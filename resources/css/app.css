@@ -206,6 +206,11 @@ input {
 	color: var(--sky-ink);
 }
 
+.auth-alert-warning {
+	background: var(--gold-light);
+	color: var(--gold-ink);
+}
+
 .auth-mode-panel {
 	display: none;
 }

@@ -6,6 +6,7 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Models\Invitation;
 use App\Models\PreSession;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -32,7 +33,12 @@ class FortifyServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Fortify::loginView(fn () => View::make('auth.login'));
-        Fortify::registerView(fn () => View::make('auth.register'));
+        Fortify::registerView(function (Request $request) {
+            return View::make('auth.register', [
+                'invitation' => Invitation::validToken($request->query('invite')),
+                'invitationToken' => $request->query('invite'),
+            ]);
+        });
         Fortify::requestPasswordResetLinkView(fn () => View::make('auth.forgot-password'));
         Fortify::resetPasswordView(fn ($request) => View::make('auth.reset-password', ['request' => $request]));
         Fortify::verifyEmailView(fn () => View::make('auth.verify-email'));
