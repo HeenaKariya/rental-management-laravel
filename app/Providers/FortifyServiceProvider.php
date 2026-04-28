@@ -6,6 +6,7 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Models\PreSession;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -36,7 +37,19 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetPasswordView(fn ($request) => View::make('auth.reset-password', ['request' => $request]));
         Fortify::verifyEmailView(fn () => View::make('auth.verify-email'));
         Fortify::confirmPasswordView(fn () => View::make('auth.confirm-password'));
-        Fortify::twoFactorChallengeView(fn () => View::make('auth.two-factor-challenge'));
+        Fortify::twoFactorChallengeView(function (Request $request) {
+            $preSession = null;
+            $userId = $request->session()->get('login.id');
+
+            if ($userId) {
+                $preSession = PreSession::issueForUser((int) $userId);
+                $request->session()->put('auth.pre_session_token', $preSession->token);
+            }
+
+            return View::make('auth.two-factor-challenge', [
+                'preSession' => $preSession,
+            ]);
+        });
 
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);

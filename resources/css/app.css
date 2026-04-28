@@ -201,6 +201,11 @@ input {
 	color: var(--green-ink);
 }
 
+.auth-alert-info {
+	background: var(--sky-light);
+	color: var(--sky-ink);
+}
+
 .auth-mode-panel {
 	display: none;
 }

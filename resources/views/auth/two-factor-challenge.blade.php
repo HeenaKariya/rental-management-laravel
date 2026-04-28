@@ -1,5 +1,7 @@
 @extends('layouts.auth', [
     'title' => 'Two-Factor Challenge | PropMgr',
+    'headline' => 'A pre-session token is active until two-factor verification is completed.',
+    'subhead' => 'Protected routes stay blocked until this challenge finishes successfully or the 15-minute token expires.',
 ])
 
 @section('content')
@@ -13,6 +15,12 @@
         <button class="tab is-active" type="button" data-ui-tab data-toggle-target="code-panel">Authenticator code</button>
         <button class="tab" type="button" data-ui-tab data-toggle-target="recovery-panel">Recovery code</button>
     </div>
+
+    @if ($preSession)
+        <div class="auth-alert auth-alert-info">
+            Pre-session token active until {{ $preSession->expires_at->format('M j, Y g:i A') }}.
+        </div>
+    @endif
 
     <form method="POST" action="{{ route('two-factor.login') }}" class="auth-form-grid auth-mode-panel is-visible" data-toggle-panel="code-panel">
         @csrf
