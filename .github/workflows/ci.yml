@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Configure SQLite for CI
+        run: |
+          mkdir -p database
+          touch database/database.sqlite
+          php -r "file_put_contents('.env', preg_replace(['/^DB_CONNECTION=.*/m','/^DB_HOST=.*/m','/^DB_PORT=.*/m','/^DB_DATABASE=.*/m','/^DB_USERNAME=.*/m','/^DB_PASSWORD=.*/m'], ['DB_CONNECTION=sqlite','DB_HOST=127.0.0.1','DB_PORT=','DB_DATABASE=database/database.sqlite','DB_USERNAME=','DB_PASSWORD='], file_get_contents('.env')));"
+
+      - name: Run migrations
+        run: php artisan migrate --force
+
+      - name: Run Pint
+        run: ./vendor/bin/pint --test
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Run PHPUnit
+        run: php artisan test
