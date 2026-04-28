@@ -1,4 +1,9 @@
 import './bootstrap';
+import Alpine from 'alpinejs';
+
+window.Alpine = Alpine;
+
+Alpine.start();
 
 document.addEventListener('click', (event) => {
 	const toggleButton = event.target.closest('[data-ui-toggle]');
@@ -18,5 +23,13 @@ document.addEventListener('click', (event) => {
 		document.querySelectorAll('[data-ui-tab]').forEach((button) => {
 			button.classList.toggle('is-active', button === tabButton);
 		});
+
+		const target = tabButton.getAttribute('data-toggle-target');
+
+		if (target) {
+			document.querySelectorAll('[data-toggle-panel]').forEach((panel) => {
+				panel.classList.toggle('is-visible', panel.getAttribute('data-toggle-panel') === target);
+			});
+		}
 	}
 });
