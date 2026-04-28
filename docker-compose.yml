@@ -1,0 +1,72 @@
+services:
+    db:
+        image: mysql:8.4
+        restart: unless-stopped
+        environment:
+            MYSQL_DATABASE: rental_management
+            MYSQL_USER: laravel
+            MYSQL_PASSWORD: secret
+            MYSQL_ROOT_PASSWORD: root
+        ports:
+            - "${FORWARD_DB_PORT:-3310}:3306"
+        volumes:
+            - db-data:/var/lib/mysql
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "mysqladmin",
+                    "ping",
+                    "-h",
+                    "127.0.0.1",
+                    "-uroot",
+                    "-proot",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 20s
+        networks:
+            - rental-management
+
+    redis:
+        image: redis:7.4-alpine
+        restart: unless-stopped
+        ports:
+            - "${FORWARD_REDIS_PORT:-6379}:6379"
+        volumes:
+            - redis-data:/data
+        networks:
+            - rental-management
+
+    mailpit:
+        image: axllent/mailpit:v1.23
+        restart: unless-stopped
+        ports:
+            - "${MAILPIT_SMTP_PORT:-1025}:1025"
+            - "${MAILPIT_UI_PORT:-8025}:8025"
+        networks:
+            - rental-management
+
+    phpmyadmin:
+        image: phpmyadmin:5.2-apache
+        restart: unless-stopped
+        depends_on:
+            db:
+                condition: service_healthy
+        environment:
+            PMA_HOST: db
+            PMA_PORT: 3306
+            PMA_USER: root
+            PMA_PASSWORD: root
+        ports:
+            - "${PHPMYADMIN_PORT:-8081}:80"
+        networks:
+            - rental-management
+
+volumes:
+    db-data:
+    redis-data:
+
+networks:
+    rental-management:
