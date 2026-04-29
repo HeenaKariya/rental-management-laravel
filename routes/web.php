@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Finance\LeasePaymentHistoryController;
 use App\Http\Controllers\Property\PropertyController;
 use App\Http\Controllers\Property\PropertyManagerAssignmentController;
 use App\Http\Controllers\Tenancy\LeaseDepositController;
@@ -49,6 +50,9 @@ Route::middleware(['auth', 'full-auth-session'])->group(function () {
     Route::get('/leases/create', [LeaseController::class, 'create'])->name('leases.create');
     Route::post('/leases', [LeaseController::class, 'store'])->name('leases.store');
     Route::get('/leases/{lease}', [LeaseController::class, 'show'])->name('leases.show');
+    Route::get('/leases/{lease}/payments', [LeasePaymentHistoryController::class, 'show'])->name('leases.payments.show');
+    Route::post('/leases/{lease}/payments/{ledger}/instalments', [LeasePaymentHistoryController::class, 'storeInstalment'])->name('leases.payments.instalments.store');
+    Route::get('/leases/{lease}/payments/{ledger}/instalments/{instalment}/receipt', [LeasePaymentHistoryController::class, 'downloadReceipt'])->name('leases.payments.receipt.download');
     Route::get('/leases/{lease}/edit', [LeaseController::class, 'edit'])->name('leases.edit');
     Route::put('/leases/{lease}', [LeaseController::class, 'update'])->name('leases.update');
     Route::post('/leases/{lease}/renew', [LeaseController::class, 'renew'])->name('leases.renew');

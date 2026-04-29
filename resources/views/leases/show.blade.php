@@ -13,6 +13,7 @@
 
                     <div class="page-actions">
                         <a class="btn btn-ghost" href="{{ $user?->hasRole('tenant') ? route('dashboard') : route('leases.index') }}">{{ $user?->hasRole('tenant') ? 'Back to portal' : 'Back to leases' }}</a>
+                        <a class="btn btn-ghost" href="{{ route('leases.payments.show', $lease) }}">Payment history</a>
                         @can('update', $lease)
                             <a class="btn btn-solid" href="{{ route('leases.edit', $lease) }}">Edit lease</a>
                         @endcan
@@ -72,6 +73,17 @@
                             <div class="field-group">
                                 <span class="field-label">Notes</span>
                                 <div class="field-input">{{ $lease->notes ?: 'No notes recorded for this lease yet.' }}</div>
+                            </div>
+
+                            <div class="two-up-grid">
+                                <div class="field-group">
+                                    <span class="field-label">Grace period</span>
+                                    <div class="field-input">{{ $lease->grace_period_days }} days</div>
+                                </div>
+                                <div class="field-group">
+                                    <span class="field-label">Late fee rule</span>
+                                    <div class="field-input">{{ $lease->late_fee_mode === 'percentage' ? number_format((float) $lease->late_fee_value, 2).'%' : number_format((float) $lease->late_fee_value, 2) }}</div>
+                                </div>
                             </div>
                         </article>
                     </div>

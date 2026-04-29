@@ -156,6 +156,9 @@ class LeaseController extends Controller
             'end_on' => ['required', 'date', 'after:start_on'],
             'rent_amount' => ['required', 'numeric', 'min:0'],
             'billing_day' => ['required', 'integer', 'between:1,28'],
+            'grace_period_days' => ['nullable', 'integer', 'min:0', 'max:31'],
+            'late_fee_mode' => ['nullable', 'string', Rule::in(['fixed', 'percentage'])],
+            'late_fee_value' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
         ]);
 
@@ -176,6 +179,9 @@ class LeaseController extends Controller
                 'end_on' => $data['end_on'],
                 'rent_amount' => $data['rent_amount'],
                 'billing_day' => $data['billing_day'],
+                'grace_period_days' => $data['grace_period_days'] ?? $lease->grace_period_days,
+                'late_fee_mode' => $data['late_fee_mode'] ?? $lease->late_fee_mode,
+                'late_fee_value' => $data['late_fee_value'] ?? $lease->late_fee_value,
                 'status' => 'active',
                 'notes' => $data['notes'] ?? null,
                 'created_by' => $user->id,
@@ -195,6 +201,9 @@ class LeaseController extends Controller
             'end_on' => ['required', 'date', 'after:start_on'],
             'rent_amount' => ['required', 'numeric', 'min:0'],
             'billing_day' => ['required', 'integer', 'between:1,28'],
+            'grace_period_days' => ['nullable', 'integer', 'min:0', 'max:31'],
+            'late_fee_mode' => ['nullable', 'string', Rule::in(['fixed', 'percentage'])],
+            'late_fee_value' => ['nullable', 'numeric', 'min:0'],
             'status' => ['required', 'string', Rule::in(Lease::STATUSES)],
             'notes' => ['nullable', 'string'],
         ]);
