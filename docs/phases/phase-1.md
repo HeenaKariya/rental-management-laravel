@@ -26,15 +26,16 @@ Date: 2026-04-28
 - Super Admin 2FA oversight includes user status visibility, lock recovery, and admin-triggered 2FA reset actions.
 - User lock state is now persisted with temporary and hard lock thresholds across login and two-factor failures.
 - OTP delivery now runs through an email/WhatsApp abstraction for Super Admin and Manager roles, with resend limits and fallback-to-email behavior.
+- Recovery code lifecycle hardening is implemented with low-inventory warnings plus focused single-use and regeneration checks.
 - Focused feature tests cover RBAC foundation and pre-session access blocking.
 - Focused feature tests cover invitation-only registration and role-scoped invite issuance.
 - Focused feature tests cover security settings and Super Admin 2FA oversight access.
 - Focused feature tests cover auth lock enforcement across login and two-factor challenge routes.
 - Focused feature tests cover delivered OTP challenge routing, resend limits, and delivery fallback behavior.
+- Focused feature tests cover recovery code depletion, single-use replacement, and regeneration invalidation.
 
 ## Remaining Deliverables
 
-- Backup code generation, usage, and regeneration lifecycle hardening.
 - Broader Phase 1 negative-path and edge-case tests.
 
 ## Exit Criteria Status

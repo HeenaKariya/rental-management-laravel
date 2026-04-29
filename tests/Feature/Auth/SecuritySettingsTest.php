@@ -456,4 +456,89 @@ class SecuritySettingsTest extends TestCase
             'event' => 'two_factor.otp_fallback',
         ]);
     }
+
+    public function test_recovery_code_is_single_use_and_is_replaced_after_successful_login(): void
+    {
+        /** @var User $tenant */
+        $tenant = User::factory()->create([
+            'email' => 'recovery@example.com',
+        ]);
+        $tenant->assignRole('tenant');
+        $tenant->forceFill([
+            'two_factor_secret' => encrypt('tenant-secret'),
+            'two_factor_recovery_codes' => encrypt(json_encode(['recover-1111', 'recover-2222'])),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        $this->withSession([
+            'login.id' => $tenant->id,
+            'login.remember' => false,
+        ])->post(route('two-factor.login.store'), [
+            'recovery_code' => 'recover-1111',
+        ])->assertRedirect(route('dashboard'));
+
+        $tenant->refresh();
+
+        $this->assertSame(2, $tenant->remainingRecoveryCodesCount());
+        $this->assertNotContains('recover-1111', $tenant->recoveryCodes());
+
+        $this->post(route('logout'));
+
+        $this->withSession([
+            'login.id' => $tenant->id,
+            'login.remember' => false,
+        ])->post(route('two-factor.login.store'), [
+            'recovery_code' => 'recover-1111',
+        ])->assertSessionHasErrors('recovery_code');
+    }
+
+    public function test_regenerating_recovery_codes_invalidates_the_previous_set(): void
+    {
+        /** @var User $tenant */
+        $tenant = User::factory()->create([
+            'email' => 'regen@example.com',
+        ]);
+        $tenant->assignRole('tenant');
+        $tenant->forceFill([
+            'two_factor_secret' => encrypt('tenant-secret'),
+            'two_factor_recovery_codes' => encrypt(json_encode(['legacy-1111', 'legacy-2222'])),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        $this->actingAs($tenant)
+            ->withSession(['auth.password_confirmed_at' => now()->unix()])
+            ->post(route('settings.security.two-factor.recovery-codes'))
+            ->assertRedirect(route('settings.security'));
+
+        $tenant->refresh();
+
+        $this->assertSame(8, $tenant->remainingRecoveryCodesCount());
+        $this->assertNotContains('legacy-1111', $tenant->recoveryCodes());
+
+        $this->post(route('logout'));
+
+        $this->withSession([
+            'login.id' => $tenant->id,
+            'login.remember' => false,
+        ])->post(route('two-factor.login.store'), [
+            'recovery_code' => 'legacy-1111',
+        ])->assertSessionHasErrors('recovery_code');
+    }
+
+    public function test_security_settings_warns_when_recovery_codes_are_running_low(): void
+    {
+        /** @var User $tenant */
+        $tenant = User::factory()->create();
+        $tenant->assignRole('tenant');
+        $tenant->forceFill([
+            'two_factor_secret' => encrypt('tenant-secret'),
+            'two_factor_recovery_codes' => encrypt(json_encode(['only-1111', 'only-2222'])),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        $this->actingAs($tenant)
+            ->get(route('settings.security'))
+            ->assertOk()
+            ->assertSee('Only 2 recovery codes remain. Regenerate a fresh set before you run out.');
+    }
 }

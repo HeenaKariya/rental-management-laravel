@@ -85,15 +85,18 @@
 
                                 <div class="btn-strip">
                                     <button class="btn btn-solid" type="submit">Confirm delivered OTP</button>
-                                    @foreach ($otpSetup['availableChannels'] as $channel)
-                                        <form method="POST" action="{{ route('settings.security.two-factor.otp.resend') }}">
-                                            @csrf
-                                            <input type="hidden" name="channel" value="{{ $channel }}">
-                                            <button class="btn btn-ghost btn-sm" type="submit">Resend via {{ $channel === 'whatsapp' ? 'WhatsApp' : 'Email' }}</button>
-                                        </form>
-                                    @endforeach
                                 </div>
                             </form>
+
+                            <div class="btn-strip">
+                                @foreach ($otpSetup['availableChannels'] as $channel)
+                                    <form method="POST" action="{{ route('settings.security.two-factor.otp.resend') }}">
+                                        @csrf
+                                        <input type="hidden" name="channel" value="{{ $channel }}">
+                                        <button class="btn btn-ghost btn-sm" type="submit">Resend via {{ $channel === 'whatsapp' ? 'WhatsApp' : 'Email' }}</button>
+                                    </form>
+                                @endforeach
+                            </div>
                         @elseif ($twoFactorPendingConfirmation && $twoFactorQrCodeSvg)
                             <div class="security-qr-frame">{!! $twoFactorQrCodeSvg !!}</div>
 
@@ -119,6 +122,12 @@
 
                         <div>
                             <p class="row-label">Recovery codes</p>
+
+                            @if ($user->recoveryCodeInventoryMessage())
+                                <div class="auth-alert {{ $user->hasLowRecoveryCodeInventory() || $user->remainingRecoveryCodesCount() === 0 ? 'auth-alert-warning' : 'auth-alert-info' }}">
+                                    {{ $user->recoveryCodeInventoryMessage() }}
+                                </div>
+                            @endif
 
                             <div class="security-code-list">
                                 @foreach ($recoveryCodes as $recoveryCode)

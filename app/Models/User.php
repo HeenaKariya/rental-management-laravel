@@ -132,6 +132,35 @@ class User extends Authenticatable
         };
     }
 
+    public function remainingRecoveryCodesCount(): int
+    {
+        if (! $this->two_factor_recovery_codes) {
+            return 0;
+        }
+
+        return count($this->recoveryCodes());
+    }
+
+    public function hasLowRecoveryCodeInventory(): bool
+    {
+        return $this->remainingRecoveryCodesCount() > 0 && $this->remainingRecoveryCodesCount() <= 2;
+    }
+
+    public function recoveryCodeInventoryMessage(): ?string
+    {
+        $count = $this->remainingRecoveryCodesCount();
+
+        if ($count === 0) {
+            return 'No recovery codes are available. Regenerate a new set before you need account recovery.';
+        }
+
+        if ($this->hasLowRecoveryCodeInventory()) {
+            return 'Only '.$count.' recovery codes remain. Regenerate a fresh set before you run out.';
+        }
+
+        return null;
+    }
+
     public function usesDeliveredOtpTwoFactor(): bool
     {
         return $this->hasAnyRole(['super_admin', 'manager']);
