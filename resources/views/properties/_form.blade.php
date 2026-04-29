@@ -146,6 +146,22 @@
             </label>
 
             @if ($property->exists && $property->photos->isNotEmpty())
+                <div class="form-photo-stack">
+                    @foreach ($property->photos as $photo)
+                        <div class="form-photo-row">
+                            <div>
+                                <p class="tenant-name">Photo #{{ $photo->id }}</p>
+                                <p class="tenant-unit">{{ $photo->is_cover ? 'Current cover image' : 'Gallery image' }}</p>
+                            </div>
+
+                            <label class="field-group form-photo-order-field">
+                                <span class="field-label">Order</span>
+                                <input class="field-input" type="number" min="1" name="photo_orders[{{ $photo->id }}]" value="{{ old('photo_orders.'.$photo->id, $photo->sort_order) }}">
+                            </label>
+                        </div>
+                    @endforeach
+                </div>
+
                 <label class="field-group">
                     <span class="field-label">Cover photo</span>
                     <select class="field-input" name="cover_photo_id">

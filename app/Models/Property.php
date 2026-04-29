@@ -195,6 +195,30 @@ class Property extends Model
         $this->photos()->whereKey($coverPhotoId)->update(['is_cover' => true]);
     }
 
+    public function reorderPhotos(array $photoOrders): void
+    {
+        if ($photoOrders === []) {
+            return;
+        }
+
+        $normalizedOrders = collect($photoOrders)
+            ->mapWithKeys(fn ($sortOrder, $photoId) => [(int) $photoId => max(0, (int) $sortOrder)])
+            ->sortBy(fn (int $sortOrder) => $sortOrder)
+            ->keys()
+            ->values();
+
+        if ($normalizedOrders->isEmpty()) {
+            return;
+        }
+
+        $sortOrder = 1;
+
+        foreach ($normalizedOrders as $photoId) {
+            $this->photos()->whereKey($photoId)->update(['sort_order' => $sortOrder]);
+            $sortOrder++;
+        }
+    }
+
     protected static function uniqueSlugFor(string $title, ?int $ignoreId = null): string
     {
         $base = Str::slug($title) ?: 'property';

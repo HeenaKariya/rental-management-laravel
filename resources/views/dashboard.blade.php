@@ -2,23 +2,6 @@
 
 @section('content')
     <div class="dashboard-stack">
-        <section class="workspace-hero card-soft">
-            <div>
-                <p class="row-label">{{ $user->hasRole('super_admin') ? 'Super Admin Command Center' : 'Operations Dashboard' }}</p>
-                <h2 class="hero-title">Control properties, access, and onboarding from one place.</h2>
-                <p class="hero-text">
-                    This is now the default post-login workspace. It shows live property scope,
-                    open invites, and recent platform security activity instead of placeholder kit samples.
-                </p>
-            </div>
-
-            <div class="btn-strip">
-                @foreach ($quickActions as $action)
-                    <a class="btn btn-{{ $action['style'] }}" href="{{ $action['route'] }}">{{ $action['label'] }}</a>
-                @endforeach
-            </div>
-        </section>
-
         <section class="stat-grid dashboard-stat-grid">
             <article class="stat-card">
                 <p class="stat-label">Visible properties</p>

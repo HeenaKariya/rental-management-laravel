@@ -139,6 +139,47 @@ class PropertyAccessTest extends TestCase
         ]);
     }
 
+    public function test_super_admin_can_reorder_photos_and_select_a_new_cover(): void
+    {
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create();
+        $superAdmin->assignRole('super_admin');
+
+        $property = Property::factory()->create();
+
+        $firstPhoto = $property->photos()->create([
+            'disk' => 'public',
+            'path' => 'properties/test-one.jpg',
+            'sort_order' => 1,
+            'is_cover' => true,
+            'uploaded_by' => $superAdmin->id,
+        ]);
+
+        $secondPhoto = $property->photos()->create([
+            'disk' => 'public',
+            'path' => 'properties/test-two.jpg',
+            'sort_order' => 2,
+            'is_cover' => false,
+            'uploaded_by' => $superAdmin->id,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->put(route('properties.update', $property), $this->propertyPayload([
+                'cover_photo_id' => $secondPhoto->id,
+                'photo_orders' => [
+                    $firstPhoto->id => 2,
+                    $secondPhoto->id => 1,
+                ],
+            ]))
+            ->assertRedirect(route('properties.show', $property));
+
+        $orderedPhotos = $property->fresh()->photos()->get();
+
+        $this->assertSame($secondPhoto->id, $orderedPhotos->first()->id);
+        $this->assertTrue((bool) $orderedPhotos->first()->is_cover);
+        $this->assertFalse((bool) $orderedPhotos->last()->is_cover);
+    }
+
     private function propertyPayload(array $overrides = []): array
     {
         return [

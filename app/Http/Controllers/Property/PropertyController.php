@@ -30,8 +30,7 @@ class PropertyController extends Controller
                 fn ($query) => $query->whereHas('activeManagerAssignments', fn ($assignmentQuery) => $assignmentQuery->where('manager_id', (int) $request->integer('assigned_manager_id')))
             )
             ->latest()
-            ->paginate(12)
-            ->withQueryString();
+            ->get();
 
         return view('properties.index', [
             'filters' => $request->only(['type', 'lifecycle_stage', 'assigned_manager_id']),
@@ -89,6 +88,7 @@ class PropertyController extends Controller
         $this->authorize('view', $property);
 
         $property->load([
+            'activeManagerAssignments.manager',
             'activityLogs.actor',
             'activityLogs.subjectUser',
             'managers.roles',
@@ -147,6 +147,10 @@ class PropertyController extends Controller
 
         $this->storeUploadedPhotos($request, $property, $user);
 
+        if ($request->filled('photo_orders')) {
+            $property->reorderPhotos((array) $request->input('photo_orders'));
+        }
+
         if ($request->filled('cover_photo_id')) {
             $property->refreshCoverPhoto((int) $request->integer('cover_photo_id'));
         }
@@ -183,13 +187,15 @@ class PropertyController extends Controller
             'description' => ['nullable', 'string'],
             'assigned_manager_id' => ['nullable', 'integer', 'exists:users,id'],
             'cover_photo_id' => ['nullable', 'integer', Rule::exists('property_photos', 'id')->where(fn ($query) => $property ? $query->where('property_id', $property->id) : $query)],
+            'photo_orders' => ['nullable', 'array'],
+            'photo_orders.*' => ['nullable', 'integer', 'min:0'],
             'photos' => ['nullable', 'array'],
             'photos.*' => ['image', 'max:4096'],
         ]);
 
         $data['area_unit'] = $data['area_unit'] ?: 'sqft';
 
-        unset($data['assigned_manager_id'], $data['cover_photo_id'], $data['photos']);
+        unset($data['assigned_manager_id'], $data['cover_photo_id'], $data['photo_orders'], $data['photos']);
 
         return $data;
     }
