@@ -145,6 +145,14 @@ class PropertyController extends Controller
             ]);
         }
 
+        if ($user->hasRole('super_admin')) {
+            $selectedManager = $request->filled('assigned_manager_id')
+                ? $this->findManagerOrFail((int) $request->integer('assigned_manager_id'))
+                : null;
+
+            $property->syncAssignedManager($selectedManager, $user);
+        }
+
         $this->storeUploadedPhotos($request, $property, $user);
 
         if ($request->filled('photo_orders')) {

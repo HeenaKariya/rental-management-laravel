@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Property\Notifications\PropertyManagerAssignmentNotification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 class Property extends Model
@@ -162,6 +164,8 @@ class Property extends Model
             'manager_name' => $manager->name,
         ], $manager);
 
+        Notification::send($manager, new PropertyManagerAssignmentNotification($this, 'assigned', $actor));
+
         return $assignment;
     }
 
@@ -179,6 +183,29 @@ class Property extends Model
         PropertyActivityLog::record($this, 'property.manager_revoked', $actor, [
             'manager_name' => $assignment->manager?->name,
         ], $assignment->manager);
+
+        if ($assignment->manager) {
+            Notification::send($assignment->manager, new PropertyManagerAssignmentNotification($this, 'revoked', $actor));
+        }
+    }
+
+    public function syncAssignedManager(?User $manager, ?User $actor = null): void
+    {
+        $activeAssignments = $this->activeManagerAssignments()
+            ->with('manager')
+            ->get();
+
+        foreach ($activeAssignments as $activeAssignment) {
+            if ($manager && $activeAssignment->manager_id === $manager->id) {
+                continue;
+            }
+
+            $this->revokeManagerAssignment($activeAssignment, $actor);
+        }
+
+        if ($manager) {
+            $this->assignManager($manager, $actor);
+        }
     }
 
     public function refreshCoverPhoto(?int $coverPhotoId = null): void
