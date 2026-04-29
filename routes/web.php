@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\TwoFactorOversightController;
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Settings\SecuritySettingsController;
 use Illuminate\Http\Request;
@@ -31,6 +32,8 @@ Route::middleware(['auth', 'full-auth-session'])->group(function () {
 });
 
 Route::middleware(['auth', 'full-auth-session', 'role:super_admin'])->group(function () {
+    Route::get('/admin/security/two-factor', [TwoFactorOversightController::class, 'index'])
+        ->name('admin.security.two-factor.index');
     Route::get('/admin/invitations/create', [InvitationController::class, 'create'])->name('invitations.create');
     Route::post('/admin/invitations', [InvitationController::class, 'store'])->name('invitations.store');
 });

@@ -95,4 +95,48 @@ class SecuritySettingsTest extends TestCase
 
         $this->assertNotNull($preSession->fresh()->completed_at);
     }
+
+    public function test_super_admin_can_view_two_factor_oversight(): void
+    {
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create([
+            'name' => 'Super Admin',
+            'email' => 'super-admin@example.com',
+        ]);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $tenant */
+        $tenant = User::factory()->create([
+            'name' => 'Tenant User',
+            'email' => 'tenant@example.com',
+        ]);
+        $tenant->assignRole('tenant');
+        $tenant->forceFill([
+            'two_factor_secret' => encrypt('tenant-secret'),
+            'two_factor_recovery_codes' => encrypt(json_encode(['tenant-code-1', 'tenant-code-2'])),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        AuthAuditLog::record($tenant, 'two_factor.confirmed');
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.security.two-factor.index'))
+            ->assertOk()
+            ->assertSee('Monitor two-factor adoption and recent auth activity.')
+            ->assertSee('Tenant User')
+            ->assertSee('tenant@example.com')
+            ->assertSee('Confirmed')
+            ->assertSee('2FA confirmed');
+    }
+
+    public function test_non_super_admin_cannot_view_two_factor_oversight(): void
+    {
+        /** @var User $tenant */
+        $tenant = User::factory()->create();
+        $tenant->assignRole('tenant');
+
+        $this->actingAs($tenant)
+            ->get(route('admin.security.two-factor.index'))
+            ->assertForbidden();
+    }
 }

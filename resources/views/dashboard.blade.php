@@ -29,6 +29,9 @@
                     <div class="btn-strip">
                         <a class="btn btn-solid" href="{{ route('dashboard') }}">Open dashboard</a>
                         <a class="btn btn-violet" href="{{ route('settings.security') }}">Security settings</a>
+                        @if (auth()->user()?->hasRole('super_admin'))
+                            <a class="btn btn-ghost" href="{{ route('admin.security.two-factor.index') }}">2FA oversight</a>
+                        @endif
                         <button class="btn btn-lime" type="button">Create tenant</button>
                         <button class="btn btn-ghost" type="button">Export report</button>
                     </div>

@@ -22,8 +22,11 @@ Date: 2026-04-28
 - Invite-aware onboarding is implemented with role-scoped invitations and invitation acceptance links.
 - Super Admin users can issue invitations from the protected admin area.
 - Registration now requires a valid invitation token and assigns the invited role.
+- User-facing 2FA settings, recovery code regeneration, and per-user auth audit logging are implemented.
+- Super Admin read-only 2FA oversight is implemented with user status visibility and recent auth events.
 - Focused feature tests cover RBAC foundation and pre-session access blocking.
 - Focused feature tests cover invitation-only registration and role-scoped invite issuance.
+- Focused feature tests cover security settings and Super Admin 2FA oversight access.
 
 ## Remaining Deliverables
 
@@ -31,7 +34,6 @@ Date: 2026-04-28
 - Backup code generation, usage, and regeneration lifecycle hardening.
 - Soft lock and hard lock flows.
 - Super Admin 2FA management panel.
-- 2FA audit logs and read-only admin view.
 - Broader Phase 1 negative-path and edge-case tests.
 
 ## Exit Criteria Status

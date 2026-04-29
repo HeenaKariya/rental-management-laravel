@@ -14,6 +14,9 @@
 
                 <div class="identity-actions">
                     <span class="badge badge-ink">{{ $twoFactorEnabled ? '2FA active' : '2FA not confirmed' }}</span>
+                    @if ($user->hasRole('super_admin'))
+                        <a class="btn btn-violet btn-sm" href="{{ route('admin.security.two-factor.index') }}">Admin oversight</a>
+                    @endif
                     <a class="btn btn-ghost btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
                 </div>
             </header>
