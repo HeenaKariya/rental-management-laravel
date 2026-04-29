@@ -3,68 +3,58 @@
 @section('content')
     <div class="ui-shell">
         <div class="ui-wrap">
-            <header class="identity-card">
-                <div class="identity-brand">
-                    <div class="logo-mark">P</div>
+            <div class="dashboard-stack">
+                <section class="page-header card-soft">
                     <div>
-                        <p class="logo-text">PropMgr</p>
-                        <p class="eyebrow-text">Super Admin two-factor oversight</p>
+                        <p class="page-kicker">Super Admin panel</p>
+                        <h1 class="page-title">Two-factor oversight</h1>
+                        <p class="page-description">Monitor two-factor adoption and recent auth activity.</p>
                     </div>
-                </div>
 
-                <div class="identity-actions">
-                    <span class="badge badge-ink">{{ $users->count() }} monitored accounts</span>
-                    <a class="btn btn-violet btn-sm" href="{{ route('settings.security') }}">My security</a>
-                    <a class="btn btn-ghost btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
-                </div>
-            </header>
+                    <div class="page-actions">
+                        <span class="badge badge-ink">{{ $users->count() }} monitored accounts</span>
+                        <a class="btn btn-violet btn-sm" href="{{ route('settings.security') }}">My security</a>
+                        <a class="btn btn-ghost btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
+                    </div>
+                </section>
 
-            <section>
-                <p class="row-label">Panel</p>
-                <h1 class="security-title">Monitor two-factor adoption and recent auth activity.</h1>
-                <p class="security-copy">
-                    This panel gives Super Admins a single place to spot users with missing 2FA,
-                    users stuck in pending confirmation, and the latest authentication events across the system.
-                </p>
-            </section>
+                @if (session('status'))
+                    <div class="auth-alert auth-alert-success">{{ session('status') }}</div>
+                @endif
 
-            @if (session('status'))
-                <div class="auth-alert auth-alert-success">{{ session('status') }}</div>
-            @endif
+                <section class="stat-grid dashboard-stat-grid">
+                    <article class="stat-card">
+                        <p class="stat-label">Confirmed</p>
+                        <h2 class="stat-value">{{ $summary['confirmed'] }}</h2>
+                        <p class="stat-meta"><span>fully confirmed enrollment</span></p>
+                    </article>
+                    <article class="stat-card">
+                        <p class="stat-label">Pending</p>
+                        <h2 class="stat-value">{{ $summary['pending'] }}</h2>
+                        <p class="stat-meta"><span>started but not confirmed</span></p>
+                    </article>
+                    <article class="stat-card">
+                        <p class="stat-label">Not enabled</p>
+                        <h2 class="stat-value">{{ $summary['notEnabled'] }}</h2>
+                        <p class="stat-meta"><span>still need enrollment</span></p>
+                    </article>
+                    <article class="stat-card">
+                        <p class="stat-label">Soft Locked</p>
+                        <h2 class="stat-value">{{ $summary['softLocked'] }}</h2>
+                        <p class="stat-meta"><span>temporary lock flow</span></p>
+                    </article>
+                </section>
 
-            <section class="metric-grid">
-                <article class="metric-card">
-                    <p class="row-label">Confirmed</p>
-                    <p class="metric-value">{{ $summary['confirmed'] }}</p>
-                    <p class="metric-copy">Users with fully confirmed authenticator setup.</p>
-                </article>
-                <article class="metric-card">
-                    <p class="row-label">Pending</p>
-                    <p class="metric-value">{{ $summary['pending'] }}</p>
-                    <p class="metric-copy">Users who started setup but have not confirmed it yet.</p>
-                </article>
-                <article class="metric-card">
-                    <p class="row-label">Not Enabled</p>
-                    <p class="metric-value">{{ $summary['notEnabled'] }}</p>
-                    <p class="metric-copy">Users who still need two-factor enrollment.</p>
-                </article>
-                <article class="metric-card">
-                    <p class="row-label">Soft Locked</p>
-                    <p class="metric-value">{{ $summary['softLocked'] }}</p>
-                    <p class="metric-copy">Users currently paused by the temporary lock flow.</p>
-                </article>
-                <article class="metric-card">
-                    <p class="row-label">Hard Locked</p>
-                    <p class="metric-value">{{ $summary['hardLocked'] }}</p>
-                    <p class="metric-copy">Users who now require Super Admin intervention.</p>
-                </article>
-            </section>
+                <section class="dashboard-grid">
+                    <div class="dashboard-column-wide">
+                        <article class="table-card dashboard-panel">
+                            <div class="dashboard-panel-head">
+                                <div>
+                                    <p class="row-label">Account status</p>
+                                    <h3 class="dashboard-panel-title">Monitored users</h3>
+                                </div>
+                            </div>
 
-            <section class="oversight-layout">
-                <div class="oversight-stack">
-                    <div>
-                        <p class="row-label">Account status</p>
-                        <div class="table-card">
                             <div class="table-head">
                                 <span>User</span>
                                 <span>2FA status</span>
@@ -78,6 +68,11 @@
                                         <p class="oversight-user-name">{{ $user->name }}</p>
                                         <p class="oversight-user-role">{{ $user->roleSummary() }}</p>
                                         <p class="oversight-user-email">{{ $user->email }}</p>
+                                        @if ($user->isSoftLocked())
+                                            <p class="oversight-user-email">Temporarily locked</p>
+                                        @elseif ($user->isHardLocked())
+                                            <p class="oversight-user-email">Super Admin reset required</p>
+                                        @endif
 
                                         @if ($user->isAuthLocked() || $user->two_factor_secret !== null)
                                             <div class="oversight-actions">
@@ -124,41 +119,45 @@
                                     </div>
                                 </div>
                             @endforeach
-                        </div>
-                    </div>
-                </div>
-
-                <aside class="security-card">
-                    <div>
-                        <p class="row-label">Recent events</p>
-                        <h2 class="hero-text" style="margin-top: 0; max-width: none;">Latest platform authentication activity</h2>
+                        </article>
                     </div>
 
-                    <div class="security-log-list">
-                        @forelse ($auditLogs as $auditLog)
-                            <article class="security-log-item">
-                                <div class="security-log-head">
-                                    <span class="badge {{ $auditLog->badgeClass() }}">{{ $auditLog->label() }}</span>
-                                    <span class="security-log-meta">{{ $auditLog->occurred_at?->format('M j, Y g:i A') }}</span>
+                    <div class="dashboard-column-side">
+                        <aside class="security-card dashboard-panel">
+                            <div class="dashboard-panel-head">
+                                <div>
+                                    <p class="row-label">Recent events</p>
+                                    <h3 class="dashboard-panel-title">Platform authentication activity</h3>
                                 </div>
+                            </div>
 
-                                <p class="oversight-log-copy">
-                                    {{ $auditLog->user?->name ?? 'Unknown user' }}
-                                    @if ($auditLog->user)
-                                        · {{ $auditLog->user->roleSummary() }}
-                                    @endif
-                                </p>
+                            <div class="security-log-list">
+                                @forelse ($auditLogs as $auditLog)
+                                    <article class="security-log-item">
+                                        <div class="security-log-head">
+                                            <span class="badge {{ $auditLog->badgeClass() }}">{{ $auditLog->label() }}</span>
+                                            <span class="security-log-meta">{{ $auditLog->occurred_at?->format('M j, Y g:i A') }}</span>
+                                        </div>
 
-                                @if ($auditLog->summary())
-                                    <p class="security-log-meta">{{ $auditLog->summary() }}</p>
-                                @endif
-                            </article>
-                        @empty
-                            <p class="security-empty">No authentication events are available yet.</p>
-                        @endforelse
+                                        <p class="oversight-log-copy">
+                                            {{ $auditLog->user?->name ?? 'Unknown user' }}
+                                            @if ($auditLog->user)
+                                                · {{ $auditLog->user->roleSummary() }}
+                                            @endif
+                                        </p>
+
+                                        @if ($auditLog->summary())
+                                            <p class="security-log-meta">{{ $auditLog->summary() }}</p>
+                                        @endif
+                                    </article>
+                                @empty
+                                    <p class="security-empty">No authentication events are available yet.</p>
+                                @endforelse
+                            </div>
+                        </aside>
                     </div>
-                </aside>
-            </section>
+                </section>
+            </div>
         </div>
     </div>
 @endsection

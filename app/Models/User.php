@@ -82,6 +82,19 @@ class User extends Authenticatable
         return $this->hasMany(TwoFactorOtpToken::class);
     }
 
+    public function managedProperties(): BelongsToMany
+    {
+        return $this->belongsToMany(Property::class, 'property_manager_assignments', 'manager_id', 'property_id')
+            ->withPivot(['id', 'assigned_by', 'assigned_at', 'revoked_at', 'revoked_by'])
+            ->wherePivotNull('revoked_at')
+            ->withTimestamps();
+    }
+
+    public function propertyAssignments(): HasMany
+    {
+        return $this->hasMany(PropertyManagerAssignment::class, 'manager_id');
+    }
+
     public function assignRole(string $slug): void
     {
         $roleId = Role::query()->where('slug', $slug)->value('id');

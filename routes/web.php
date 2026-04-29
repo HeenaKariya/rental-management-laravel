@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Property\PropertyController;
+use App\Http\Controllers\Property\PropertyManagerAssignmentController;
 use App\Http\Controllers\Admin\TwoFactorOversightController;
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Auth\TwoFactorOtpController;
@@ -13,12 +16,23 @@ Route::get('/', function (Request $request) {
         : redirect()->route('login');
 });
 
-Route::view('/dashboard', 'dashboard')
+Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'full-auth-session'])
     ->name('dashboard');
 
 Route::middleware(['auth', 'full-auth-session'])->group(function () {
     Route::get('/settings/security', [SecuritySettingsController::class, 'show'])->name('settings.security');
+    Route::get('/properties', [PropertyController::class, 'index'])->name('properties.index');
+    Route::get('/properties/create', [PropertyController::class, 'create'])->name('properties.create');
+    Route::post('/properties', [PropertyController::class, 'store'])->name('properties.store');
+    Route::get('/properties/{property}', [PropertyController::class, 'show'])->name('properties.show');
+    Route::get('/properties/{property}/edit', [PropertyController::class, 'edit'])->name('properties.edit');
+    Route::put('/properties/{property}', [PropertyController::class, 'update'])->name('properties.update');
+    Route::delete('/properties/{property}', [PropertyController::class, 'archive'])->name('properties.archive');
+    Route::post('/properties/{property}/assignments', [PropertyManagerAssignmentController::class, 'store'])
+        ->name('properties.assignments.store');
+    Route::delete('/properties/{property}/assignments/{assignment}', [PropertyManagerAssignmentController::class, 'destroy'])
+        ->name('properties.assignments.destroy');
 
     Route::middleware('password.confirm')->group(function () {
         Route::post('/settings/security/two-factor', [SecuritySettingsController::class, 'enableTwoFactor'])

@@ -1,11 +1,58 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
+import { DataTable } from 'simple-datatables';
 
 window.Alpine = Alpine;
 
 Alpine.start();
 
+const initializeDataTables = () => {
+	document.querySelectorAll('.js-data-table').forEach((table) => {
+		if (table.dataset.dataTableInitialized === 'true') {
+			return;
+		}
+
+		const pageSize = Number.parseInt(table.dataset.pageSize ?? '10', 10);
+		const emptyMessage = table.dataset.emptyMessage ?? 'No records found.';
+
+		const renumberRows = () => {
+			table.querySelectorAll('tbody [data-row-number]').forEach((cell, index) => {
+				cell.textContent = String(index + 1);
+			});
+		};
+
+		const dataTable = new DataTable(table, {
+			perPage: Number.isNaN(pageSize) ? 10 : pageSize,
+			perPageSelect: [10, 20, 30, 50],
+			searchable: true,
+			fixedHeight: false,
+			labels: {
+				placeholder: 'Search properties',
+				perPage: '{select} rows per page',
+				noRows: emptyMessage,
+				info: 'Showing {start} to {end} of {rows} properties',
+			},
+		});
+
+		['datatable.init', 'datatable.page', 'datatable.sort', 'datatable.search', 'datatable.perpage', 'datatable.update'].forEach((eventName) => {
+			dataTable.on(eventName, renumberRows);
+		});
+
+		renumberRows();
+		table.dataset.dataTableInitialized = 'true';
+	});
+};
+
+initializeDataTables();
+
 document.addEventListener('click', (event) => {
+	const appNavToggle = event.target.closest('[data-app-nav-toggle]');
+
+	if (appNavToggle) {
+		document.body.classList.toggle('body-nav-open');
+		return;
+	}
+
 	const toggleButton = event.target.closest('[data-ui-toggle]');
 
 	if (toggleButton) {
