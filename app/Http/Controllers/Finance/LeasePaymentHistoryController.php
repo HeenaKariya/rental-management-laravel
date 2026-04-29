@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use InvalidArgumentException;
 
 class LeasePaymentHistoryController extends Controller
 {
@@ -25,6 +26,8 @@ class LeasePaymentHistoryController extends Controller
         $lease->ensureRentLedgers($request->user());
         $lease->load([
             'rentLedgers.instalments.recorder',
+            'rentLedgers.instalments.voider',
+            'rentLedgers.instalments.corrections.changer',
         ]);
 
         return view('leases.payments', [
@@ -77,6 +80,48 @@ class LeasePaymentHistoryController extends Controller
         ], $user);
 
         return back()->with('status', 'Instalment recorded.');
+    }
+
+    public function correctInstalment(Request $request, Lease $lease, RentLedger $ledger, RentInstalment $instalment): RedirectResponse
+    {
+        $this->authorize('update', $lease);
+        abort_unless($ledger->lease_id === $lease->id, 404);
+        abort_unless($instalment->rent_ledger_id === $ledger->id, 404);
+
+        $data = $request->validate([
+            'payment_mode' => ['required', 'string', Rule::in(RentInstalment::PAYMENT_MODES)],
+            'reference_number' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        try {
+            $instalment->correctMetadata([
+                'payment_mode' => $data['payment_mode'],
+                'reference_number' => $data['reference_number'] ?? null,
+            ], $request->user());
+        } catch (InvalidArgumentException $exception) {
+            return back()->withErrors(['payment_mode' => $exception->getMessage()]);
+        }
+
+        return back()->with('status', 'Instalment metadata corrected.');
+    }
+
+    public function voidInstalment(Request $request, Lease $lease, RentLedger $ledger, RentInstalment $instalment): RedirectResponse
+    {
+        $this->authorize('update', $lease);
+        abort_unless($ledger->lease_id === $lease->id, 404);
+        abort_unless($instalment->rent_ledger_id === $ledger->id, 404);
+
+        $data = $request->validate([
+            'void_reason' => ['required', 'string'],
+        ]);
+
+        try {
+            $instalment->void($data['void_reason'], $request->user());
+        } catch (InvalidArgumentException $exception) {
+            return back()->withErrors(['void_reason' => $exception->getMessage()]);
+        }
+
+        return back()->with('status', 'Instalment voided and ledger recalculated.');
     }
 
     public function downloadReceipt(Request $request, Lease $lease, RentLedger $ledger, RentInstalment $instalment): Response

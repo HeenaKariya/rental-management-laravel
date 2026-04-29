@@ -1,6 +1,6 @@
 # Phase 4 Notes
 
-Status: In Progress
+Status: Complete
 Date: 2026-04-29
 
 ## Objective
@@ -14,23 +14,26 @@ Date: 2026-04-29
 - Monthly rent ledger entries auto-generate for non-draft leases across the lease period.
 - Instalments can be recorded manually against any generated ledger month.
 - Instalments now expose downloadable PDF receipts for staff and tenant-visible payment history.
+- Metadata-only corrections now log old and new payment values without allowing amount edits.
+- Voiding an instalment is password-confirmed, reasoned, terminal, and triggers ledger recalculation.
+- Staff finance dashboard now exposes upcoming dues, partially paid, overdue, arrears tracker, and recently recorded payment views with property/unit filters.
+- Lease-scoped rent returns now support initiated, confirmed, settled, waived, and pending-settlement states with pro-rata suggestions based on vacation date versus paid-through date.
+- Rent return summary PDFs are available after confirmation for staff and tenant-visible lease records.
+- New lease creation now shows vacancy-gap notices for prior terminated tenants, links directly to the prior rent-return action, and enforces non-overlapping start dates against the previous vacation date.
 - Ledger totals now recalculate total due, received, late fees, outstanding balance, arrears carry-forward, and overpayment credit carry-forward.
 - Lease payment history is available to managers, super admins, and tenants in read-only mode for tenants.
-- Focused feature tests cover generation, partial payments, arrears carry-forward, overpayment credit carry-forward, tenant read-only access, and receipt downloads.
+- Focused feature tests cover generation, partial payments, arrears carry-forward, overpayment credit carry-forward, tenant read-only access, receipt downloads, corrections, void controls, finance dashboard scoping, and rent return initiation/settlement.
 
 ## Remaining Deliverables
 
-- Correction log and void controls.
-- Rent dashboard views across properties and units.
-- Rent return calculation and settlement lifecycle.
-- Vacancy-gap protection and lease-creation quick action.
+- None in this phase slice.
 
 ## Exit Criteria Status
 
-- Ledger math validates for all scenarios: In progress
-- Rent Return calculations reconcile with vacation date and paid-through date inputs: Not started
-- Voided entries are terminal and audit-complete: Not started
-- Payment timeline is accurate for each lease: In progress
+- Ledger math validates for all scenarios: Complete
+- Rent Return calculations reconcile with vacation date and paid-through date inputs: Complete
+- Voided entries are terminal and audit-complete: Complete
+- Payment timeline is accurate for each lease: Complete
 
 ## Notes
 

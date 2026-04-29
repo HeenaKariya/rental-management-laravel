@@ -102,6 +102,11 @@ class Lease extends Model
         return $this->hasOne(LeaseDeposit::class);
     }
 
+    public function rentReturn(): HasOne
+    {
+        return $this->hasOne(RentReturn::class);
+    }
+
     public function rentLedgers(): HasMany
     {
         return $this->hasMany(RentLedger::class)->orderBy('payment_month');
@@ -246,6 +251,53 @@ class Lease extends Model
             'occupancy_status' => $hasActiveLease ? 'occupied' : 'vacant',
             'vacant_since' => $hasActiveLease ? null : ($this->unit->vacant_since ?: now()->toDateString()),
         ])->save();
+    }
+
+    public function latestPaidThroughDate(): ?Carbon
+    {
+        $paidLedger = $this->rentLedgers()
+            ->where('status', 'fully_paid')
+            ->latest('payment_month')
+            ->first();
+
+        return $paidLedger?->payment_month?->copy()->endOfMonth();
+    }
+
+    public function rentReturnDraft(?Carbon $vacationDate = null): array
+    {
+        $vacationDate = ($vacationDate ?: $this->terminated_at ?: $this->end_on)->copy()->startOfDay();
+        $lastPaidThroughDate = $this->latestPaidThroughDate()?->copy()->startOfDay();
+        $billingMonth = ($lastPaidThroughDate ?: $vacationDate)->copy()->startOfMonth();
+        $billingMonthDays = $billingMonth->daysInMonth;
+        $calculation = RentReturn::calculateSuggestion(
+            $vacationDate,
+            $lastPaidThroughDate,
+            (float) $this->rent_amount,
+            $billingMonthDays,
+        );
+
+        $latestLedger = $this->rentLedgers()->latest('payment_month')->first();
+
+        return [
+            'billing_month' => $billingMonth,
+            'billing_month_days' => $billingMonthDays,
+            'daily_rate' => $calculation['daily_rate'],
+            'last_paid_through_date' => $lastPaidThroughDate,
+            'monthly_rent_amount' => (float) $this->rent_amount,
+            'outstanding_arrears' => max((float) ($latestLedger?->outstanding_balance ?? 0), 0),
+            'suggested_amount' => $calculation['suggested_amount'],
+            'unused_days' => $calculation['unused_days'],
+            'vacation_date' => $vacationDate,
+        ];
+    }
+
+    public function canInitiateRentReturn(): bool
+    {
+        if (! $this->terminated_at || $this->rentReturn()->exists()) {
+            return false;
+        }
+
+        return (float) $this->rentReturnDraft()['suggested_amount'] > 0;
     }
 
     protected static function uniqueLeaseNumber(): string

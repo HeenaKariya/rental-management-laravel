@@ -20,6 +20,7 @@
                     @include('leases._form', [
                         'cancelUrl' => route('leases.index'),
                         'submitLabel' => 'Create lease',
+                        'vacancyGapContext' => $vacancyGapContext,
                     ])
                 </form>
             </div>

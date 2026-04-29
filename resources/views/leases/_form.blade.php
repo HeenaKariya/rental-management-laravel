@@ -10,6 +10,19 @@
     </div>
 @endif
 
+@if (! empty($vacancyGapContext))
+    <div class="table-card" style="margin-bottom: 1.25rem;">
+        <div class="pending-card">
+            <div class="pending-row">
+                <span>A previous tenant vacated this unit on {{ $vacancyGapContext['vacationDate'] }}. A Rent Return for {{ $vacancyGapContext['previousLease']->tenant->full_name }} is {{ $vacancyGapContext['rentReturnStatusLabel'] }}. You may proceed with this lease without processing it first.</span>
+            </div>
+            <div class="pending-row">
+                <a href="{{ $vacancyGapContext['quickActionUrl'] }}">Open prior rent return</a>
+            </div>
+        </div>
+    </div>
+@endif
+
 <div class="form-layout-stack">
     <section class="form-section-card">
         <div class="form-section-head">

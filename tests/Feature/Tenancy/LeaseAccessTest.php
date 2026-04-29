@@ -177,6 +177,78 @@ class LeaseAccessTest extends TestCase
             ->assertSessionHasErrors('start_on');
     }
 
+    public function test_create_lease_page_warns_when_a_previous_vacated_tenant_has_no_rent_return_started(): void
+    {
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create();
+        $superAdmin->assignRole('super_admin');
+
+        $unit = Unit::factory()->create();
+        $tenant = Tenant::factory()->create(['unit_id' => $unit->id]);
+        $lease = Lease::factory()->create([
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'status' => 'terminated',
+            'start_on' => '2026-04-01',
+            'end_on' => '2026-04-30',
+            'rent_amount' => 10000,
+            'billing_day' => 1,
+            'grace_period_days' => 0,
+            'late_fee_mode' => 'fixed',
+            'late_fee_value' => 0,
+            'terminated_at' => '2026-04-10 10:00:00',
+        ]);
+
+        $this->actingAs($superAdmin)->get(route('leases.payments.show', $lease))->assertOk();
+        $ledger = $lease->fresh()->rentLedgers()->firstOrFail();
+
+        $this->actingAs($superAdmin)
+            ->post(route('leases.payments.instalments.store', [$lease, $ledger]), [
+                'amount_paid' => 10000,
+                'payment_date' => '2026-04-01',
+                'payment_mode' => 'cash',
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($superAdmin)
+            ->get(route('leases.create', ['unit_id' => $unit->id]))
+            ->assertOk()
+            ->assertSee('A previous tenant vacated this unit on 2026-04-10.')
+            ->assertSee('Not Yet Initiated')
+            ->assertSee(route('leases.rent-return.create', $lease), false);
+    }
+
+    public function test_new_lease_cannot_start_before_the_previous_vacation_date_for_the_same_unit(): void
+    {
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create();
+        $superAdmin->assignRole('super_admin');
+
+        $unit = Unit::factory()->create();
+        $previousTenant = Tenant::factory()->create(['unit_id' => $unit->id, 'full_name' => 'Previous Tenant']);
+        Lease::factory()->create([
+            'unit_id' => $unit->id,
+            'tenant_id' => $previousTenant->id,
+            'status' => 'terminated',
+            'start_on' => '2026-04-01',
+            'end_on' => '2026-04-30',
+            'terminated_at' => '2026-04-10 10:00:00',
+        ]);
+
+        $incomingTenant = Tenant::factory()->create(['unit_id' => $unit->id]);
+
+        $this->actingAs($superAdmin)
+            ->from(route('leases.create', ['unit_id' => $unit->id]))
+            ->post(route('leases.store'), $this->leasePayload([
+                'unit_id' => $unit->id,
+                'tenant_id' => $incomingTenant->id,
+                'status' => 'draft',
+                'start_on' => '2026-04-09',
+                'end_on' => '2027-04-08',
+            ]))
+            ->assertSessionHasErrors('start_on');
+    }
+
     private function leasePayload(array $overrides = []): array
     {
         return [

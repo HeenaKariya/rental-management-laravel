@@ -22,6 +22,7 @@
                 ['label' => 'Tenants', 'route' => 'tenants.index', 'icon' => 'tenant', 'active' => request()->routeIs('tenants.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 3'],
                 ['label' => 'Leases', 'route' => 'leases.index', 'icon' => 'lease', 'active' => request()->routeIs('leases.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 3'],
                 ['label' => 'Deposits', 'route' => 'deposits.index', 'icon' => 'finance', 'active' => request()->routeIs('deposits.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 3'],
+                ['label' => 'Finance', 'route' => 'finance.index', 'icon' => 'finance', 'active' => request()->routeIs('finance.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 4'],
                 ['label' => 'Security', 'route' => 'settings.security', 'icon' => 'security', 'active' => request()->routeIs('settings.security*'), 'visible' => true, 'badge' => null],
                 ['label' => '2FA Oversight', 'route' => 'admin.security.two-factor.index', 'icon' => 'shield', 'active' => request()->routeIs('admin.security.two-factor.*'), 'visible' => $isSuperAdmin, 'badge' => null],
                 ['label' => 'Invitations', 'route' => 'invitations.create', 'icon' => 'invite', 'active' => request()->routeIs('invitations.create') || request()->routeIs('invitations.store'), 'visible' => $isSuperAdmin, 'badge' => null],
@@ -56,9 +57,6 @@
                             @endif
                         </a>
                     @endforeach
-
-                    <p class="nav-section">Next</p>
-                    <span class="app-nav-link is-muted"><span class="app-nav-label">@include('partials.app-icon', ['icon' => 'finance'])<span>Finance</span></span><span class="nav-chip">Phase 4</span></span>
                 </nav>
             </aside>
 

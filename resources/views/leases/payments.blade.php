@@ -110,12 +110,59 @@
                                                     <div>
                                                         <div class="tenant-name">Instalment {{ $instalment->instalment_number }}</div>
                                                         <div class="tenant-unit">{{ $instalment->payment_date->format('M j, Y') }}</div>
+                                                        @if ($instalment->isVoided())
+                                                            <div class="tenant-unit">Voided · {{ $instalment->voided_at?->format('M j, Y g:i A') }}</div>
+                                                        @endif
                                                     </div>
                                                     <div class="muted-text">{{ number_format((float) $instalment->amount_paid, 2) }}</div>
                                                     <div class="muted-text">{{ str($instalment->payment_mode)->replace('_', ' ')->title() }}</div>
                                                     <div class="muted-text">{{ $instalment->recorder?->name ?: 'System' }}</div>
                                                     <div><a class="btn btn-ghost btn-sm" href="{{ route('leases.payments.receipt.download', [$lease, $ledger, $instalment]) }}">Receipt PDF</a></div>
                                                 </div>
+
+                                                @if ($instalment->isVoided())
+                                                    <div class="pending-row"><span>Void reason</span><span>{{ $instalment->void_reason }}</span></div>
+                                                @endif
+
+                                                @if ($instalment->corrections->isNotEmpty())
+                                                    @foreach ($instalment->corrections as $correction)
+                                                        <div class="pending-row"><span>{{ str($correction->field_name)->replace('_', ' ')->title() }} correction</span><span>{{ $correction->old_value ?: 'Blank' }} -> {{ $correction->new_value ?: 'Blank' }} · {{ $correction->changer?->name ?: 'System' }}</span></div>
+                                                    @endforeach
+                                                @endif
+
+                                                @can('update', $lease)
+                                                    @if (! $instalment->isVoided())
+                                                        <form method="POST" action="{{ route('leases.payments.instalments.correct', [$lease, $ledger, $instalment]) }}" class="auth-form-grid" style="margin-top: 0.75rem;">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <label class="field-group">
+                                                                <span class="field-label">Payment mode</span>
+                                                                <select class="field-input" name="payment_mode" required>
+                                                                    @foreach ($paymentModes as $paymentMode)
+                                                                        <option value="{{ $paymentMode }}" @selected($instalment->payment_mode === $paymentMode)>{{ str($paymentMode)->replace('_', ' ')->title() }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </label>
+                                                            <label class="field-group">
+                                                                <span class="field-label">Reference number</span>
+                                                                <input class="field-input" type="text" name="reference_number" value="{{ $instalment->reference_number }}">
+                                                            </label>
+                                                            <div class="btn-strip">
+                                                                <button class="btn btn-ghost btn-sm" type="submit">Save correction</button>
+                                                            </div>
+                                                        </form>
+
+                                                        <form method="POST" action="{{ route('leases.payments.instalments.void', [$lease, $ledger, $instalment]) }}" style="margin-top: 0.75rem;">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <label class="field-group">
+                                                                <span class="field-label">Void reason</span>
+                                                                <textarea class="field-input" name="void_reason" rows="2" required></textarea>
+                                                            </label>
+                                                            <button class="btn btn-ghost btn-sm" type="submit">Void instalment</button>
+                                                        </form>
+                                                    @endif
+                                                @endcan
                                             @endforeach
                                         @endif
                                     </article>

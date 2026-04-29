@@ -63,6 +63,11 @@ class RentLedger extends Model
         return $this->hasMany(RentInstalment::class)->orderBy('payment_date')->orderBy('instalment_number');
     }
 
+    public function activeInstalments(): HasMany
+    {
+        return $this->instalments()->whereNull('voided_at');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -100,7 +105,7 @@ class RentLedger extends Model
 
     public function syncComputedState(float $carriedArrears, float $creditBroughtForward, ?User $actor = null): void
     {
-        $totals = $this->instalments()
+        $totals = $this->activeInstalments()
             ->selectRaw('COALESCE(SUM(amount_paid), 0) as paid_total, COALESCE(SUM(late_fee_charged), 0) as late_fee_total')
             ->first();
 

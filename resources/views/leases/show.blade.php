@@ -14,6 +14,13 @@
                     <div class="page-actions">
                         <a class="btn btn-ghost" href="{{ $user?->hasRole('tenant') ? route('dashboard') : route('leases.index') }}">{{ $user?->hasRole('tenant') ? 'Back to portal' : 'Back to leases' }}</a>
                         <a class="btn btn-ghost" href="{{ route('leases.payments.show', $lease) }}">Payment history</a>
+                        @if ($lease->rentReturn)
+                            <a class="btn btn-ghost" href="{{ route('leases.rent-return.show', [$lease, $lease->rentReturn]) }}">Rent return</a>
+                        @elseif ($rentReturnDraft && (float) $rentReturnDraft['suggested_amount'] > 0)
+                            @can('update', $lease)
+                                <a class="btn btn-ghost" href="{{ route('leases.rent-return.create', $lease) }}">Process Rent Return</a>
+                            @endcan
+                        @endif
                         @can('update', $lease)
                             <a class="btn btn-solid" href="{{ route('leases.edit', $lease) }}">Edit lease</a>
                         @endcan
@@ -74,6 +81,29 @@
                                 <span class="field-label">Notes</span>
                                 <div class="field-input">{{ $lease->notes ?: 'No notes recorded for this lease yet.' }}</div>
                             </div>
+
+                            @if ($lease->rentReturn)
+                                <div class="field-group">
+                                    <span class="field-label">Rent return</span>
+                                    <div class="field-input">
+                                        <strong>{{ str($lease->rentReturn->status)->replace('_', ' ')->title() }}</strong>
+                                        · suggested {{ number_format((float) $lease->rentReturn->suggested_amount, 2) }}
+                                        @if ($lease->rentReturn->confirmed_amount !== null)
+                                            · confirmed {{ number_format((float) $lease->rentReturn->confirmed_amount, 2) }}
+                                        @endif
+                                    </div>
+                                </div>
+                            @elseif ($rentReturnDraft && (float) $rentReturnDraft['suggested_amount'] > 0)
+                                <div class="field-group">
+                                    <span class="field-label">Rent return</span>
+                                    <div class="field-input">
+                                        Potential overpayment detected from {{ $rentReturnDraft['vacation_date']->toDateString() }} to {{ $rentReturnDraft['last_paid_through_date']?->toDateString() }}.
+                                        @can('update', $lease)
+                                            <a href="{{ route('leases.rent-return.create', $lease) }}">Process Rent Return</a>
+                                        @endcan
+                                    </div>
+                                </div>
+                            @endif
 
                             <div class="two-up-grid">
                                 <div class="field-group">
