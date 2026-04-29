@@ -290,6 +290,24 @@ class SecuritySettingsTest extends TestCase
         ]);
     }
 
+    public function test_non_super_admin_cannot_release_a_lock_from_admin_oversight(): void
+    {
+        /** @var User $tenant */
+        $tenant = User::factory()->create();
+        $tenant->assignRole('tenant');
+
+        /** @var User $lockedUser */
+        $lockedUser = User::factory()->create();
+        $lockedUser->assignRole('manager');
+        $lockedUser->forceFill([
+            'auth_hard_locked_at' => now(),
+        ])->save();
+
+        $this->actingAs($tenant)
+            ->post(route('admin.security.two-factor.release-lock', $lockedUser))
+            ->assertForbidden();
+    }
+
     public function test_super_admin_can_reset_two_factor_and_release_related_locks(): void
     {
         /** @var User $superAdmin */
@@ -327,6 +345,97 @@ class SecuritySettingsTest extends TestCase
             'user_id' => $managedUser->id,
             'event' => 'two_factor.admin_reset',
         ]);
+    }
+
+    public function test_non_super_admin_cannot_reset_two_factor_from_admin_oversight(): void
+    {
+        /** @var User $tenant */
+        $tenant = User::factory()->create();
+        $tenant->assignRole('tenant');
+
+        /** @var User $managedUser */
+        $managedUser = User::factory()->create();
+        $managedUser->assignRole('manager');
+        $managedUser->forceFill([
+            'two_factor_secret' => encrypt('managed-secret'),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        $this->actingAs($tenant)
+            ->post(route('admin.security.two-factor.reset', $managedUser))
+            ->assertForbidden();
+    }
+
+    public function test_manager_two_factor_setup_sends_delivered_otp(): void
+    {
+        /** @var User $manager */
+        $manager = User::factory()->create([
+            'email' => 'setup-manager@example.com',
+        ]);
+        $manager->assignRole('manager');
+
+        $this->actingAs($manager)
+            ->withSession(['auth.password_confirmed_at' => now()->unix()])
+            ->post(route('settings.security.two-factor.enable'))
+            ->assertRedirect(route('settings.security'));
+
+        $manager->refresh();
+
+        $this->assertNotNull($manager->two_factor_secret);
+        $this->assertNull($manager->two_factor_confirmed_at);
+        Notification::assertSentTo($manager, TwoFactorOtpNotification::class);
+        $this->assertDatabaseHas('two_factor_otp_tokens', [
+            'user_id' => $manager->id,
+            'purpose' => TwoFactorOtpBroker::PURPOSE_SETUP_CONFIRMATION,
+        ]);
+    }
+
+    public function test_invalid_delivered_otp_does_not_confirm_two_factor_setup(): void
+    {
+        /** @var User $manager */
+        $manager = User::factory()->create([
+            'email' => 'confirm-manager@example.com',
+        ]);
+        $manager->assignRole('manager');
+        $manager->forceFill([
+            'two_factor_secret' => encrypt('otp:setup-secret'),
+        ])->save();
+
+        app(TwoFactorOtpBroker::class)->dispatch($manager, TwoFactorOtpBroker::PURPOSE_SETUP_CONFIRMATION);
+
+        $this->actingAs($manager)
+            ->withSession(['auth.password_confirmed_at' => now()->unix()])
+            ->post(route('settings.security.two-factor.confirm'), [
+                'code' => '000000',
+            ])->assertSessionHasErrorsIn('confirmTwoFactorAuthentication', ['code']);
+
+        $this->assertNull($manager->fresh()->two_factor_confirmed_at);
+    }
+
+    public function test_setup_otp_resend_is_rate_limited(): void
+    {
+        /** @var User $manager */
+        $manager = User::factory()->create([
+            'email' => 'setup-limit@example.com',
+        ]);
+        $manager->assignRole('manager');
+        $manager->forceFill([
+            'two_factor_secret' => encrypt('otp:setup-secret'),
+        ])->save();
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $this->actingAs($manager)
+                ->withSession(['auth.password_confirmed_at' => now()->unix()])
+                ->post(route('settings.security.two-factor.otp.resend'), [
+                    'channel' => 'email',
+                ])->assertSessionHasNoErrors();
+        }
+
+        $this->actingAs($manager)
+            ->withSession(['auth.password_confirmed_at' => now()->unix()])
+            ->post(route('settings.security.two-factor.otp.resend'), [
+                'channel' => 'email',
+            ])->assertSessionHasErrors('code');
     }
 
     public function test_manager_two_factor_challenge_sends_a_delivered_otp(): void
