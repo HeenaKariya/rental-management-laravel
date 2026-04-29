@@ -6,6 +6,13 @@ window.Alpine = Alpine;
 Alpine.start();
 
 document.addEventListener('click', (event) => {
+	const appNavToggle = event.target.closest('[data-app-nav-toggle]');
+
+	if (appNavToggle) {
+		document.body.classList.toggle('body-nav-open');
+		return;
+	}
+
 	const toggleButton = event.target.closest('[data-ui-toggle]');
 
 	if (toggleButton) {

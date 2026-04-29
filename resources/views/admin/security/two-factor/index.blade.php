@@ -3,29 +3,18 @@
 @section('content')
     <div class="ui-shell">
         <div class="ui-wrap">
-            <header class="identity-card">
-                <div class="identity-brand">
-                    <div class="logo-mark">P</div>
-                    <div>
-                        <p class="logo-text">PropMgr</p>
-                        <p class="eyebrow-text">Super Admin two-factor oversight</p>
-                    </div>
+            <section class="page-header card-soft">
+                <div>
+                    <p class="page-kicker">Super Admin panel</p>
+                    <h1 class="page-title">Two-factor oversight</h1>
+                    <p class="page-description">Monitor adoption, spot lockouts, and recover access issues from one operational panel.</p>
                 </div>
 
-                <div class="identity-actions">
+                <div class="page-actions">
                     <span class="badge badge-ink">{{ $users->count() }} monitored accounts</span>
                     <a class="btn btn-violet btn-sm" href="{{ route('settings.security') }}">My security</a>
                     <a class="btn btn-ghost btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
                 </div>
-            </header>
-
-            <section>
-                <p class="row-label">Panel</p>
-                <h1 class="security-title">Monitor two-factor adoption and recent auth activity.</h1>
-                <p class="security-copy">
-                    This panel gives Super Admins a single place to spot users with missing 2FA,
-                    users stuck in pending confirmation, and the latest authentication events across the system.
-                </p>
             </section>
 
             @if (session('status'))

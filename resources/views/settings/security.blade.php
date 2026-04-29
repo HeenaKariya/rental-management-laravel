@@ -3,35 +3,24 @@
 @section('content')
     <div class="ui-shell">
         <div class="ui-wrap">
-            <header class="identity-card">
-                <div class="identity-brand">
-                    <div class="logo-mark">P</div>
-                    <div>
-                        <p class="logo-text">PropMgr</p>
-                        <p class="eyebrow-text">Authentication and recovery controls</p>
-                    </div>
+            <section class="page-header card-soft">
+                <div>
+                    <p class="page-kicker">Security settings</p>
+                    <h1 class="page-title">Manage two-factor authentication</h1>
+                    <p class="page-description">Confirm your second factor, rotate recovery codes, and review the recent audit trail for your account.</p>
                 </div>
 
-                <div class="identity-actions">
+                <div class="page-actions">
                     <span class="badge badge-ink">{{ $twoFactorEnabled ? '2FA active' : '2FA not confirmed' }}</span>
                     @if ($user->hasRole('super_admin'))
                         <a class="btn btn-violet btn-sm" href="{{ route('admin.security.two-factor.index') }}">Admin oversight</a>
                     @endif
                     <a class="btn btn-ghost btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
                 </div>
-            </header>
+            </section>
 
             <section class="security-grid">
                 <article class="security-card">
-                    <div>
-                        <p class="row-label">Security settings</p>
-                        <h1 class="security-title">Manage two-factor authentication.</h1>
-                        <p class="security-copy">
-                            Confirm your second factor, rotate recovery codes, and review the recent audit trail
-                            for your account.
-                        </p>
-                    </div>
-
                     @if (session('status'))
                         <div class="auth-alert auth-alert-success">{{ session('status') }}</div>
                     @endif
