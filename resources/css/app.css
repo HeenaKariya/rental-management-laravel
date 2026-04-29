@@ -793,11 +793,15 @@ input {
 
 .security-inline-form {
 	margin: 0;
-	align-items: flex-end;
 	width: 100%;
 	max-width: 460px;
 	flex-direction: column;
 	align-items: stretch;
+}
+
+.security-inline-form .btn-strip form,
+.btn-strip form {
+	margin: 0;
 }
 
 .security-inline-form .btn-strip {

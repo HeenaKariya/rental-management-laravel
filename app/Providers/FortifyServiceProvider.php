@@ -7,8 +7,10 @@ use App\Actions\Fortify\EnsureUserIsNotLocked;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Domain\Auth\Services\TwoFactorOtpBroker;
 use App\Models\Invitation;
 use App\Models\PreSession;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -50,14 +52,25 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::twoFactorChallengeView(function (Request $request) {
             $preSession = null;
             $userId = $request->session()->get('login.id');
+            $otpChallenge = null;
+            $usesDeliveredOtp = false;
 
             if ($userId) {
                 $preSession = PreSession::issueForUser((int) $userId);
                 $request->session()->put('auth.pre_session_token', $preSession->token);
+
+                $user = User::query()->find($userId);
+
+                if ($user?->usesDeliveredOtpTwoFactor()) {
+                    $usesDeliveredOtp = true;
+                    $otpChallenge = app(TwoFactorOtpBroker::class)->ensureActiveToken($user, TwoFactorOtpBroker::PURPOSE_LOGIN_CHALLENGE);
+                }
             }
 
             return View::make('auth.two-factor-challenge', [
+                'otpChallenge' => $otpChallenge,
                 'preSession' => $preSession,
+                'usesDeliveredOtp' => $usesDeliveredOtp,
             ]);
         });
 

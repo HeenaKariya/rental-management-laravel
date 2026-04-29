@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\TwoFactorOversightController;
 use App\Http\Controllers\Auth\InvitationController;
+use App\Http\Controllers\Auth\TwoFactorOtpController;
 use App\Http\Controllers\Settings\SecuritySettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -26,10 +27,16 @@ Route::middleware(['auth', 'full-auth-session'])->group(function () {
             ->name('settings.security.two-factor.confirm');
         Route::delete('/settings/security/two-factor', [SecuritySettingsController::class, 'disableTwoFactor'])
             ->name('settings.security.two-factor.disable');
+        Route::post('/settings/security/two-factor/otp/resend', [SecuritySettingsController::class, 'resendOtp'])
+            ->name('settings.security.two-factor.otp.resend');
         Route::post('/settings/security/two-factor/recovery-codes', [SecuritySettingsController::class, 'regenerateRecoveryCodes'])
             ->name('settings.security.two-factor.recovery-codes');
     });
 });
+
+Route::post('/two-factor-challenge/otp/resend', [TwoFactorOtpController::class, 'resend'])
+    ->middleware('guest')
+    ->name('two-factor.otp.resend');
 
 Route::middleware(['auth', 'full-auth-session', 'role:super_admin'])->group(function () {
     Route::get('/admin/security/two-factor', [TwoFactorOversightController::class, 'index'])

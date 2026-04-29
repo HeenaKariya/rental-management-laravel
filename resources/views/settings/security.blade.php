@@ -27,7 +27,7 @@
                         <p class="row-label">Security settings</p>
                         <h1 class="security-title">Manage two-factor authentication.</h1>
                         <p class="security-copy">
-                            Confirm an authenticator app, rotate recovery codes, and review the recent audit trail
+                            Confirm your second factor, rotate recovery codes, and review the recent audit trail
                             for your account.
                         </p>
                     </div>
@@ -38,13 +38,14 @@
 
                     @if (! $twoFactorEnabled && ! $twoFactorPendingConfirmation)
                         <div class="badge-strip">
-                            <span class="badge badge-outline">Authenticator app required</span>
+                            <span class="badge badge-outline">{{ $usesDeliveredOtp ? 'Delivered OTP required' : 'Authenticator app required' }}</span>
                             <span class="badge badge-outline">Recovery codes unavailable</span>
                         </div>
 
                         <p class="security-meta">
-                            Start setup to generate a shared secret, QR code, and recovery codes. Password confirmation
-                            is required before any security change is applied.
+                            {{ $usesDeliveredOtp
+                                ? 'Start setup to deliver an email or WhatsApp OTP and generate recovery codes. Password confirmation is required before any security change is applied.'
+                                : 'Start setup to generate a shared secret, QR code, and recovery codes. Password confirmation is required before any security change is applied.' }}
                         </p>
 
                         <form method="POST" action="{{ route('settings.security.two-factor.enable') }}">
@@ -59,13 +60,41 @@
                             @endif
 
                             @if ($twoFactorEnabled)
-                                <span class="badge badge-green">Authenticator app confirmed</span>
+                                <span class="badge badge-green">{{ $usesDeliveredOtp ? 'Delivered OTP confirmed' : 'Authenticator app confirmed' }}</span>
                             @endif
 
                             <span class="badge badge-sky">{{ count($recoveryCodes) }} recovery codes ready</span>
                         </div>
 
-                        @if ($twoFactorPendingConfirmation && $twoFactorQrCodeSvg)
+                        @if ($twoFactorPendingConfirmation && $usesDeliveredOtp && $otpSetup)
+                            <p class="security-meta">
+                                {{ $otpSetup['channelLabel'] }} active until {{ $otpSetup['expiresAt']->format('M j, Y g:i A') }}.
+                                @if ($otpSetup['fallbackFrom'])
+                                    Fallback from {{ $otpSetup['fallbackFrom'] === 'whatsapp' ? 'WhatsApp' : 'Email' }} was used.
+                                @endif
+                            </p>
+
+                            <form method="POST" action="{{ route('settings.security.two-factor.confirm') }}" class="security-inline-form">
+                                @csrf
+
+                                <label class="field-group">
+                                    <span class="field-label">One-time password</span>
+                                    <input class="field-input @error('code') is-error @enderror" type="text" name="code" inputmode="numeric" autocomplete="one-time-code">
+                                    @error('code')<span class="field-hint is-error">{{ $message }}</span>@enderror
+                                </label>
+
+                                <div class="btn-strip">
+                                    <button class="btn btn-solid" type="submit">Confirm delivered OTP</button>
+                                    @foreach ($otpSetup['availableChannels'] as $channel)
+                                        <form method="POST" action="{{ route('settings.security.two-factor.otp.resend') }}">
+                                            @csrf
+                                            <input type="hidden" name="channel" value="{{ $channel }}">
+                                            <button class="btn btn-ghost btn-sm" type="submit">Resend via {{ $channel === 'whatsapp' ? 'WhatsApp' : 'Email' }}</button>
+                                        </form>
+                                    @endforeach
+                                </div>
+                            </form>
+                        @elseif ($twoFactorPendingConfirmation && $twoFactorQrCodeSvg)
                             <div class="security-qr-frame">{!! $twoFactorQrCodeSvg !!}</div>
 
                             <p class="security-meta">

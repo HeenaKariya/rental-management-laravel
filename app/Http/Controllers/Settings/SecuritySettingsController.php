@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Domain\Auth\Services\TwoFactorOtpBroker;
 use App\Http\Controllers\Controller;
 use App\Models\AuthAuditLog;
 use App\Models\User;
@@ -21,6 +22,12 @@ class SecuritySettingsController extends Controller
         $user = $request->user();
         $twoFactorPendingConfirmation = $user->two_factor_secret !== null && $user->two_factor_confirmed_at === null;
         $twoFactorEnabled = $user->hasEnabledTwoFactorAuthentication();
+        $usesDeliveredOtp = $user->usesDeliveredOtpTwoFactor();
+        $otpSetup = null;
+
+        if ($twoFactorPendingConfirmation && $usesDeliveredOtp) {
+            $otpSetup = app(TwoFactorOtpBroker::class)->ensureActiveToken($user, TwoFactorOtpBroker::PURPOSE_SETUP_CONFIRMATION);
+        }
 
         return view('settings.security', [
             'auditLogs' => AuthAuditLog::query()
@@ -32,15 +39,26 @@ class SecuritySettingsController extends Controller
                 ? $user->recoveryCodes()
                 : [],
             'twoFactorEnabled' => $twoFactorEnabled,
+            'otpSetup' => $otpSetup,
             'twoFactorPendingConfirmation' => $twoFactorPendingConfirmation,
-            'twoFactorQrCodeSvg' => $twoFactorPendingConfirmation ? $user->twoFactorQrCodeSvg() : null,
+            'twoFactorQrCodeSvg' => $twoFactorPendingConfirmation && ! $usesDeliveredOtp ? $user->twoFactorQrCodeSvg() : null,
+            'usesDeliveredOtp' => $usesDeliveredOtp,
             'user' => $user,
         ]);
     }
 
     public function enableTwoFactor(Request $request, EnableTwoFactorAuthentication $enable): RedirectResponse
     {
-        $enable($request->user(), $request->boolean('force', false));
+        /** @var User $user */
+        $user = $request->user();
+
+        $enable($user, $request->boolean('force', false));
+
+        if ($user->usesDeliveredOtpTwoFactor()) {
+            $otpSetup = app(TwoFactorOtpBroker::class)->dispatch($user, TwoFactorOtpBroker::PURPOSE_SETUP_CONFIRMATION);
+
+            return to_route('settings.security')->with('status', 'Two-factor setup started. A '.$otpSetup['channelLabel'].' was sent for confirmation.');
+        }
 
         return to_route('settings.security')->with('status', 'Two-factor setup started. Scan the QR code and confirm with a one-time code.');
     }
@@ -69,5 +87,20 @@ class SecuritySettingsController extends Controller
         AuthAuditLog::record($request->user(), 'two_factor.recovery_codes_regenerated');
 
         return to_route('settings.security')->with('status', 'A fresh set of recovery codes has been generated.');
+    }
+
+    public function resendOtp(Request $request, TwoFactorOtpBroker $broker): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $otpSetup = $broker->dispatch(
+            $user,
+            TwoFactorOtpBroker::PURPOSE_SETUP_CONFIRMATION,
+            true,
+            $request->string('channel')->toString() ?: null,
+        );
+
+        return back()->with('status', 'A new '.$otpSetup['channelLabel'].' was sent for setup confirmation.');
     }
 }

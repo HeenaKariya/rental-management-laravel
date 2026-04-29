@@ -63,7 +63,7 @@ class EnsureAuthLockAllowsAttempt
                 : null;
         }
 
-        if ($request->routeIs('two-factor.login', 'two-factor.login.store')) {
+        if ($request->routeIs('two-factor.login', 'two-factor.login.store', 'two-factor.otp.resend')) {
             $userId = $request->session()->get('login.id');
 
             return $userId ? User::query()->find($userId) : null;

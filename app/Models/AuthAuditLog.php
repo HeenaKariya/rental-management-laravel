@@ -58,6 +58,9 @@ class AuthAuditLog extends Model
             'auth.lock.soft' => 'Temporary lock applied',
             'auth.login_failed' => 'Primary login failed',
             'auth.two_factor_failed' => '2FA challenge failed',
+            'two_factor.otp_fallback' => 'OTP delivery fallback used',
+            'two_factor.otp_resent' => 'OTP resent',
+            'two_factor.otp_sent' => 'OTP sent',
             'two_factor.admin_reset' => '2FA reset by admin',
             'two_factor.challenged' => '2FA challenge started',
             'two_factor.enabled' => '2FA setup started',
@@ -76,6 +79,7 @@ class AuthAuditLog extends Model
             'auth.lock.hard' => 'badge-coral',
             'auth.lock.blocked', 'auth.lock.released', 'auth.lock.soft' => 'badge-gold',
             'auth.login_failed', 'auth.two_factor_failed', 'two_factor.recovery_code_used' => 'badge-coral',
+            'two_factor.otp_fallback', 'two_factor.otp_resent', 'two_factor.otp_sent' => 'badge-sky',
             'two_factor.admin_reset' => 'badge-violet',
             'two_factor.confirmed', 'two_factor.passed' => 'badge-green',
             'two_factor.challenged' => 'badge-sky',
@@ -99,6 +103,9 @@ class AuthAuditLog extends Model
             'auth.two_factor_failed' => ($this->context['method'] ?? null) === 'recovery_code'
                 ? 'Recovery code verification failed.'
                 : 'Authenticator code verification failed.',
+            'two_factor.otp_fallback' => 'Primary OTP delivery failed, so the code was sent through '.$this->context['to'].'.',
+            'two_factor.otp_resent' => 'A fresh one-time password was dispatched through '.$this->context['channel'].'.',
+            'two_factor.otp_sent' => 'A one-time password was dispatched through '.$this->context['channel'].'.',
             'two_factor.admin_reset' => isset($this->context['actor_name'])
                 ? 'Two-factor enrollment reset by '.$this->context['actor_name'].'.'
                 : 'Two-factor enrollment reset by a Super Admin.',

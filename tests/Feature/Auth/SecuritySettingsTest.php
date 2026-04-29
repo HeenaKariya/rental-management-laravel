@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Domain\Auth\Contracts\WhatsappOtpGateway;
+use App\Domain\Auth\Notifications\TwoFactorOtpNotification;
+use App\Domain\Auth\Services\TwoFactorOtpBroker;
 use App\Models\AuthAuditLog;
 use App\Models\PreSession;
 use App\Models\User;
@@ -9,6 +12,7 @@ use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Events\RecoveryCodeReplaced;
 use Laravel\Fortify\Events\TwoFactorAuthenticationChallenged;
@@ -21,6 +25,17 @@ use Tests\TestCase;
 class SecuritySettingsTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Notification::fake();
+        $this->app->instance(WhatsappOtpGateway::class, new class implements WhatsappOtpGateway
+        {
+            public function send(string $phone, string $message): void {}
+        });
+    }
 
     public function test_security_settings_page_shows_recent_auth_activity(): void
     {
@@ -311,6 +326,134 @@ class SecuritySettingsTest extends TestCase
         $this->assertDatabaseHas('auth_audit_logs', [
             'user_id' => $managedUser->id,
             'event' => 'two_factor.admin_reset',
+        ]);
+    }
+
+    public function test_manager_two_factor_challenge_sends_a_delivered_otp(): void
+    {
+        /** @var User $manager */
+        $manager = User::factory()->create([
+            'email' => 'manager@example.com',
+        ]);
+        $manager->assignRole('manager');
+        $manager->forceFill([
+            'two_factor_secret' => encrypt('otp:manager-secret'),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        $this->withSession([
+            'login.id' => $manager->id,
+            'login.remember' => false,
+        ])->get(route('two-factor.login'))
+            ->assertOk()
+            ->assertSee('One-time password')
+            ->assertSee('Resend via Email');
+
+        Notification::assertSentTo($manager, TwoFactorOtpNotification::class);
+        $this->assertDatabaseHas('two_factor_otp_tokens', [
+            'user_id' => $manager->id,
+            'purpose' => TwoFactorOtpBroker::PURPOSE_LOGIN_CHALLENGE,
+            'channel' => 'email',
+        ]);
+    }
+
+    public function test_manager_can_complete_two_factor_challenge_with_delivered_otp(): void
+    {
+        /** @var User $manager */
+        $manager = User::factory()->create([
+            'email' => 'manager2@example.com',
+        ]);
+        $manager->assignRole('manager');
+        $manager->forceFill([
+            'two_factor_secret' => encrypt('otp:manager-secret'),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        $broker = app(TwoFactorOtpBroker::class);
+        $broker->dispatch($manager, TwoFactorOtpBroker::PURPOSE_LOGIN_CHALLENGE);
+
+        Notification::assertSentTo($manager, TwoFactorOtpNotification::class, function (TwoFactorOtpNotification $notification, array $channels) use ($manager) {
+            $mailMessage = $notification->toMail($manager);
+
+            preg_match('/\b(\d{6})\b/', implode(' ', $mailMessage->introLines), $matches);
+            $code = $matches[1] ?? null;
+
+            if (! $code) {
+                return false;
+            }
+
+            session(['login.id' => $manager->id, 'login.remember' => false]);
+
+            return $this->withSession([
+                'login.id' => $manager->id,
+                'login.remember' => false,
+            ])->post(route('two-factor.login.store'), [
+                'code' => $code,
+            ])->isRedirect(route('dashboard'));
+        });
+    }
+
+    public function test_otp_resend_is_rate_limited(): void
+    {
+        /** @var User $manager */
+        $manager = User::factory()->create([
+            'email' => 'limit@example.com',
+        ]);
+        $manager->assignRole('manager');
+        $manager->forceFill([
+            'two_factor_secret' => encrypt('otp:manager-secret'),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $this->withSession([
+                'login.id' => $manager->id,
+                'login.remember' => false,
+            ])->post(route('two-factor.otp.resend'), [
+                'channel' => 'email',
+            ])->assertSessionHasNoErrors();
+        }
+
+        $this->withSession([
+            'login.id' => $manager->id,
+            'login.remember' => false,
+        ])->post(route('two-factor.otp.resend'), [
+            'channel' => 'email',
+        ])->assertSessionHasErrors('code');
+    }
+
+    public function test_whatsapp_delivery_falls_back_to_email_when_gateway_fails(): void
+    {
+        $this->app->instance(WhatsappOtpGateway::class, new class implements WhatsappOtpGateway
+        {
+            public function send(string $phone, string $message): void
+            {
+                throw new \RuntimeException('gateway down');
+            }
+        });
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create([
+            'email' => 'fallback@example.com',
+            'phone' => '+15550001111',
+        ]);
+        $superAdmin->assignRole('super_admin');
+        $superAdmin->forceFill([
+            'two_factor_secret' => encrypt('otp:admin-secret'),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        $this->withSession([
+            'login.id' => $superAdmin->id,
+            'login.remember' => false,
+        ])->get(route('two-factor.login'))
+            ->assertOk()
+            ->assertSee('Fallback from WhatsApp was used.', false);
+
+        Notification::assertSentTo($superAdmin, TwoFactorOtpNotification::class);
+        $this->assertDatabaseHas('auth_audit_logs', [
+            'user_id' => $superAdmin->id,
+            'event' => 'two_factor.otp_fallback',
         ]);
     }
 }

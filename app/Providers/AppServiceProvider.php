@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Domain\Auth\Contracts\WhatsappOtpGateway;
+use App\Domain\Auth\Services\HybridTwoFactorAuthenticationProvider;
+use App\Domain\Auth\Services\LogWhatsappOtpGateway;
+use App\Domain\Auth\Services\TwoFactorOtpBroker;
 use App\Http\Responses\Auth\FailedTwoFactorLoginResponse;
 use App\Models\AuthAuditLog;
 use App\Models\PreSession;
@@ -9,10 +13,12 @@ use App\Models\User;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Contracts\FailedTwoFactorLoginResponse as FailedTwoFactorLoginResponseContract;
+use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider as TwoFactorAuthenticationProviderContract;
 use Laravel\Fortify\Events\RecoveryCodeReplaced;
 use Laravel\Fortify\Events\TwoFactorAuthenticationChallenged;
 use Laravel\Fortify\Events\TwoFactorAuthenticationConfirmed;
@@ -21,6 +27,7 @@ use Laravel\Fortify\Events\TwoFactorAuthenticationEnabled;
 use Laravel\Fortify\Events\TwoFactorAuthenticationFailed;
 use Laravel\Fortify\Events\ValidTwoFactorAuthenticationCodeProvided;
 use Laravel\Fortify\Fortify;
+use PragmaRX\Google2FA\Google2FA;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +36,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(WhatsappOtpGateway::class, LogWhatsappOtpGateway::class);
+        $this->app->singleton(TwoFactorAuthenticationProviderContract::class, function ($app) {
+            return new HybridTwoFactorAuthenticationProvider(
+                $app->make(Google2FA::class),
+                $app->make(Repository::class),
+                $app->make(TwoFactorOtpBroker::class),
+            );
+        });
         $this->app->singleton(FailedTwoFactorLoginResponseContract::class, FailedTwoFactorLoginResponse::class);
     }
 

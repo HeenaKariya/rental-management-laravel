@@ -31,6 +31,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
     ];
 
@@ -74,6 +75,11 @@ class User extends Authenticatable
     public function latestAuthAuditLog(): HasOne
     {
         return $this->hasOne(AuthAuditLog::class)->latestOfMany('occurred_at');
+    }
+
+    public function twoFactorOtpTokens(): HasMany
+    {
+        return $this->hasMany(TwoFactorOtpToken::class);
     }
 
     public function assignRole(string $slug): void
@@ -124,6 +130,26 @@ class User extends Authenticatable
             'Pending confirmation' => 'badge-gold',
             default => 'badge-outline',
         };
+    }
+
+    public function usesDeliveredOtpTwoFactor(): bool
+    {
+        return $this->hasAnyRole(['super_admin', 'manager']);
+    }
+
+    public function preferredOtpChannels(): array
+    {
+        $channels = [];
+
+        if ($this->phone) {
+            $channels[] = 'whatsapp';
+        }
+
+        if ($this->email) {
+            $channels[] = 'email';
+        }
+
+        return array_values(array_unique($channels));
     }
 
     public function clearExpiredSoftLock(): void
