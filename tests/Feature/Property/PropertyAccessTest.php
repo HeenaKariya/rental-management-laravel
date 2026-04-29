@@ -84,6 +84,47 @@ class PropertyAccessTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_manager_cannot_edit_update_archive_or_assign_an_unassigned_property(): void
+    {
+        /** @var User $manager */
+        $manager = User::factory()->create();
+        $manager->assignRole('manager');
+
+        /** @var User $otherManager */
+        $otherManager = User::factory()->create();
+        $otherManager->assignRole('manager');
+
+        $property = Property::factory()->create([
+            'title' => 'Restricted Plaza',
+        ]);
+
+        $assignment = $property->assignManager($otherManager, $otherManager);
+
+        $this->actingAs($manager)
+            ->get(route('properties.edit', $property))
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->put(route('properties.update', $property), $this->propertyPayload([
+                'title' => 'Unauthorized Update Attempt',
+            ]))
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->delete(route('properties.archive', $property))
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->post(route('properties.assignments.store', $property), [
+                'manager_id' => $manager->id,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->delete(route('properties.assignments.destroy', [$property, $assignment]))
+            ->assertForbidden();
+    }
+
     public function test_manager_created_property_is_auto_assigned_back_to_the_creator(): void
     {
         /** @var User $manager */

@@ -1,6 +1,6 @@
 # Phase 2 Notes
 
-Status: In Progress
+Status: Complete
 Date: 2026-04-29
 
 ## Objective
@@ -13,19 +13,19 @@ Date: 2026-04-29
 - Property schema, lifecycle state, archive behavior, manager assignments, photos, and property activity logs.
 - Assignment notifications for manager add and revoke events.
 - Manager-scoped property listing and detail authorization.
-- Super Admin assignment and revoke actions with audit coverage.
-- Focused feature tests for manager URL scoping, assignment revoke behavior, and archive rules.
+- Super Admin assignment, reassignment, and revoke actions with audit coverage.
+- Focused feature tests for manager URL scoping, edit/update/archive restrictions, reassignment, and archive rules.
 
-## Remaining Deliverables
+## Deliverable Status
 
-- Complete property photo management UX for cover selection and explicit ordering controls.
-- Expand property CRUD filters and detail read models as units, owners, and finance modules arrive.
-- Complete Phase 2 exit-criteria validation across all property surfaces.
+- Property photo management now supports cover selection and explicit ordering controls.
+- Assignment notifications now send on manager add and revoke events.
+- Property read models and filters are sufficient for the current property-core scope; future enrichment moves to later phases as units, owners, and finance modules arrive.
 
 ## Exit Criteria Status
 
-- Manager cannot access unassigned property data via URL/API: In progress
-- Assignment and removal fully audited: In progress
+- Manager cannot access unassigned property data via URL/API: Complete
+- Assignment and removal fully audited: Complete
 
 ## Notes
 
