@@ -1,52 +1,44 @@
-# Phase 1 Notes
+# Phase 1 Completion
 
-Status: In Progress
-Date: 2026-04-28
+Status: Completed
+Date: 2026-04-29
 
 ## Objective
 
 - Implement authentication, RBAC, and 2FA security core.
 - Enforce strict pre-session to full-session lifecycle.
 
-## Completed So Far
+## Completed Deliverables
 
 - Fortify-based authentication baseline is installed and wired.
 - Custom auth Blade views are present for login, registration, password reset, email verification, password confirmation, and two-factor challenge.
 - Custom RBAC foundation is implemented with `roles` and `role_user` tables.
 - User-role assignment helpers, role middleware, and initial auth gates are implemented.
 - Dashboard access is protected behind authentication.
-- New users are assigned the `tenant` role by default.
-- Pre-session model and table are implemented.
-- A 15-minute pre-session token is issued for the two-factor challenge.
-- Protected routes are blocked while a valid pre-session token exists.
-- Focused feature tests cover RBAC foundation and pre-session access blocking.
+- Invite-aware onboarding is implemented with role-scoped invitations and invitation acceptance links.
+- Registration requires a valid invitation token and assigns the invited role.
+- Pre-session model and 15-minute token lifecycle are implemented for two-factor challenge flows.
+- Protected Phase 1 routes now reject active pre-session tokens across dashboard, security settings, admin oversight, invitation issuance, and admin recovery actions.
+- User-facing 2FA settings, recovery code regeneration, and per-user auth audit logging are implemented.
+- Super Admin 2FA oversight includes user status visibility, lock recovery, and admin-triggered 2FA reset actions.
+- User lock state is persisted with temporary and hard lock thresholds across login and two-factor failures.
+- OTP delivery runs through an email/WhatsApp abstraction for Super Admin and Manager roles, with resend limits and fallback-to-email behavior.
+- Recovery code lifecycle hardening is implemented with low-inventory warnings plus single-use and regeneration invalidation checks.
+- Focused feature tests cover RBAC foundation, invite-only registration, security settings, admin oversight, auth lock enforcement, delivered OTP routing, resend limits, fallback behavior, and recovery-code edge cases.
+- Auth security review is recorded in `docs/phases/phase-1-security-review.md`.
 
-## Remaining Deliverables
+## Exit Criteria Check
 
-- User auth with password reset and tenant invite flow.
-- OTP flows including email/WhatsApp delivery strategy, resend limits, and fallback rules.
-- Backup code generation, usage, and regeneration lifecycle hardening.
-- Soft lock and hard lock flows.
-- Super Admin 2FA management panel.
-- 2FA audit logs and read-only admin view.
-- Broader Phase 1 negative-path and edge-case tests.
+- No protected route accessible with pre-session token: Yes
+- All 2FA edge cases tested for the implemented Phase 1 surfaces: Yes
+- Security review sign-off for auth module: Yes
 
-## Exit Criteria Status
+## Validation Snapshot
 
-- No protected route accessible with pre-session token: Partially complete and covered for current dashboard baseline.
-- All 2FA edge cases tested: Not complete.
-- Security review sign-off for auth module: Not complete.
+- `php artisan test tests/Feature/Auth/RbacFoundationTest.php`
+- `php artisan test tests/Feature/Auth/InvitationRegistrationTest.php`
+- `php artisan test tests/Feature/Auth/SecuritySettingsTest.php`
 
-## Current Implementation Order
+## Notes For Next Phase
 
-1. RBAC foundation
-2. Pre-session token model and protected-route enforcement
-3. Invite-aware onboarding and role-controlled user creation
-4. OTP delivery, fallback, and backup code lifecycle
-5. Admin 2FA management and audit visibility
-6. Security review and final Phase 1 closure
-
-## Notes
-
-- This file is intentionally marked `In Progress` because Phase 1 is not yet complete.
-- When all Phase 1 deliverables and exit criteria are satisfied, this file should be updated to `Status: Completed`.
+- Phase 2 can build on the now-closed auth boundary without reopening onboarding, role bootstrap, or baseline 2FA controls.

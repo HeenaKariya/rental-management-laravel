@@ -40,12 +40,5 @@
             <a class="auth-link" href="{{ route('password.request') }}">Forgot password?</a>
         </div>
     </form>
-
-    @if (config('fortify.features', []) && in_array(
-        \Laravel\Fortify\Features::registration(),
-        config('fortify.features'),
-        true
-    ))
-        <p class="auth-footer-copy">No account yet? <a class="auth-link" href="{{ route('register') }}">Create one</a></p>
-    @endif
+    <p class="auth-footer-copy">New accounts are created by invitation from a Super Admin.</p>
 @endsection

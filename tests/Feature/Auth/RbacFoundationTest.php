@@ -3,7 +3,9 @@
 namespace Tests\Feature\Auth;
 
 use App\Actions\Fortify\CreateNewUser;
+use App\Models\Invitation;
 use App\Models\PreSession;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
@@ -14,13 +16,26 @@ class RbacFoundationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_new_users_receive_the_tenant_role(): void
+    public function test_new_invited_users_can_receive_the_tenant_role(): void
     {
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create();
+        $superAdmin->assignRole('super_admin');
+
+        $tenantRoleId = Role::query()->where('slug', 'tenant')->value('id');
+
+        $invitation = Invitation::issue([
+            'email' => 'tenant@example.com',
+            'role_id' => $tenantRoleId,
+            'invited_by' => $superAdmin->id,
+        ]);
+
         $user = app(CreateNewUser::class)->create([
             'name' => 'Tenant User',
             'email' => 'tenant@example.com',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
+            'invitation_token' => $invitation->token,
         ]);
 
         $this->assertTrue($user->fresh()->hasRole('tenant'));
@@ -85,5 +100,48 @@ class RbacFoundationTest extends TestCase
             ->withSession(['auth.pre_session_token' => $preSession->token])
             ->get('/dashboard')
             ->assertRedirect('/login');
+    }
+
+    public function test_all_current_protected_phase_one_routes_reject_active_pre_session_tokens(): void
+    {
+        /** @var User $tenant */
+        $tenant = User::factory()->create();
+        $tenant->assignRole('tenant');
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create();
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $managedUser */
+        $managedUser = User::factory()->create();
+        $managedUser->assignRole('manager');
+
+        $this->actingAs($tenant)
+            ->withSession(['auth.pre_session_token' => PreSession::issueForUser($tenant->id)->token])
+            ->get(route('settings.security'))
+            ->assertRedirect(route('login'));
+
+        $this->actingAs($tenant)
+            ->withSession([
+                'auth.pre_session_token' => PreSession::issueForUser($tenant->id)->token,
+                'auth.password_confirmed_at' => now()->unix(),
+            ])
+            ->post(route('settings.security.two-factor.enable'))
+            ->assertRedirect(route('login'));
+
+        $this->actingAs($superAdmin)
+            ->withSession(['auth.pre_session_token' => PreSession::issueForUser($superAdmin->id)->token])
+            ->get(route('admin.security.two-factor.index'))
+            ->assertRedirect(route('login'));
+
+        $this->actingAs($superAdmin)
+            ->withSession(['auth.pre_session_token' => PreSession::issueForUser($superAdmin->id)->token])
+            ->get(route('invitations.create'))
+            ->assertRedirect(route('login'));
+
+        $this->actingAs($superAdmin)
+            ->withSession(['auth.pre_session_token' => PreSession::issueForUser($superAdmin->id)->token])
+            ->post(route('admin.security.two-factor.release-lock', $managedUser))
+            ->assertRedirect(route('login'));
     }
 }

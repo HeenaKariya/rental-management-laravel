@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureAuthLockAllowsAttempt;
 use App\Http\Middleware\EnsureFullAuthSession;
 use App\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Foundation\Application;
@@ -13,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->appendToGroup('web', EnsureAuthLockAllowsAttempt::class);
+
         $middleware->alias([
             'full-auth-session' => EnsureFullAuthSession::class,
             'role' => EnsureUserHasRole::class,
