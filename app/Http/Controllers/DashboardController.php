@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\AuthAuditLog;
 use App\Models\Invitation;
+use App\Models\Lease;
+use App\Models\LeaseDeposit;
 use App\Models\Property;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
@@ -16,6 +19,10 @@ class DashboardController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
+
+        if ($user->hasRole('tenant')) {
+            return $this->tenantPortal($user);
+        }
 
         $visibleProperties = $this->visiblePropertiesFor($user);
         $propertiesCount = $visibleProperties->count();
@@ -93,6 +100,49 @@ class DashboardController extends Controller
             'properties' => $properties,
             'quickActions' => $quickActions,
             'summary' => $summary,
+            'user' => $user,
+        ]);
+    }
+
+    private function tenantPortal(User $user): View
+    {
+        $tenant = Tenant::query()
+            ->visibleTo($user)
+            ->with(['documents', 'unit.property'])
+            ->first();
+
+        $leases = Lease::query()
+            ->visibleTo($user)
+            ->with(['deposit', 'unit.property'])
+            ->latest('start_on')
+            ->get();
+
+        $deposits = LeaseDeposit::query()
+            ->visibleTo($user)
+            ->with(['lease.unit.property'])
+            ->latest()
+            ->get();
+
+        $authEvents = AuthAuditLog::query()
+            ->with('user.roles')
+            ->where('user_id', $user->id)
+            ->latest('occurred_at')
+            ->limit(6)
+            ->get();
+
+        $summary = [
+            'documents' => $tenant?->documents->count() ?? 0,
+            'depositBalance' => $deposits->sum(fn (LeaseDeposit $deposit) => (float) $deposit->current_balance),
+            'leases' => $leases->count(),
+            'activeLeases' => $leases->where('status', 'active')->count(),
+        ];
+
+        return view('dashboard-tenant', [
+            'authEvents' => $authEvents,
+            'deposits' => $deposits,
+            'leases' => $leases,
+            'summary' => $summary,
+            'tenant' => $tenant,
             'user' => $user,
         ]);
     }

@@ -14,9 +14,14 @@
             $authUser = auth()->user();
             $isSuperAdmin = $authUser?->hasRole('super_admin');
             $isManager = $authUser?->hasRole('manager');
+            $isTenant = $authUser?->hasRole('tenant');
             $appNavigation = collect([
                 ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'dashboard', 'active' => request()->routeIs('dashboard'), 'visible' => true, 'badge' => null],
                 ['label' => 'Properties', 'route' => 'properties.index', 'icon' => 'property', 'active' => request()->routeIs('properties.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 2'],
+                ['label' => 'Units', 'route' => 'units.index', 'icon' => 'unit', 'active' => request()->routeIs('units.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 3'],
+                ['label' => 'Tenants', 'route' => 'tenants.index', 'icon' => 'tenant', 'active' => request()->routeIs('tenants.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 3'],
+                ['label' => 'Leases', 'route' => 'leases.index', 'icon' => 'lease', 'active' => request()->routeIs('leases.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 3'],
+                ['label' => 'Deposits', 'route' => 'deposits.index', 'icon' => 'finance', 'active' => request()->routeIs('deposits.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 3'],
                 ['label' => 'Security', 'route' => 'settings.security', 'icon' => 'security', 'active' => request()->routeIs('settings.security*'), 'visible' => true, 'badge' => null],
                 ['label' => '2FA Oversight', 'route' => 'admin.security.two-factor.index', 'icon' => 'shield', 'active' => request()->routeIs('admin.security.two-factor.*'), 'visible' => $isSuperAdmin, 'badge' => null],
                 ['label' => 'Invitations', 'route' => 'invitations.create', 'icon' => 'invite', 'active' => request()->routeIs('invitations.create') || request()->routeIs('invitations.store'), 'visible' => $isSuperAdmin, 'badge' => null],
@@ -53,8 +58,6 @@
                     @endforeach
 
                     <p class="nav-section">Next</p>
-                    <span class="app-nav-link is-muted"><span class="app-nav-label">@include('partials.app-icon', ['icon' => 'unit'])<span>Units</span></span><span class="nav-chip">Phase 3</span></span>
-                    <span class="app-nav-link is-muted"><span class="app-nav-label">@include('partials.app-icon', ['icon' => 'lease'])<span>Leases</span></span><span class="nav-chip">Phase 3</span></span>
                     <span class="app-nav-link is-muted"><span class="app-nav-label">@include('partials.app-icon', ['icon' => 'finance'])<span>Finance</span></span><span class="nav-chip">Phase 4</span></span>
                 </nav>
             </aside>
@@ -62,7 +65,7 @@
             <div class="app-main">
                 <header class="app-topbar">
                     <div class="app-topbar-meta">
-                        <span class="app-topbar-workspace">{{ $isSuperAdmin ? 'Super Admin Workspace' : ($isManager ? 'Manager Workspace' : 'Workspace') }}</span>
+                        <span class="app-topbar-workspace">{{ $isSuperAdmin ? 'Super Admin Workspace' : ($isManager ? 'Manager Workspace' : ($isTenant ? 'Tenant Portal' : 'Workspace')) }}</span>
                         <span class="app-topbar-separator">/</span>
                         <span class="app-topbar-current">{{ str($title ?? 'Dashboard | PropMgr')->before(' | ') }}</span>
                     </div>

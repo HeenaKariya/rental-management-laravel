@@ -56,6 +56,14 @@
             </svg>
             @break
 
+        @case('tenant')
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 19a4 4 0 0 0-8 0"></path>
+                <circle cx="12" cy="11" r="4"></circle>
+                <path d="M5 19a7 7 0 0 1 14 0"></path>
+            </svg>
+            @break
+
         @case('lease')
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M7 3h7l5 5v13H7z"></path>

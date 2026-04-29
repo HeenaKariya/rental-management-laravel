@@ -2,6 +2,22 @@
 
 @section('content')
     <div class="dashboard-stack">
+        @if ($quickActions->isNotEmpty())
+            <section class="page-header card-soft">
+                <div>
+                    <p class="page-kicker">Workspace overview</p>
+                    <h1 class="page-title">Operations dashboard</h1>
+                    <p class="page-description">Move between the current property, security, and onboarding workstreams from one shared control surface.</p>
+                </div>
+
+                <div class="page-actions">
+                    @foreach ($quickActions as $action)
+                        <a class="btn btn-{{ $action['style'] }}" href="{{ $action['route'] }}">{{ $action['label'] }}</a>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         <section class="stat-grid dashboard-stat-grid">
             <article class="stat-card">
                 <p class="stat-label">Visible properties</p>
