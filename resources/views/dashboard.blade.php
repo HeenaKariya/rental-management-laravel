@@ -27,7 +27,8 @@
                         badges, cards, forms, and navigation patterns from your PropMgr kit.
                     </p>
                     <div class="btn-strip">
-                        <button class="btn btn-solid" type="button">Open dashboard</button>
+                        <a class="btn btn-solid" href="{{ route('dashboard') }}">Open dashboard</a>
+                        <a class="btn btn-violet" href="{{ route('settings.security') }}">Security settings</a>
                         <button class="btn btn-lime" type="button">Create tenant</button>
                         <button class="btn btn-ghost" type="button">Export report</button>
                     </div>

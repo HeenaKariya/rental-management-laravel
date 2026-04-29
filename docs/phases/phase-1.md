@@ -19,11 +19,14 @@ Date: 2026-04-28
 - Pre-session model and table are implemented.
 - A 15-minute pre-session token is issued for the two-factor challenge.
 - Protected routes are blocked while a valid pre-session token exists.
+- Invite-aware onboarding is implemented with role-scoped invitations and invitation acceptance links.
+- Super Admin users can issue invitations from the protected admin area.
+- Registration now requires a valid invitation token and assigns the invited role.
 - Focused feature tests cover RBAC foundation and pre-session access blocking.
+- Focused feature tests cover invitation-only registration and role-scoped invite issuance.
 
 ## Remaining Deliverables
 
-- User auth with password reset and tenant invite flow.
 - OTP flows including email/WhatsApp delivery strategy, resend limits, and fallback rules.
 - Backup code generation, usage, and regeneration lifecycle hardening.
 - Soft lock and hard lock flows.
@@ -42,8 +45,8 @@ Date: 2026-04-28
 1. RBAC foundation
 2. Pre-session token model and protected-route enforcement
 3. Invite-aware onboarding and role-controlled user creation
-4. OTP delivery, fallback, and backup code lifecycle
-5. Admin 2FA management and audit visibility
+4. User-facing 2FA settings, recovery code lifecycle, and auth audit logging
+5. OTP delivery, lock flows, and admin 2FA oversight
 6. Security review and final Phase 1 closure
 
 ## Notes

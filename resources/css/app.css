@@ -751,11 +751,130 @@ input {
 .quick-icon.is-gold { background: var(--gold-light); }
 .quick-icon.is-lime { background: var(--lime); }
 
+.security-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+	gap: 20px;
+}
+
+.security-card {
+	background: var(--card);
+	border: 1px solid var(--line);
+	box-shadow: var(--shadow-soft);
+	border-radius: var(--radius-lg);
+	padding: 22px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.security-title {
+	margin: 0;
+	font-size: clamp(1.8rem, 3vw, 2.7rem);
+	line-height: 0.98;
+	letter-spacing: -0.05em;
+}
+
+.security-copy,
+.security-meta,
+.security-empty {
+	margin: 0;
+	color: var(--ink2);
+	line-height: 1.7;
+}
+
+.security-actions,
+.security-inline-form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	align-items: center;
+}
+
+.security-inline-form {
+	margin: 0;
+	align-items: flex-end;
+	width: 100%;
+	max-width: 460px;
+	flex-direction: column;
+	align-items: stretch;
+}
+
+.security-inline-form .btn-strip {
+	justify-content: flex-start;
+}
+
+.security-qr-frame {
+	padding: 18px;
+	border-radius: var(--radius-md);
+	background: linear-gradient(180deg, rgba(13, 13, 13, 0.03), rgba(13, 13, 13, 0.01));
+	border: 1px solid var(--line);
+	max-width: 280px;
+	color: var(--ink);
+}
+
+.security-qr-frame svg {
+	width: 100%;
+	height: auto;
+	display: block;
+	background: #fff;
+	border-radius: 12px;
+	padding: 10px;
+}
+
+.security-code-list,
+.security-log-list {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.security-code-item,
+.security-log-item {
+	padding: 12px 14px;
+	border-radius: var(--radius-md);
+	background: var(--card2);
+	border: 1px solid rgba(13, 13, 13, 0.05);
+}
+
+.security-code-item {
+	font-family: var(--font-mono);
+	font-size: 0.82rem;
+	font-weight: 500;
+	word-break: break-all;
+}
+
+.security-log-item {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.security-log-head {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.security-log-meta {
+	margin: 0;
+	color: var(--ink3);
+	font-size: 0.78rem;
+	line-height: 1.6;
+}
+
+.security-card .auth-alert {
+	margin-top: 0;
+}
+
 @media (max-width: 1080px) {
 	.auth-card-wrap,
 	.hero-grid,
 	.two-up-grid,
 	.content-grid,
+	.security-grid,
 	.quick-grid,
 	.stat-grid {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -784,6 +903,7 @@ input {
 
 	.hero-grid,
 	.two-up-grid,
+	.security-grid,
 	.quick-grid,
 	.stat-grid,
 	.color-grid {
