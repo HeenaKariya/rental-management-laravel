@@ -237,4 +237,80 @@ class SecuritySettingsTest extends TestCase
             ->assertSee('Lock Target')
             ->assertSee('Temporarily locked');
     }
+
+    public function test_super_admin_can_release_a_hard_lock(): void
+    {
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create([
+            'name' => 'Root Admin',
+        ]);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $lockedUser */
+        $lockedUser = User::factory()->create([
+            'email' => 'hard-locked@example.com',
+        ]);
+        $lockedUser->assignRole('tenant');
+        $lockedUser->forceFill([
+            'auth_hard_locked_at' => now(),
+            'auth_soft_lock_count' => User::HARD_LOCK_THRESHOLD,
+            'login_failed_attempts' => 3,
+            'two_factor_failed_attempts' => 2,
+        ])->save();
+
+        $this->actingAs($superAdmin)
+            ->post(route('admin.security.two-factor.release-lock', $lockedUser))
+            ->assertRedirect(route('admin.security.two-factor.index'));
+
+        $lockedUser->refresh();
+
+        $this->assertNull($lockedUser->auth_hard_locked_at);
+        $this->assertSame(0, $lockedUser->auth_soft_lock_count);
+        $this->assertSame(0, $lockedUser->login_failed_attempts);
+        $this->assertSame(0, $lockedUser->two_factor_failed_attempts);
+
+        $this->assertDatabaseHas('auth_audit_logs', [
+            'user_id' => $lockedUser->id,
+            'event' => 'auth.lock.released',
+        ]);
+    }
+
+    public function test_super_admin_can_reset_two_factor_and_release_related_locks(): void
+    {
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create([
+            'name' => 'Root Admin',
+        ]);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $managedUser */
+        $managedUser = User::factory()->create([
+            'email' => 'needs-reset@example.com',
+        ]);
+        $managedUser->assignRole('manager');
+        $managedUser->forceFill([
+            'two_factor_secret' => encrypt('managed-secret'),
+            'two_factor_recovery_codes' => encrypt(json_encode(['code-a', 'code-b'])),
+            'two_factor_confirmed_at' => now(),
+            'auth_soft_locked_until' => now()->addMinutes(User::SOFT_LOCK_MINUTES),
+            'two_factor_failed_attempts' => 4,
+        ])->save();
+
+        $this->actingAs($superAdmin)
+            ->post(route('admin.security.two-factor.reset', $managedUser))
+            ->assertRedirect(route('admin.security.two-factor.index'));
+
+        $managedUser->refresh();
+
+        $this->assertNull($managedUser->two_factor_secret);
+        $this->assertNull($managedUser->two_factor_recovery_codes);
+        $this->assertNull($managedUser->two_factor_confirmed_at);
+        $this->assertNull($managedUser->auth_soft_locked_until);
+        $this->assertSame(0, $managedUser->two_factor_failed_attempts);
+
+        $this->assertDatabaseHas('auth_audit_logs', [
+            'user_id' => $managedUser->id,
+            'event' => 'two_factor.admin_reset',
+        ]);
+    }
 }

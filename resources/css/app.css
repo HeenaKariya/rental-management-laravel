@@ -932,6 +932,17 @@ input {
 	color: var(--ink2);
 }
 
+.oversight-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 10px;
+}
+
+.oversight-actions form {
+	margin: 0;
+}
+
 @media (max-width: 1080px) {
 	.auth-card-wrap,
 	.hero-grid,

@@ -54,9 +54,11 @@ class AuthAuditLog extends Model
         return match ($this->event) {
             'auth.lock.blocked' => 'Locked attempt blocked',
             'auth.lock.hard' => 'Hard lock applied',
+            'auth.lock.released' => 'Lock released',
             'auth.lock.soft' => 'Temporary lock applied',
             'auth.login_failed' => 'Primary login failed',
             'auth.two_factor_failed' => '2FA challenge failed',
+            'two_factor.admin_reset' => '2FA reset by admin',
             'two_factor.challenged' => '2FA challenge started',
             'two_factor.enabled' => '2FA setup started',
             'two_factor.confirmed' => '2FA confirmed',
@@ -72,8 +74,9 @@ class AuthAuditLog extends Model
     {
         return match ($this->event) {
             'auth.lock.hard' => 'badge-coral',
-            'auth.lock.blocked', 'auth.lock.soft' => 'badge-gold',
+            'auth.lock.blocked', 'auth.lock.released', 'auth.lock.soft' => 'badge-gold',
             'auth.login_failed', 'auth.two_factor_failed', 'two_factor.recovery_code_used' => 'badge-coral',
+            'two_factor.admin_reset' => 'badge-violet',
             'two_factor.confirmed', 'two_factor.passed' => 'badge-green',
             'two_factor.challenged' => 'badge-sky',
             'two_factor.enabled', 'two_factor.recovery_codes_regenerated' => 'badge-gold',
@@ -87,12 +90,18 @@ class AuthAuditLog extends Model
             'auth.lock.blocked' => ($this->context['state'] ?? null) === 'Hard locked'
                 ? 'A hard-locked account attempted access.'
                 : 'A temporarily locked account attempted access.',
+            'auth.lock.released' => isset($this->context['actor_name'])
+                ? 'Lock released by '.$this->context['actor_name'].'.'
+                : 'Lock released by a Super Admin.',
             'auth.lock.soft' => 'Account locked for '.($this->context['minutes'] ?? User::SOFT_LOCK_MINUTES).' minutes after repeated failures.',
             'auth.lock.hard' => 'Account reached the repeated lock threshold and now requires Super Admin intervention.',
             'auth.login_failed' => 'Email and password verification failed.',
             'auth.two_factor_failed' => ($this->context['method'] ?? null) === 'recovery_code'
                 ? 'Recovery code verification failed.'
                 : 'Authenticator code verification failed.',
+            'two_factor.admin_reset' => isset($this->context['actor_name'])
+                ? 'Two-factor enrollment reset by '.$this->context['actor_name'].'.'
+                : 'Two-factor enrollment reset by a Super Admin.',
             'two_factor.passed' => ($this->context['method'] ?? null) === 'recovery_code'
                 ? 'Completed with a recovery code.'
                 : 'Completed with an authenticator code.',

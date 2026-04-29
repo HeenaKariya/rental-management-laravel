@@ -34,6 +34,10 @@ Route::middleware(['auth', 'full-auth-session'])->group(function () {
 Route::middleware(['auth', 'full-auth-session', 'role:super_admin'])->group(function () {
     Route::get('/admin/security/two-factor', [TwoFactorOversightController::class, 'index'])
         ->name('admin.security.two-factor.index');
+    Route::post('/admin/security/two-factor/{user}/release-lock', [TwoFactorOversightController::class, 'releaseLock'])
+        ->name('admin.security.two-factor.release-lock');
+    Route::post('/admin/security/two-factor/{user}/reset', [TwoFactorOversightController::class, 'resetTwoFactor'])
+        ->name('admin.security.two-factor.reset');
     Route::get('/admin/invitations/create', [InvitationController::class, 'create'])->name('invitations.create');
     Route::post('/admin/invitations', [InvitationController::class, 'store'])->name('invitations.store');
 });

@@ -23,10 +23,14 @@
                 <p class="row-label">Panel</p>
                 <h1 class="security-title">Monitor two-factor adoption and recent auth activity.</h1>
                 <p class="security-copy">
-                    This read-only view gives Super Admins a single place to spot users with missing 2FA,
+                    This panel gives Super Admins a single place to spot users with missing 2FA,
                     users stuck in pending confirmation, and the latest authentication events across the system.
                 </p>
             </section>
+
+            @if (session('status'))
+                <div class="auth-alert auth-alert-success">{{ session('status') }}</div>
+            @endif
 
             <section class="metric-grid">
                 <article class="metric-card">
@@ -74,6 +78,24 @@
                                         <p class="oversight-user-name">{{ $user->name }}</p>
                                         <p class="oversight-user-role">{{ $user->roleSummary() }}</p>
                                         <p class="oversight-user-email">{{ $user->email }}</p>
+
+                                        @if ($user->isAuthLocked() || $user->two_factor_secret !== null)
+                                            <div class="oversight-actions">
+                                                @if ($user->isAuthLocked())
+                                                    <form method="POST" action="{{ route('admin.security.two-factor.release-lock', $user) }}">
+                                                        @csrf
+                                                        <button class="btn btn-ghost btn-sm" type="submit">Release lock</button>
+                                                    </form>
+                                                @endif
+
+                                                @if ($user->two_factor_secret !== null)
+                                                    <form method="POST" action="{{ route('admin.security.two-factor.reset', $user) }}">
+                                                        @csrf
+                                                        <button class="btn btn-violet btn-sm" type="submit">Reset 2FA</button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        @endif
                                     </div>
 
                                     <div class="badge-strip">

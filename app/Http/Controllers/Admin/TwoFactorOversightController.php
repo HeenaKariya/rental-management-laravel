@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuthAuditLog;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class TwoFactorOversightController extends Controller
@@ -31,5 +33,31 @@ class TwoFactorOversightController extends Controller
             ],
             'users' => $users,
         ]);
+    }
+
+    public function releaseLock(Request $request, User $user): RedirectResponse
+    {
+        $user->releaseAuthLock();
+
+        AuthAuditLog::record($user, 'auth.lock.released', [
+            'actor_id' => $request->user()?->id,
+            'actor_name' => $request->user()?->name,
+        ]);
+
+        return to_route('admin.security.two-factor.index')
+            ->with('status', 'Authentication lock released for '.$user->email.'.');
+    }
+
+    public function resetTwoFactor(Request $request, User $user): RedirectResponse
+    {
+        $user->adminResetTwoFactor();
+
+        AuthAuditLog::record($user, 'two_factor.admin_reset', [
+            'actor_id' => $request->user()?->id,
+            'actor_name' => $request->user()?->name,
+        ]);
+
+        return to_route('admin.security.two-factor.index')
+            ->with('status', 'Two-factor credentials reset for '.$user->email.'.');
     }
 }

@@ -219,6 +219,28 @@ class User extends Authenticatable
         ])->save();
     }
 
+    public function releaseAuthLock(): void
+    {
+        $this->forceFill([
+            'auth_hard_locked_at' => null,
+            'auth_soft_locked_until' => null,
+            'auth_soft_lock_count' => 0,
+            'login_failed_attempts' => 0,
+            'two_factor_failed_attempts' => 0,
+        ])->save();
+    }
+
+    public function adminResetTwoFactor(): void
+    {
+        $this->forceFill([
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
+        ])->save();
+
+        $this->releaseAuthLock();
+    }
+
     protected function recordAuthenticationFailure(string $field, int $threshold): ?string
     {
         if ($this->isHardLocked()) {
