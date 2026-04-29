@@ -15,6 +15,14 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
+    public const PRIMARY_AUTH_SOFT_LOCK_THRESHOLD = 5;
+
+    public const TWO_FACTOR_SOFT_LOCK_THRESHOLD = 5;
+
+    public const HARD_LOCK_THRESHOLD = 3;
+
+    public const SOFT_LOCK_MINUTES = 15;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -46,6 +54,8 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'auth_hard_locked_at' => 'datetime',
+            'auth_soft_locked_until' => 'datetime',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
@@ -114,5 +124,130 @@ class User extends Authenticatable
             'Pending confirmation' => 'badge-gold',
             default => 'badge-outline',
         };
+    }
+
+    public function clearExpiredSoftLock(): void
+    {
+        if (! $this->auth_soft_locked_until?->isPast()) {
+            return;
+        }
+
+        $this->forceFill([
+            'auth_soft_locked_until' => null,
+        ])->save();
+    }
+
+    public function isSoftLocked(): bool
+    {
+        return $this->auth_soft_locked_until?->isFuture() ?? false;
+    }
+
+    public function isHardLocked(): bool
+    {
+        return $this->auth_hard_locked_at !== null;
+    }
+
+    public function isAuthLocked(): bool
+    {
+        return $this->isHardLocked() || $this->isSoftLocked();
+    }
+
+    public function authLockStatus(): string
+    {
+        if ($this->isHardLocked()) {
+            return 'Hard locked';
+        }
+
+        if ($this->isSoftLocked()) {
+            return 'Temporarily locked';
+        }
+
+        return 'Open';
+    }
+
+    public function authLockStatusBadgeClass(): string
+    {
+        return match ($this->authLockStatus()) {
+            'Hard locked' => 'badge-coral',
+            'Temporarily locked' => 'badge-gold',
+            default => 'badge-outline',
+        };
+    }
+
+    public function activeAuthLockMessage(): ?string
+    {
+        if ($this->isHardLocked()) {
+            return 'This account is hard locked. Contact a Super Admin to restore access.';
+        }
+
+        if ($this->isSoftLocked()) {
+            return 'This account is temporarily locked until '.$this->auth_soft_locked_until?->format('M j, Y g:i A').'.';
+        }
+
+        return null;
+    }
+
+    public function recordPrimaryAuthenticationFailure(): ?string
+    {
+        return $this->recordAuthenticationFailure('login_failed_attempts', self::PRIMARY_AUTH_SOFT_LOCK_THRESHOLD);
+    }
+
+    public function recordTwoFactorFailure(): ?string
+    {
+        return $this->recordAuthenticationFailure('two_factor_failed_attempts', self::TWO_FACTOR_SOFT_LOCK_THRESHOLD);
+    }
+
+    public function clearPrimaryAuthenticationFailures(): void
+    {
+        if (($this->login_failed_attempts ?? 0) === 0) {
+            return;
+        }
+
+        $this->forceFill([
+            'login_failed_attempts' => 0,
+        ])->save();
+    }
+
+    public function clearTwoFactorFailures(): void
+    {
+        if (($this->two_factor_failed_attempts ?? 0) === 0) {
+            return;
+        }
+
+        $this->forceFill([
+            'two_factor_failed_attempts' => 0,
+        ])->save();
+    }
+
+    protected function recordAuthenticationFailure(string $field, int $threshold): ?string
+    {
+        if ($this->isHardLocked()) {
+            return null;
+        }
+
+        $nextAttempts = (int) ($this->{$field} ?? 0) + 1;
+        $triggeredEvent = null;
+
+        $this->{$field} = $nextAttempts;
+
+        if ($nextAttempts >= $threshold) {
+            $softLockCount = (int) ($this->auth_soft_lock_count ?? 0) + 1;
+
+            $this->{$field} = 0;
+            $this->auth_soft_lock_count = $softLockCount;
+
+            if ($softLockCount >= self::HARD_LOCK_THRESHOLD) {
+                $this->auth_hard_locked_at = now();
+                $this->auth_soft_locked_until = null;
+                $triggeredEvent = 'auth.lock.hard';
+            } else {
+                $this->auth_soft_locked_until = now()->addMinutes(self::SOFT_LOCK_MINUTES);
+                $triggeredEvent = 'auth.lock.soft';
+            }
+        }
+
+        $this->save();
+
+        return $triggeredEvent;
     }
 }

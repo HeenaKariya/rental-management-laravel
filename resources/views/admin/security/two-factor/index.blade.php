@@ -44,6 +44,16 @@
                     <p class="metric-value">{{ $summary['notEnabled'] }}</p>
                     <p class="metric-copy">Users who still need two-factor enrollment.</p>
                 </article>
+                <article class="metric-card">
+                    <p class="row-label">Soft Locked</p>
+                    <p class="metric-value">{{ $summary['softLocked'] }}</p>
+                    <p class="metric-copy">Users currently paused by the temporary lock flow.</p>
+                </article>
+                <article class="metric-card">
+                    <p class="row-label">Hard Locked</p>
+                    <p class="metric-value">{{ $summary['hardLocked'] }}</p>
+                    <p class="metric-copy">Users who now require Super Admin intervention.</p>
+                </article>
             </section>
 
             <section class="oversight-layout">
@@ -66,7 +76,10 @@
                                         <p class="oversight-user-email">{{ $user->email }}</p>
                                     </div>
 
-                                    <span class="badge {{ $user->twoFactorStatusBadgeClass() }} compact-badge">{{ $user->twoFactorStatus() }}</span>
+                                    <div class="badge-strip">
+                                        <span class="badge {{ $user->twoFactorStatusBadgeClass() }} compact-badge">{{ $user->twoFactorStatus() }}</span>
+                                        <span class="badge {{ $user->authLockStatusBadgeClass() }} compact-badge">{{ $user->authLockStatus() }}</span>
+                                    </div>
 
                                     <div class="oversight-user-meta">
                                         @if ($user->latestAuthAuditLog)

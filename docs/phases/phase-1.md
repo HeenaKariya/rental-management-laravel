@@ -24,15 +24,16 @@ Date: 2026-04-28
 - Registration now requires a valid invitation token and assigns the invited role.
 - User-facing 2FA settings, recovery code regeneration, and per-user auth audit logging are implemented.
 - Super Admin read-only 2FA oversight is implemented with user status visibility and recent auth events.
+- User lock state is now persisted with temporary and hard lock thresholds across login and two-factor failures.
 - Focused feature tests cover RBAC foundation and pre-session access blocking.
 - Focused feature tests cover invitation-only registration and role-scoped invite issuance.
 - Focused feature tests cover security settings and Super Admin 2FA oversight access.
+- Focused feature tests cover auth lock enforcement across login and two-factor challenge routes.
 
 ## Remaining Deliverables
 
 - OTP flows including email/WhatsApp delivery strategy, resend limits, and fallback rules.
 - Backup code generation, usage, and regeneration lifecycle hardening.
-- Soft lock and hard lock flows.
 - Super Admin 2FA management panel.
 - Broader Phase 1 negative-path and edge-case tests.
 

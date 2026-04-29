@@ -24,6 +24,8 @@ class TwoFactorOversightController extends Controller
                 ->get(),
             'summary' => [
                 'confirmed' => $users->filter(fn (User $user) => $user->hasEnabledTwoFactorAuthentication())->count(),
+                'hardLocked' => $users->filter(fn (User $user) => $user->isHardLocked())->count(),
+                'softLocked' => $users->filter(fn (User $user) => $user->isSoftLocked())->count(),
                 'pending' => $users->filter(fn (User $user) => $user->two_factor_secret !== null && $user->two_factor_confirmed_at === null)->count(),
                 'notEnabled' => $users->filter(fn (User $user) => $user->two_factor_secret === null)->count(),
             ],

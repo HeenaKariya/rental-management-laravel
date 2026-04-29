@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\AuthAuditLog;
 use App\Models\PreSession;
 use App\Models\User;
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -14,6 +15,7 @@ use Laravel\Fortify\Events\TwoFactorAuthenticationChallenged;
 use Laravel\Fortify\Events\TwoFactorAuthenticationConfirmed;
 use Laravel\Fortify\Events\TwoFactorAuthenticationDisabled;
 use Laravel\Fortify\Events\TwoFactorAuthenticationEnabled;
+use Laravel\Fortify\Events\TwoFactorAuthenticationFailed;
 use Tests\TestCase;
 
 class SecuritySettingsTest extends TestCase
@@ -138,5 +140,101 @@ class SecuritySettingsTest extends TestCase
         $this->actingAs($tenant)
             ->get(route('admin.security.two-factor.index'))
             ->assertForbidden();
+    }
+
+    public function test_locked_user_cannot_submit_login_form(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create([
+            'email' => 'locked@example.com',
+            'password' => 'Password123!',
+        ]);
+        $user->forceFill([
+            'auth_soft_locked_until' => now()->addMinutes(User::SOFT_LOCK_MINUTES),
+        ])->save();
+
+        $this->post(route('login.store'), [
+            'email' => 'locked@example.com',
+            'password' => 'Password123!',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
+
+    public function test_repeated_failed_login_events_trigger_soft_then_hard_locks(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        for ($cycle = 0; $cycle < User::HARD_LOCK_THRESHOLD; $cycle++) {
+            for ($attempt = 0; $attempt < User::PRIMARY_AUTH_SOFT_LOCK_THRESHOLD; $attempt++) {
+                Event::dispatch(new Failed('web', $user, ['email' => $user->email]));
+            }
+
+            if ($cycle < User::HARD_LOCK_THRESHOLD - 1) {
+                $this->assertNotNull($user->fresh()->auth_soft_locked_until);
+                $this->travel(User::SOFT_LOCK_MINUTES + 1)->minutes();
+                $user->refresh()->clearExpiredSoftLock();
+            }
+        }
+
+        $user->refresh();
+
+        $this->assertNotNull($user->auth_hard_locked_at);
+        $this->assertDatabaseHas('auth_audit_logs', [
+            'user_id' => $user->id,
+            'event' => 'auth.lock.hard',
+        ]);
+    }
+
+    public function test_locked_two_factor_challenge_redirects_back_to_login(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        $user->forceFill([
+            'auth_soft_locked_until' => now()->addMinutes(User::SOFT_LOCK_MINUTES),
+            'two_factor_secret' => encrypt('tenant-secret'),
+            'two_factor_recovery_codes' => encrypt(json_encode(['tenant-code-1'])),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        $this->withSession([
+            'login.id' => $user->id,
+            'login.remember' => false,
+        ])->get(route('two-factor.login'))
+            ->assertRedirect(route('login'));
+    }
+
+    public function test_repeated_two_factor_failures_trigger_a_soft_lock_and_surface_in_admin_oversight(): void
+    {
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create();
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $tenant */
+        $tenant = User::factory()->create([
+            'name' => 'Lock Target',
+            'email' => 'lock-target@example.com',
+        ]);
+        $tenant->assignRole('tenant');
+
+        for ($attempt = 0; $attempt < User::TWO_FACTOR_SOFT_LOCK_THRESHOLD; $attempt++) {
+            Event::dispatch(new TwoFactorAuthenticationFailed($tenant));
+        }
+
+        $tenant->refresh();
+
+        $this->assertNotNull($tenant->auth_soft_locked_until);
+        $this->assertDatabaseHas('auth_audit_logs', [
+            'user_id' => $tenant->id,
+            'event' => 'auth.lock.soft',
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.security.two-factor.index'))
+            ->assertOk()
+            ->assertSee('Soft Locked')
+            ->assertSee('Lock Target')
+            ->assertSee('Temporarily locked');
     }
 }

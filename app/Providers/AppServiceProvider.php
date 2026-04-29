@@ -2,19 +2,25 @@
 
 namespace App\Providers;
 
+use App\Http\Responses\Auth\FailedTwoFactorLoginResponse;
 use App\Models\AuthAuditLog;
 use App\Models\PreSession;
 use App\Models\User;
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Fortify\Contracts\FailedTwoFactorLoginResponse as FailedTwoFactorLoginResponseContract;
 use Laravel\Fortify\Events\RecoveryCodeReplaced;
 use Laravel\Fortify\Events\TwoFactorAuthenticationChallenged;
 use Laravel\Fortify\Events\TwoFactorAuthenticationConfirmed;
 use Laravel\Fortify\Events\TwoFactorAuthenticationDisabled;
 use Laravel\Fortify\Events\TwoFactorAuthenticationEnabled;
+use Laravel\Fortify\Events\TwoFactorAuthenticationFailed;
+use Laravel\Fortify\Events\ValidTwoFactorAuthenticationCodeProvided;
+use Laravel\Fortify\Fortify;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(FailedTwoFactorLoginResponseContract::class, FailedTwoFactorLoginResponse::class);
     }
 
     /**
@@ -31,8 +37,36 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(Failed::class, function (Failed $event): void {
+            $user = $event->user;
+
+            if (! $user instanceof User && app()->bound('request')) {
+                $username = request()->input(Fortify::username());
+                $user = User::query()->where(Fortify::username(), $username)->first();
+            }
+
+            if (! $user instanceof User) {
+                return;
+            }
+
+            $triggeredEvent = $user->recordPrimaryAuthenticationFailure();
+
+            AuthAuditLog::record($user, 'auth.login_failed');
+
+            if ($triggeredEvent) {
+                AuthAuditLog::record($user, $triggeredEvent, [
+                    'minutes' => User::SOFT_LOCK_MINUTES,
+                    'surface' => 'login',
+                ]);
+            }
+        });
+
         Event::listen(Login::class, function (Login $event): void {
             if (! app()->bound('request')) {
+                return;
+            }
+
+            if (! $event->user instanceof User) {
                 return;
             }
 
@@ -40,8 +74,10 @@ class AppServiceProvider extends ServiceProvider
             $token = $request->session()->pull('auth.pre_session_token');
 
             PreSession::completeByToken($token);
+            $event->user->clearPrimaryAuthenticationFailures();
 
             if ($token) {
+                $event->user->clearTwoFactorFailures();
                 AuthAuditLog::record($event->user, 'two_factor.passed', [
                     'method' => $request->filled('recovery_code') ? 'recovery_code' : 'authenticator_code',
                 ]);
@@ -60,7 +96,39 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Event::listen(TwoFactorAuthenticationChallenged::class, function (TwoFactorAuthenticationChallenged $event): void {
+            if (! $event->user instanceof User) {
+                return;
+            }
+
+            $event->user->clearPrimaryAuthenticationFailures();
             AuthAuditLog::record($event->user, 'two_factor.challenged');
+        });
+
+        Event::listen(TwoFactorAuthenticationFailed::class, function (TwoFactorAuthenticationFailed $event): void {
+            if (! $event->user instanceof User) {
+                return;
+            }
+
+            $triggeredEvent = $event->user->recordTwoFactorFailure();
+
+            AuthAuditLog::record($event->user, 'auth.two_factor_failed', [
+                'method' => request()->filled('recovery_code') ? 'recovery_code' : 'authenticator_code',
+            ]);
+
+            if ($triggeredEvent) {
+                AuthAuditLog::record($event->user, $triggeredEvent, [
+                    'minutes' => User::SOFT_LOCK_MINUTES,
+                    'surface' => 'two_factor',
+                ]);
+            }
+        });
+
+        Event::listen(ValidTwoFactorAuthenticationCodeProvided::class, function (ValidTwoFactorAuthenticationCodeProvided $event): void {
+            if (! $event->user instanceof User) {
+                return;
+            }
+
+            $event->user->clearTwoFactorFailures();
         });
 
         Event::listen(TwoFactorAuthenticationEnabled::class, function (TwoFactorAuthenticationEnabled $event): void {
