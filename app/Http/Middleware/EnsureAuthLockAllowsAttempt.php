@@ -36,7 +36,7 @@ class EnsureAuthLockAllowsAttempt
             'surface' => $this->surface($request),
         ]);
 
-        if ($request->routeIs('two-factor.login', 'two-factor.login.store')) {
+        if ($request->routeIs('two-factor.login', 'two-factor.login.store', 'two-factor.otp.resend')) {
             $request->session()->forget([
                 'auth.pre_session_token',
                 'login.id',
@@ -74,7 +74,7 @@ class EnsureAuthLockAllowsAttempt
 
     protected function surface(Request $request): string
     {
-        return $request->routeIs('two-factor.login', 'two-factor.login.store')
+        return $request->routeIs('two-factor.login', 'two-factor.login.store', 'two-factor.otp.resend')
             ? 'two_factor'
             : 'login';
     }

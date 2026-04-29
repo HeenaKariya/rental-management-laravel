@@ -20,7 +20,11 @@ class FailedTwoFactorLoginResponse implements FailedTwoFactorLoginResponseContra
      */
     public function toResponse($request)
     {
-        $user = $request->hasChallengedUser() ? $request->challengedUser() : null;
+        if (! $request->hasChallengedUser()) {
+            return redirect()->route('login');
+        }
+
+        $user = $request->challengedUser();
 
         if ($user instanceof User) {
             $user->clearExpiredSoftLock();

@@ -457,6 +457,47 @@ class SecuritySettingsTest extends TestCase
         ]);
     }
 
+    public function test_two_factor_otp_resend_without_a_challenged_user_redirects_to_login(): void
+    {
+        $this->post(route('two-factor.otp.resend'), [
+            'channel' => 'email',
+        ])->assertRedirect(route('login'));
+    }
+
+    public function test_locked_user_cannot_resend_two_factor_otp_and_attempt_is_audited_on_two_factor_surface(): void
+    {
+        /** @var User $manager */
+        $manager = User::factory()->create([
+            'email' => 'resend-lock@example.com',
+        ]);
+        $manager->assignRole('manager');
+        $manager->forceFill([
+            'auth_hard_locked_at' => now(),
+            'two_factor_secret' => encrypt('otp:manager-secret'),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        $this->withSession([
+            'login.id' => $manager->id,
+            'login.remember' => false,
+        ])->post(route('two-factor.otp.resend'), [
+            'channel' => 'email',
+        ])->assertRedirect(route('login'));
+
+        $this->assertDatabaseHas('auth_audit_logs', [
+            'user_id' => $manager->id,
+            'event' => 'auth.lock.blocked',
+            'context->surface' => 'two_factor',
+        ]);
+    }
+
+    public function test_missing_two_factor_session_on_post_redirects_back_to_login(): void
+    {
+        $this->post(route('two-factor.login.store'), [
+            'code' => '123456',
+        ])->assertRedirect(route('login'));
+    }
+
     public function test_recovery_code_is_single_use_and_is_replaced_after_successful_login(): void
     {
         /** @var User $tenant */
