@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Finance\RentDashboardController;
+use App\Http\Controllers\Finance\LeasePaymentHistoryController;
+use App\Http\Controllers\Finance\RentReturnController;
 use App\Http\Controllers\Property\PropertyController;
 use App\Http\Controllers\Property\PropertyManagerAssignmentController;
 use App\Http\Controllers\Tenancy\LeaseDepositController;
@@ -25,6 +28,7 @@ Route::get('/dashboard', DashboardController::class)
     ->name('dashboard');
 
 Route::middleware(['auth', 'full-auth-session'])->group(function () {
+    Route::get('/finance', RentDashboardController::class)->name('finance.index');
     Route::get('/settings/security', [SecuritySettingsController::class, 'show'])->name('settings.security');
     Route::get('/properties', [PropertyController::class, 'index'])->name('properties.index');
     Route::get('/properties/create', [PropertyController::class, 'create'])->name('properties.create');
@@ -49,6 +53,15 @@ Route::middleware(['auth', 'full-auth-session'])->group(function () {
     Route::get('/leases/create', [LeaseController::class, 'create'])->name('leases.create');
     Route::post('/leases', [LeaseController::class, 'store'])->name('leases.store');
     Route::get('/leases/{lease}', [LeaseController::class, 'show'])->name('leases.show');
+    Route::get('/leases/{lease}/rent-return/create', [RentReturnController::class, 'create'])->name('leases.rent-return.create');
+    Route::post('/leases/{lease}/rent-return', [RentReturnController::class, 'store'])->name('leases.rent-return.store');
+    Route::get('/leases/{lease}/rent-return/{rentReturn}', [RentReturnController::class, 'show'])->name('leases.rent-return.show');
+    Route::patch('/leases/{lease}/rent-return/{rentReturn}', [RentReturnController::class, 'update'])->name('leases.rent-return.update');
+    Route::get('/leases/{lease}/rent-return/{rentReturn}/summary', [RentReturnController::class, 'downloadSummary'])->name('leases.rent-return.summary.download');
+    Route::get('/leases/{lease}/payments', [LeasePaymentHistoryController::class, 'show'])->name('leases.payments.show');
+    Route::post('/leases/{lease}/payments/{ledger}/instalments', [LeasePaymentHistoryController::class, 'storeInstalment'])->name('leases.payments.instalments.store');
+    Route::get('/leases/{lease}/payments/{ledger}/instalments/{instalment}/receipt', [LeasePaymentHistoryController::class, 'downloadReceipt'])->name('leases.payments.receipt.download');
+    Route::patch('/leases/{lease}/payments/{ledger}/instalments/{instalment}', [LeasePaymentHistoryController::class, 'correctInstalment'])->name('leases.payments.instalments.correct');
     Route::get('/leases/{lease}/edit', [LeaseController::class, 'edit'])->name('leases.edit');
     Route::put('/leases/{lease}', [LeaseController::class, 'update'])->name('leases.update');
     Route::post('/leases/{lease}/renew', [LeaseController::class, 'renew'])->name('leases.renew');
@@ -73,6 +86,8 @@ Route::middleware(['auth', 'full-auth-session'])->group(function () {
             ->name('settings.security.two-factor.otp.resend');
         Route::post('/settings/security/two-factor/recovery-codes', [SecuritySettingsController::class, 'regenerateRecoveryCodes'])
             ->name('settings.security.two-factor.recovery-codes');
+        Route::delete('/leases/{lease}/payments/{ledger}/instalments/{instalment}', [LeasePaymentHistoryController::class, 'voidInstalment'])
+            ->name('leases.payments.instalments.void');
     });
 });
 

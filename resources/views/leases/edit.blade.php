@@ -21,6 +21,7 @@
                     @include('leases._form', [
                         'cancelUrl' => route('leases.show', $lease),
                         'submitLabel' => 'Save changes',
+                        'vacancyGapContext' => $vacancyGapContext,
                     ])
                 </form>
             </div>

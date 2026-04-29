@@ -10,6 +10,19 @@
     </div>
 @endif
 
+@if (! empty($vacancyGapContext))
+    <div class="table-card" style="margin-bottom: 1.25rem;">
+        <div class="pending-card">
+            <div class="pending-row">
+                <span>A previous tenant vacated this unit on {{ $vacancyGapContext['vacationDate'] }}. A Rent Return for {{ $vacancyGapContext['previousLease']->tenant->full_name }} is {{ $vacancyGapContext['rentReturnStatusLabel'] }}. You may proceed with this lease without processing it first.</span>
+            </div>
+            <div class="pending-row">
+                <a href="{{ $vacancyGapContext['quickActionUrl'] }}">Open prior rent return</a>
+            </div>
+        </div>
+    </div>
+@endif
+
 <div class="form-layout-stack">
     <section class="form-section-card">
         <div class="form-section-head">
@@ -87,6 +100,26 @@
                             <option value="{{ $statusOption }}" @selected(old('status', $lease->status ?: 'draft') === $statusOption)>{{ str($statusOption)->replace('_', ' ')->title() }}</option>
                         @endforeach
                     </select>
+                </label>
+
+                <label class="field-group">
+                    <span class="field-label">Grace period</span>
+                    <input class="field-input" type="number" min="0" max="31" name="grace_period_days" value="{{ old('grace_period_days', $lease->grace_period_days ?? 5) }}" required>
+                </label>
+            </div>
+
+            <div class="two-up-grid">
+                <label class="field-group">
+                    <span class="field-label">Late fee mode</span>
+                    <select class="field-input" name="late_fee_mode" required>
+                        <option value="fixed" @selected(old('late_fee_mode', $lease->late_fee_mode ?? 'fixed') === 'fixed')>Fixed amount</option>
+                        <option value="percentage" @selected(old('late_fee_mode', $lease->late_fee_mode) === 'percentage')>Percentage of outstanding</option>
+                    </select>
+                </label>
+
+                <label class="field-group">
+                    <span class="field-label">Late fee value</span>
+                    <input class="field-input" type="number" min="0" step="0.01" name="late_fee_value" value="{{ old('late_fee_value', $lease->late_fee_value ?? 0) }}" required>
                 </label>
             </div>
 

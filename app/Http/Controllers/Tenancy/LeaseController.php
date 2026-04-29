@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -44,12 +45,24 @@ class LeaseController extends Controller
     {
         $this->authorize('create', Lease::class);
 
+        /** @var User|null $user */
+        $user = $request->user();
+        $selectedUnit = $request->filled('unit_id') && $user instanceof User
+            ? Unit::query()->visibleTo($user)->find((int) $request->integer('unit_id'))
+            : null;
+        $lease = new Lease();
+
+        if ($selectedUnit) {
+            $lease->unit_id = $selectedUnit->id;
+        }
+
         return view('leases.create', [
-            'lease' => new Lease(),
-            'leaseUnits' => $this->unitOptionsFor($request->user()),
+            'lease' => $lease,
+            'leaseUnits' => $this->unitOptionsFor($user),
             'statusOptions' => Lease::STATUSES,
-            'tenantOptions' => collect(),
-            'user' => $request->user(),
+            'tenantOptions' => $this->tenantOptionsFor($user),
+            'user' => $user,
+            'vacancyGapContext' => $this->vacancyGapContextFor($user, $selectedUnit?->id),
         ]);
     }
 
@@ -63,6 +76,16 @@ class LeaseController extends Controller
 
         $unit = $this->findVisibleUnitOrFail($user, (int) $data['unit_id']);
         $tenant = $this->findVisibleTenantOrFail($user, (int) $data['tenant_id'], $unit->id);
+
+        if ($conflictingLease = $this->findVacancyGapConflict($user, $unit->id, $data['start_on'])) {
+            return back()->withInput()->withErrors([
+                'start_on' => sprintf(
+                    'This unit was vacated on %s by %s. The next lease must start on or after that date.',
+                    $conflictingLease->terminated_at->toDateString(),
+                    $conflictingLease->tenant->full_name,
+                ),
+            ]);
+        }
 
         $lease = new Lease([
             ...$data,
@@ -89,10 +112,18 @@ class LeaseController extends Controller
     {
         $this->authorize('view', $lease);
 
-        $lease->load(['previousLease', 'renewals', 'tenant', 'unit.property']);
+        $lease->load(['previousLease', 'renewals', 'rentReturn', 'tenant', 'unit.property']);
+
+        $rentReturnDraft = null;
+
+        if ($lease->terminated_at || $lease->rentReturn) {
+            $lease->ensureRentLedgers($request->user());
+            $rentReturnDraft = $lease->rentReturnDraft();
+        }
 
         return view('leases.show', [
             'lease' => $lease,
+            'rentReturnDraft' => $rentReturnDraft,
             'user' => $request->user(),
         ]);
     }
@@ -109,6 +140,7 @@ class LeaseController extends Controller
             'statusOptions' => Lease::STATUSES,
             'tenantOptions' => $this->tenantOptionsFor($request->user()),
             'user' => $request->user(),
+            'vacancyGapContext' => null,
         ]);
     }
 
@@ -122,6 +154,16 @@ class LeaseController extends Controller
 
         $unit = $this->findVisibleUnitOrFail($user, (int) $data['unit_id']);
         $tenant = $this->findVisibleTenantOrFail($user, (int) $data['tenant_id'], $unit->id);
+
+        if ($conflictingLease = $this->findVacancyGapConflict($user, $unit->id, $data['start_on'], $lease)) {
+            return back()->withInput()->withErrors([
+                'start_on' => sprintf(
+                    'This unit was vacated on %s by %s. The next lease must start on or after that date.',
+                    $conflictingLease->terminated_at->toDateString(),
+                    $conflictingLease->tenant->full_name,
+                ),
+            ]);
+        }
 
         $lease->fill([
             ...$data,
@@ -156,6 +198,9 @@ class LeaseController extends Controller
             'end_on' => ['required', 'date', 'after:start_on'],
             'rent_amount' => ['required', 'numeric', 'min:0'],
             'billing_day' => ['required', 'integer', 'between:1,28'],
+            'grace_period_days' => ['nullable', 'integer', 'min:0', 'max:31'],
+            'late_fee_mode' => ['nullable', 'string', Rule::in(['fixed', 'percentage'])],
+            'late_fee_value' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
         ]);
 
@@ -176,6 +221,9 @@ class LeaseController extends Controller
                 'end_on' => $data['end_on'],
                 'rent_amount' => $data['rent_amount'],
                 'billing_day' => $data['billing_day'],
+                'grace_period_days' => $data['grace_period_days'] ?? $lease->grace_period_days,
+                'late_fee_mode' => $data['late_fee_mode'] ?? $lease->late_fee_mode,
+                'late_fee_value' => $data['late_fee_value'] ?? $lease->late_fee_value,
                 'status' => 'active',
                 'notes' => $data['notes'] ?? null,
                 'created_by' => $user->id,
@@ -195,6 +243,9 @@ class LeaseController extends Controller
             'end_on' => ['required', 'date', 'after:start_on'],
             'rent_amount' => ['required', 'numeric', 'min:0'],
             'billing_day' => ['required', 'integer', 'between:1,28'],
+            'grace_period_days' => ['nullable', 'integer', 'min:0', 'max:31'],
+            'late_fee_mode' => ['nullable', 'string', Rule::in(['fixed', 'percentage'])],
+            'late_fee_value' => ['nullable', 'numeric', 'min:0'],
             'status' => ['required', 'string', Rule::in(Lease::STATUSES)],
             'notes' => ['nullable', 'string'],
         ]);
@@ -247,5 +298,58 @@ class LeaseController extends Controller
         abort_unless($tenant, 403);
 
         return $tenant;
+    }
+
+    private function vacancyGapContextFor(?User $user, ?int $unitId): ?array
+    {
+        if (! $user instanceof User || ! $unitId) {
+            return null;
+        }
+
+        $previousLease = Lease::query()
+            ->visibleTo($user)
+            ->where('unit_id', $unitId)
+            ->whereNotNull('terminated_at')
+            ->with(['rentReturn', 'tenant'])
+            ->latest('terminated_at')
+            ->first();
+
+        if (! $previousLease) {
+            return null;
+        }
+
+        $statusLabel = $previousLease->rentReturn
+            ? str($previousLease->rentReturn->status)->replace('_', ' ')->title()->toString()
+            : 'Not Yet Initiated';
+        $quickActionUrl = $previousLease->rentReturn
+            ? route('leases.rent-return.show', [$previousLease, $previousLease->rentReturn])
+            : route('leases.rent-return.create', $previousLease);
+
+        return [
+            'previousLease' => $previousLease,
+            'quickActionUrl' => $quickActionUrl,
+            'rentReturnStatusLabel' => $statusLabel,
+            'vacationDate' => $previousLease->terminated_at->copy()->toDateString(),
+        ];
+    }
+
+    private function findVacancyGapConflict(User $user, int $unitId, string $startOn, ?Lease $ignoreLease = null): ?Lease
+    {
+        $candidate = Lease::query()
+            ->visibleTo($user)
+            ->where('unit_id', $unitId)
+            ->whereNotNull('terminated_at')
+            ->with('tenant')
+            ->when($ignoreLease, fn ($query) => $query->whereKeyNot($ignoreLease->id))
+            ->latest('terminated_at')
+            ->first();
+
+        if (! $candidate) {
+            return null;
+        }
+
+        return Carbon::parse($startOn)->startOfDay()->lt($candidate->terminated_at->copy()->startOfDay())
+            ? $candidate
+            : null;
     }
 }

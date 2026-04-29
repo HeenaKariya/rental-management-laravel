@@ -88,9 +88,9 @@
                     </div>
 
                     <div class="pending-row"><span>Phase 1 security core</span><span class="pending-pill is-green">Done</span></div>
-                    <div class="pending-row"><span>Phase 2 property core and manager scoping</span><span class="pending-pill is-gold">Active</span></div>
-                    <div class="pending-row"><span>Phase 3 units, tenants, leases, deposits</span><span class="pending-pill is-neutral">Next</span></div>
-                    <div class="pending-row"><span>Phase 4 rent ledger and returns</span><span class="pending-pill is-neutral">Queued</span></div>
+                    <div class="pending-row"><span>Phase 2 property core and manager scoping</span><span class="pending-pill is-green">Done</span></div>
+                    <div class="pending-row"><span>Phase 3 units, tenants, leases, deposits</span><span class="pending-pill is-green">Done</span></div>
+                    <div class="pending-row"><span>Phase 4 rent ledger and returns</span><span class="pending-pill is-gold">Active</span></div>
                 </article>
             </div>
 

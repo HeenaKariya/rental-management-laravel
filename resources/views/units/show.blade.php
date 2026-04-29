@@ -13,6 +13,9 @@
 
                     <div class="page-actions">
                         <a class="btn btn-ghost" href="{{ route('units.index') }}">Back to units</a>
+                        @can('create', App\Models\Lease::class)
+                            <a class="btn btn-ghost" href="{{ route('leases.create', ['unit_id' => $unit->id]) }}">Start new lease</a>
+                        @endcan
                         @can('update', $unit)
                             <a class="btn btn-solid" href="{{ route('units.edit', $unit) }}">Edit unit</a>
                         @endcan
