@@ -115,6 +115,11 @@ class Property extends Model
         return $this->hasMany(PropertyPhoto::class)->orderBy('sort_order');
     }
 
+    public function units(): HasMany
+    {
+        return $this->hasMany(Unit::class)->orderBy('unit_number');
+    }
+
     public function activityLogs(): HasMany
     {
         return $this->hasMany(PropertyActivityLog::class)->latest('occurred_at');
