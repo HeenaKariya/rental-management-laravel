@@ -18,6 +18,11 @@ class SecuritySettingsController extends Controller
 {
     public function show(Request $request): View
     {
+        return $this->twoFactorControls($request);
+    }
+
+    public function twoFactorControls(Request $request): View
+    {
         /** @var User $user */
         $user = $request->user();
         $twoFactorPendingConfirmation = $user->two_factor_secret !== null && $user->two_factor_confirmed_at === null;
@@ -29,7 +34,7 @@ class SecuritySettingsController extends Controller
             $otpSetup = app(TwoFactorOtpBroker::class)->ensureActiveToken($user, TwoFactorOtpBroker::PURPOSE_SETUP_CONFIRMATION);
         }
 
-        return view('settings.security', [
+        return view('settings.security-two-factor', [
             'auditLogs' => AuthAuditLog::query()
                 ->where('user_id', $user->id)
                 ->latest('occurred_at')

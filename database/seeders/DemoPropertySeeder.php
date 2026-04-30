@@ -31,6 +31,9 @@ class DemoPropertySeeder extends Seeder
                 'phone' => '+15550000001',
             ]
         );
+        if ($managerA->phone !== '+15550000001') {
+            $managerA->forceFill(['phone' => '+15550000001'])->save();
+        }
         $managerA->assignRole('manager');
 
         $managerB = User::query()->firstOrCreate(
@@ -38,9 +41,12 @@ class DemoPropertySeeder extends Seeder
             [
                 'name' => 'Riya Manager',
                 'password' => 'password',
-                'phone' => '+15550000002',
+                'phone' => '+919428794129',
             ]
         );
+        if ($managerB->phone !== '+919428794129') {
+            $managerB->forceFill(['phone' => '+919428794129'])->save();
+        }
         $managerB->assignRole('manager');
 
         $owner = User::query()->firstOrCreate(

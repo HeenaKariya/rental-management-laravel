@@ -64,6 +64,7 @@ Route::middleware(['auth', 'full-auth-session'])->group(function () {
     Route::get('/finance/reports/loan-schedule.csv', [LoanScheduleReportController::class, 'csv'])->name('finance.reports.loan-schedule.csv');
     Route::get('/finance/reports/loan-schedule.pdf', [LoanScheduleReportController::class, 'pdf'])->name('finance.reports.loan-schedule.pdf');
     Route::get('/settings/security', [SecuritySettingsController::class, 'show'])->name('settings.security');
+    Route::get('/settings/security/two-factor', [SecuritySettingsController::class, 'twoFactorControls'])->name('settings.security.two-factor');
     Route::get('/properties', [PropertyController::class, 'index'])->name('properties.index');
     Route::get('/properties/create', [PropertyController::class, 'create'])->name('properties.create');
     Route::post('/properties', [PropertyController::class, 'store'])->name('properties.store');

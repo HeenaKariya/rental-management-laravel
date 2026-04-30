@@ -3,8 +3,8 @@
 namespace App\Providers;
 
 use App\Domain\Auth\Contracts\WhatsappOtpGateway;
+use App\Domain\Auth\Services\ConfiguredWhatsappOtpGateway;
 use App\Domain\Auth\Services\HybridTwoFactorAuthenticationProvider;
-use App\Domain\Auth\Services\LogWhatsappOtpGateway;
 use App\Domain\Auth\Services\TwoFactorOtpBroker;
 use App\Domain\Notifications\Contracts\WhatsappNotificationGateway;
 use App\Domain\Notifications\Services\LogWhatsappNotificationGateway;
@@ -39,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(WhatsappOtpGateway::class, LogWhatsappOtpGateway::class);
+        $this->app->singleton(WhatsappOtpGateway::class, ConfiguredWhatsappOtpGateway::class);
         $this->app->singleton(WhatsappNotificationGateway::class, function () {
             $driver = (string) config('notifications.whatsapp.driver', 'log');
 

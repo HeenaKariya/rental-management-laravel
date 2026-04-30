@@ -111,8 +111,8 @@
 
                                     <div class="oversight-user-meta">
                                         @if ($user->latestAuthAuditLog)
-                                            <p class="oversight-user-name">{{ $user->latestAuthAuditLog->occurred_at?->format('M j, Y') }}</p>
-                                            <p class="oversight-user-email">{{ $user->latestAuthAuditLog->occurred_at?->format('g:i A') }}</p>
+                                            <p class="oversight-user-name">{{ $user->latestAuthAuditLog->occurred_at?->timezone('Asia/Kolkata')->format('M j, Y') }}</p>
+                                            <p class="oversight-user-email">{{ $user->latestAuthAuditLog->occurred_at?->timezone('Asia/Kolkata')->format('g:i A') }} IST</p>
                                         @else
                                             <p class="oversight-user-name">Never</p>
                                         @endif
@@ -136,7 +136,7 @@
                                     <article class="security-log-item">
                                         <div class="security-log-head">
                                             <span class="badge {{ $auditLog->badgeClass() }}">{{ $auditLog->label() }}</span>
-                                            <span class="security-log-meta">{{ $auditLog->occurred_at?->format('M j, Y g:i A') }}</span>
+                                            <span class="security-log-meta">{{ $auditLog->occurred_at?->timezone('Asia/Kolkata')->format('M j, Y g:i A') }} IST</span>
                                         </div>
 
                                         <p class="oversight-log-copy">

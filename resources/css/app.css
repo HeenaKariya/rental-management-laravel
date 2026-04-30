@@ -1993,7 +1993,12 @@ input {
 	padding: 10px;
 }
 
-.security-code-list,
+.security-code-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+	gap: 8px;
+}
+
 .security-log-list {
 	display: flex;
 	flex-direction: column;
@@ -2012,7 +2017,7 @@ input {
 	font-family: var(--font-mono);
 	font-size: 0.82rem;
 	font-weight: 500;
-	word-break: break-all;
+	word-break: normal;
 }
 
 .security-log-item {
