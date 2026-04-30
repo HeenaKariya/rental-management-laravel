@@ -8,6 +8,7 @@ use App\Domain\Auth\Services\LogWhatsappOtpGateway;
 use App\Domain\Auth\Services\TwoFactorOtpBroker;
 use App\Domain\Notifications\Contracts\WhatsappNotificationGateway;
 use App\Domain\Notifications\Services\LogWhatsappNotificationGateway;
+use App\Domain\Notifications\Services\WpsmsWhatsappNotificationGateway;
 use App\Http\Responses\Auth\FailedTwoFactorLoginResponse;
 use App\Models\AuthAuditLog;
 use App\Models\PreSession;
@@ -39,7 +40,14 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(WhatsappOtpGateway::class, LogWhatsappOtpGateway::class);
-        $this->app->singleton(WhatsappNotificationGateway::class, LogWhatsappNotificationGateway::class);
+        $this->app->singleton(WhatsappNotificationGateway::class, function () {
+            $driver = (string) config('notifications.whatsapp.driver', 'log');
+
+            return match ($driver) {
+                'wpsms' => app(WpsmsWhatsappNotificationGateway::class),
+                default => app(LogWhatsappNotificationGateway::class),
+            };
+        });
         $this->app->singleton(TwoFactorAuthenticationProviderContract::class, function ($app) {
             return new HybridTwoFactorAuthenticationProvider(
                 $app->make(Google2FA::class),

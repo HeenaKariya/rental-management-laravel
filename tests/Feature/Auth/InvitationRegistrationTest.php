@@ -2,10 +2,14 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Domain\Auth\Notifications\InvitationIssuedNotification;
+use App\Domain\Notifications\Contracts\WhatsappNotificationGateway;
 use App\Models\Invitation;
+use App\Models\NotificationEventSetting;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class InvitationRegistrationTest extends TestCase
@@ -21,9 +25,16 @@ class InvitationRegistrationTest extends TestCase
 
     public function test_super_admin_can_create_a_role_scoped_invitation(): void
     {
+        Notification::fake();
+
         /** @var User $user */
         $user = User::factory()->create();
         $user->assignRole('super_admin');
+
+        NotificationEventSetting::query()->updateOrCreate(
+            ['event_key' => 'user_invitation_issued'],
+            ['is_enabled' => true, 'email_enabled' => true, 'whatsapp_enabled' => false, 'lead_days' => 0],
+        );
 
         $this->actingAs($user)
             ->post('/admin/invitations', [
@@ -34,6 +45,61 @@ class InvitationRegistrationTest extends TestCase
 
         $this->assertDatabaseHas('invitations', [
             'email' => 'manager@example.com',
+        ]);
+
+        Notification::assertSentOnDemand(InvitationIssuedNotification::class);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'user_invitation_issued',
+            'status' => 'sent',
+            'channel' => 'email',
+            'recipient_email' => 'manager@example.com',
+        ]);
+    }
+
+    public function test_invitation_can_send_optional_whatsapp_notification_when_phone_is_provided(): void
+    {
+        Notification::fake();
+
+        $this->app->instance(WhatsappNotificationGateway::class, new class implements WhatsappNotificationGateway
+        {
+            public function send(string $phone, string $message): void {}
+        });
+
+        /** @var User $user */
+        $user = User::factory()->create();
+        $user->assignRole('super_admin');
+
+        NotificationEventSetting::query()->updateOrCreate(
+            ['event_key' => 'user_invitation_issued'],
+            ['is_enabled' => true, 'email_enabled' => true, 'whatsapp_enabled' => true, 'lead_days' => 0],
+        );
+
+        $this->actingAs($user)
+            ->post('/admin/invitations', [
+                'email' => 'manager-whatsapp@example.com',
+                'phone' => '+15550009999',
+                'role' => 'manager',
+            ])
+            ->assertRedirect(route('invitations.create'));
+
+        $this->assertDatabaseHas('invitations', [
+            'email' => 'manager-whatsapp@example.com',
+            'phone' => '+15550009999',
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'user_invitation_issued',
+            'status' => 'sent',
+            'channel' => 'email',
+            'recipient_email' => 'manager-whatsapp@example.com',
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'user_invitation_issued',
+            'status' => 'sent',
+            'channel' => 'whatsapp',
+            'recipient_email' => '+15550009999',
         ]);
     }
 

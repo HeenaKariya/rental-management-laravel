@@ -34,6 +34,27 @@ Use the seeders to load a complete demo environment with properties, ownership s
 - Tenancy and rent: active, draft, and terminated leases with partial payment and void/reversal examples.
 - Agreements: active/inactive templates and generated, viewed, voided, signed, verified, and tampered integrity states.
 
+## Mailpit Setup (Local Invite Emails)
+
+Use Mailpit locally so invitation and system emails are visible in a browser inbox.
+
+1. Keep the default `.env` mail settings:
+   - `MAIL_MAILER=smtp`
+   - `MAIL_HOST=127.0.0.1`
+   - `MAIL_PORT=1025`
+   - `MAIL_FROM_ADDRESS="hello@example.com"`
+2. Run Mailpit:
+   - If installed locally: `mailpit`
+   - Or with Docker: `docker run --rm -p 1025:1025 -p 8025:8025 axllent/mailpit`
+3. Open Mailpit UI: `http://127.0.0.1:8025`
+4. Create an invitation in `/admin/invitations/create` and confirm the invite email appears in Mailpit.
+
+### Invitation Notification Behavior
+
+- On invite creation, the system sends an email invitation automatically.
+- If a phone number is provided and WhatsApp is enabled for `user_invitation_issued`, it also sends WhatsApp.
+- Both delivery attempts are logged in `notification_deliveries` for tracking/retry in Notification Center.
+
 ### Main Records to Explore
 
 - Riverfront Residency: active tenancy and rent history, multi-owner split, and signed agreement progression.

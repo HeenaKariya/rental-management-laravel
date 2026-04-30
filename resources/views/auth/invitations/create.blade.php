@@ -63,6 +63,12 @@
                                 </label>
 
                                 <label class="field-group">
+                                    <span class="field-label">Invitee WhatsApp phone (optional)</span>
+                                    <input class="field-input @error('phone') is-error @enderror" type="text" name="phone" value="{{ old('phone') }}" placeholder="+15550001111">
+                                    @error('phone')<span class="field-hint is-error">{{ $message }}</span>@enderror
+                                </label>
+
+                                <label class="field-group">
                                     <span class="field-label">Role</span>
                                     <select class="field-input @error('role') is-error @enderror" name="role" required>
                                         <option value="">Select a role</option>

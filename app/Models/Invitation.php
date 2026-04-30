@@ -13,6 +13,7 @@ class Invitation extends Model
 
     protected $fillable = [
         'email',
+        'phone',
         'role_id',
         'invited_by',
         'token',
@@ -42,6 +43,7 @@ class Invitation extends Model
     {
         return static::query()->create([
             'email' => $attributes['email'],
+            'phone' => $attributes['phone'] ?? null,
             'role_id' => $attributes['role_id'],
             'invited_by' => $attributes['invited_by'],
             'token' => (string) Str::uuid(),

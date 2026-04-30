@@ -14,19 +14,16 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class NotificationCenterController extends Controller
 {
-    private const FILTER_SESSION_KEY = 'admin.notifications.filters';
+    private const FILTER_SESSION_KEY_PREFIX = 'admin.notifications.filters.';
 
-    public function index(Request $request): View|RedirectResponse
+    public function index(): RedirectResponse
     {
-        if ($request->boolean('reset')) {
-            $request->session()->forget(self::FILTER_SESSION_KEY);
+        return to_route('admin.notifications.settings');
+    }
 
-            return to_route('admin.notifications.index');
-        }
-
+    public function settings(): View
+    {
         $eventDefaults = ReminderNotificationService::EVENTS;
-        $filters = $this->resolveFilters($request);
-        $filterQuery = $this->filtersToQuery($filters);
 
         $settings = collect($eventDefaults)
             ->map(function (int $defaultLeadDays, string $eventKey) {
@@ -44,28 +41,69 @@ class NotificationCenterController extends Controller
             ->sortBy('event_key')
             ->values();
 
-        $deliveriesQuery = $this->filteredDeliveriesQuery($filters);
+        return view('admin.notifications.settings', [
+            'settings' => $settings,
+        ]);
+    }
+
+    public function deliveries(Request $request): View|RedirectResponse
+    {
+        return to_route('admin.notifications.deliveries.email');
+    }
+
+    public function emailDeliveries(Request $request): View|RedirectResponse
+    {
+        return $this->renderChannelDeliveries($request, 'email');
+    }
+
+    public function whatsappDeliveries(Request $request): View|RedirectResponse
+    {
+        return $this->renderChannelDeliveries($request, 'whatsapp');
+    }
+
+    private function renderChannelDeliveries(Request $request, string $channel): View|RedirectResponse
+    {
+        $sessionScope = $this->filterSessionScope($channel);
+
+        if ($request->boolean('reset')) {
+            $request->session()->forget($sessionScope);
+
+            return to_route($this->deliveriesRouteName($channel));
+        }
+
+        $eventDefaults = ReminderNotificationService::EVENTS;
+        $filters = $this->resolveFilters($request, $sessionScope);
+        $filterQuery = $this->filtersToQuery($filters);
+
+        $deliveriesQuery = $this->filteredDeliveriesQuery($filters, $channel);
 
         $deliveries = (clone $deliveriesQuery)
             ->latest('id')
             ->paginate(25)
             ->appends($filterQuery);
 
-        return view('admin.notifications.index', [
+        return view('admin.notifications.deliveries', [
+            'currentChannel' => $channel,
             'filters' => $filters,
             'filterQuery' => $filterQuery,
             'deliveries' => $deliveries,
             'eventKeys' => array_keys($eventDefaults),
-            'settings' => $settings,
             'summary' => $this->summary((clone $deliveriesQuery)->get()),
         ]);
     }
 
     public function exportCsv(Request $request): StreamedResponse
     {
-        $filters = $this->resolveFilters($request);
+        return $this->exportChannelCsv($request, 'email');
+    }
 
-        $rows = $this->filteredDeliveriesQuery($filters)
+    public function exportChannelCsv(Request $request, string $channel): StreamedResponse
+    {
+        $channel = $this->normalizeChannel($channel);
+
+        $filters = $this->resolveFilters($request, $this->filterSessionScope($channel));
+
+        $rows = $this->filteredDeliveriesQuery($filters, $channel)
             ->latest('id')
             ->get();
 
@@ -96,7 +134,7 @@ class NotificationCenterController extends Controller
             }
 
             fclose($handle);
-        }, 'notification-deliveries.csv', [
+        }, 'notification-deliveries-'.$channel.'.csv', [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
@@ -113,42 +151,48 @@ class NotificationCenterController extends Controller
 
         foreach (ReminderNotificationService::EVENTS as $eventKey => $defaultLeadDays) {
             $row = $payload['events'][$eventKey] ?? [];
+            $eventEnabled = isset($row['is_enabled']) ? (bool) $row['is_enabled'] : false;
 
             NotificationEventSetting::query()->updateOrCreate(
                 ['event_key' => $eventKey],
                 [
-                    'is_enabled' => isset($row['is_enabled']) ? (bool) $row['is_enabled'] : false,
-                    'email_enabled' => isset($row['email_enabled']) ? (bool) $row['email_enabled'] : false,
-                    'whatsapp_enabled' => isset($row['whatsapp_enabled']) ? (bool) $row['whatsapp_enabled'] : false,
+                    'is_enabled' => $eventEnabled,
+                    'email_enabled' => $eventEnabled && (isset($row['email_enabled']) ? (bool) $row['email_enabled'] : false),
+                    'whatsapp_enabled' => $eventEnabled && (isset($row['whatsapp_enabled']) ? (bool) $row['whatsapp_enabled'] : false),
                     'lead_days' => isset($row['lead_days']) ? (int) $row['lead_days'] : $defaultLeadDays,
                 ]
             );
         }
 
-        return to_route('admin.notifications.index')->with('status', 'Notification trigger settings updated.');
+        return to_route('admin.notifications.settings')->with('status', 'Notification trigger settings updated.');
     }
 
     public function dispatchNow(ReminderNotificationService $service): RedirectResponse
     {
-        $result = $service->dispatch();
+        $channel = $this->normalizeChannel(request()->input('delivery_channel'));
+        $result = $service->dispatch(today: null, channel: $channel);
+        $channelLabel = $channel === 'whatsapp' ? 'WhatsApp' : 'Email';
 
-        return to_route('admin.notifications.index')
-            ->with('status', 'Dispatch run complete. Sent '.$result['sent'].' and failed '.$result['failed'].'.');
+        return to_route($this->deliveriesRouteName($channel))
+            ->with('status', $channelLabel.' dispatch complete. Sent '.$result['sent'].' and failed '.$result['failed'].'.');
     }
 
     public function retryFailed(ReminderNotificationService $service): RedirectResponse
     {
-        $result = $service->retryFailed();
+        $channel = $this->normalizeChannel(request()->input('delivery_channel'));
+        $result = $service->retryFailed($channel);
+        $channelLabel = $channel === 'whatsapp' ? 'WhatsApp' : 'Email';
 
-        return to_route('admin.notifications.index')
-            ->with('status', 'Retry run complete. Retried '.$result['retried'].' and resolved '.$result['resolved'].'.');
+        return to_route($this->deliveriesRouteName($channel))
+            ->with('status', $channelLabel.' retry complete. Retried '.$result['retried'].' and resolved '.$result['resolved'].'.');
     }
 
     public function retryOne(ReminderNotificationService $service, NotificationDelivery $delivery): RedirectResponse
     {
         $resolved = $service->retryDelivery($delivery);
+        $channel = $this->normalizeChannel(request()->input('delivery_channel') ?: $delivery->channel);
 
-        return to_route('admin.notifications.index')
+        return to_route($this->deliveriesRouteName($channel))
             ->with('status', $resolved ? 'Delivery retried successfully.' : 'Retry failed. Recipient email is still missing.');
     }
 
@@ -181,19 +225,19 @@ class NotificationCenterController extends Controller
         ];
     }
 
-    private function resolveFilters(Request $request): array
+    private function resolveFilters(Request $request, string $sessionScope): array
     {
         $hasFilterInput = collect(['status', 'event_key', 'date_from', 'date_to', 'recipient'])
             ->contains(fn (string $key) => $request->has($key));
 
         if ($hasFilterInput) {
             $filters = $this->normalizeFilters($request);
-            $request->session()->put(self::FILTER_SESSION_KEY, $filters);
+            $request->session()->put($sessionScope, $filters);
 
             return $filters;
         }
 
-        $stored = $request->session()->get(self::FILTER_SESSION_KEY);
+        $stored = $request->session()->get($sessionScope);
 
         if (is_array($stored)) {
             return array_merge([
@@ -241,10 +285,11 @@ class NotificationCenterController extends Controller
         return $query;
     }
 
-    private function filteredDeliveriesQuery(array $filters)
+    private function filteredDeliveriesQuery(array $filters, string $channel)
     {
         return NotificationDelivery::query()
             ->with('notifiable')
+            ->where('channel', $this->normalizeChannel($channel))
             ->when(
                 $filters['status'] !== 'all',
                 fn ($query) => $query->where('status', $filters['status'])
@@ -265,5 +310,22 @@ class NotificationCenterController extends Controller
                 filled($filters['recipient']),
                 fn ($query) => $query->where('recipient_email', 'like', '%'.$filters['recipient'].'%')
             );
+    }
+
+    private function normalizeChannel(?string $channel): string
+    {
+        return in_array($channel, ['email', 'whatsapp'], true) ? $channel : 'email';
+    }
+
+    private function deliveriesRouteName(string $channel): string
+    {
+        return $this->normalizeChannel($channel) === 'whatsapp'
+            ? 'admin.notifications.deliveries.whatsapp'
+            : 'admin.notifications.deliveries.email';
+    }
+
+    private function filterSessionScope(string $channel): string
+    {
+        return self::FILTER_SESSION_KEY_PREFIX.$this->normalizeChannel($channel);
     }
 }

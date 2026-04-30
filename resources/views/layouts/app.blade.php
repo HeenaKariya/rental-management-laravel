@@ -15,6 +15,7 @@
             $isSuperAdmin = $authUser?->hasRole('super_admin');
             $isManager = $authUser?->hasRole('manager');
             $isTenant = $authUser?->hasRole('tenant');
+            $notificationsMenuActive = request()->routeIs('admin.notifications.*');
             $appNavigation = collect([
                 ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'dashboard', 'active' => request()->routeIs('dashboard'), 'visible' => true, 'badge' => null],
                 ['label' => 'Properties', 'route' => 'properties.index', 'icon' => 'property', 'active' => request()->routeIs('properties.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager'])],
@@ -24,7 +25,6 @@
                 ['label' => 'Deposits', 'route' => 'deposits.index', 'icon' => 'finance', 'active' => request()->routeIs('deposits.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager'])],
                 ['label' => 'Finance', 'route' => 'finance.index', 'icon' => 'finance', 'active' => request()->routeIs('finance.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager'])],
                 ['label' => 'Security', 'route' => 'settings.security', 'icon' => 'security', 'active' => request()->routeIs('settings.security*'), 'visible' => true, 'badge' => null],
-                ['label' => 'Notifications', 'route' => 'admin.notifications.index', 'icon' => 'finance', 'active' => request()->routeIs('admin.notifications.*'), 'visible' => $isSuperAdmin, 'badge' => null],
                 ['label' => '2FA Oversight', 'route' => 'admin.security.two-factor.index', 'icon' => 'shield', 'active' => request()->routeIs('admin.security.two-factor.*'), 'visible' => $isSuperAdmin, 'badge' => null],
                 ['label' => 'Invitations', 'route' => 'invitations.create', 'icon' => 'invite', 'active' => request()->routeIs('invitations.create') || request()->routeIs('invitations.store'), 'visible' => $isSuperAdmin, 'badge' => null],
             ])->where('visible');
@@ -58,6 +58,29 @@
                             @endif --}}
                         </a>
                     @endforeach
+
+                    @if ($isSuperAdmin)
+                        <div class="app-nav-group{{ $notificationsMenuActive ? ' is-open' : '' }}" data-sidebar-submenu>
+                            <button
+                                class="app-nav-group-toggle{{ $notificationsMenuActive ? ' is-active' : '' }}"
+                                type="button"
+                                data-sidebar-submenu-toggle
+                                aria-expanded="{{ $notificationsMenuActive ? 'true' : 'false' }}"
+                            >
+                                <span class="app-nav-label">
+                                    @include('partials.app-icon', ['icon' => 'finance'])
+                                    <span>Notifications</span>
+                                </span>
+                                <span class="app-nav-caret" aria-hidden="true">▾</span>
+                            </button>
+
+                            <div class="app-nav-submenu">
+                                <a class="app-nav-sublink{{ request()->routeIs('admin.notifications.settings') ? ' is-active' : '' }}" href="{{ route('admin.notifications.settings') }}">Event settings</a>
+                                <a class="app-nav-sublink{{ request()->routeIs('admin.notifications.deliveries.email') ? ' is-active' : '' }}" href="{{ route('admin.notifications.deliveries.email') }}">Email logs</a>
+                                <a class="app-nav-sublink{{ request()->routeIs('admin.notifications.deliveries.whatsapp') ? ' is-active' : '' }}" href="{{ route('admin.notifications.deliveries.whatsapp') }}">WhatsApp logs</a>
+                            </div>
+                        </div>
+                    @endif
                 </nav>
             </aside>
 

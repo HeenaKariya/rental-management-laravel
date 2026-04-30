@@ -37,11 +37,13 @@ class ReminderNotificationService
         'agreement_signed' => 0,
         'agreement_integrity_failed' => 0,
         'notarized_agreement_upload_pending' => 7,
+        'user_invitation_issued' => 0,
     ];
 
-    public function dispatch(?Carbon $today = null): array
+    public function dispatch(?Carbon $today = null, ?string $channel = null): array
     {
         $today ??= now()->startOfDay();
+        $channelFilter = in_array($channel, ['email', 'whatsapp'], true) ? $channel : null;
 
         $sent = 0;
         $failed = 0;
@@ -57,7 +59,7 @@ class ReminderNotificationService
             $snapshots = $this->snapshotForEvent($eventKey, $today, $leadDays);
 
             foreach ($snapshots as $snapshot) {
-                $deliveries = $this->deliver($eventKey, $snapshot, $eventConfig);
+                $deliveries = $this->deliver($eventKey, $snapshot, $eventConfig, $channelFilter);
 
                 foreach ($deliveries as $delivery) {
                     if ($delivery->status === 'sent') {
@@ -75,14 +77,21 @@ class ReminderNotificationService
         ];
     }
 
-    public function retryFailed(): array
+    public function retryFailed(?string $channel = null): array
     {
         $retried = 0;
         $resolved = 0;
+        $channelFilter = in_array($channel, ['email', 'whatsapp'], true) ? $channel : null;
 
-        NotificationDelivery::query()
+        $query = NotificationDelivery::query()
             ->where('status', 'failed')
-            ->whereIn('channel', ['email', 'whatsapp'])
+            ->whereIn('channel', ['email', 'whatsapp']);
+
+        if ($channelFilter) {
+            $query->where('channel', $channelFilter);
+        }
+
+        $query
             ->orderBy('id')
             ->chunkById(100, function (Collection $deliveries) use (&$retried, &$resolved): void {
                 foreach ($deliveries as $delivery) {
@@ -169,7 +178,7 @@ class ReminderNotificationService
         return false;
     }
 
-    private function deliver(string $eventKey, array $snapshot, array $eventConfig): array
+    private function deliver(string $eventKey, array $snapshot, array $eventConfig, ?string $channelFilter = null): array
     {
         $logger = app(NotificationDeliveryLogger::class);
         $whatsappGateway = app(WhatsappNotificationGateway::class);
@@ -182,7 +191,10 @@ class ReminderNotificationService
 
         $deliveries = [];
 
-        if ((bool) ($eventConfig['email_enabled'] ?? true)) {
+        $allowEmail = $channelFilter === null || $channelFilter === 'email';
+        $allowWhatsapp = $channelFilter === null || $channelFilter === 'whatsapp';
+
+        if ($allowEmail && (bool) ($eventConfig['email_enabled'] ?? true)) {
             if (! $recipient || blank($recipient->email)) {
                 $deliveries[] = $logger->logFailed(
                     $eventKey,
@@ -205,7 +217,7 @@ class ReminderNotificationService
             }
         }
 
-        if ((bool) ($eventConfig['whatsapp_enabled'] ?? false)) {
+        if ($allowWhatsapp && (bool) ($eventConfig['whatsapp_enabled'] ?? false)) {
             $phone = $recipient?->phone;
 
             if (! $recipient || blank($phone)) {
@@ -247,7 +259,7 @@ class ReminderNotificationService
             }
         }
 
-        if ($deliveries === []) {
+        if ($deliveries === [] && $channelFilter === null) {
             $deliveries[] = $logger->logFailed(
                 $eventKey,
                 $recipient,

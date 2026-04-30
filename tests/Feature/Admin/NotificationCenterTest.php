@@ -20,8 +20,12 @@ class NotificationCenterTest extends TestCase
 
         $this->actingAs($superAdmin)
             ->get(route('admin.notifications.index'))
+            ->assertRedirect(route('admin.notifications.settings'));
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.notifications.settings'))
             ->assertOk()
-            ->assertSee('Notification center')
+            ->assertSee('Notification settings')
             ->assertSee('Trigger configuration');
 
         $this->actingAs($superAdmin)
@@ -41,7 +45,7 @@ class NotificationCenterTest extends TestCase
                     ],
                 ],
             ])
-            ->assertRedirect(route('admin.notifications.index'));
+            ->assertRedirect(route('admin.notifications.settings'));
 
         $this->assertDatabaseHas('notification_event_settings', [
             'event_key' => 'rent_due_reminder',
@@ -54,7 +58,7 @@ class NotificationCenterTest extends TestCase
         $this->assertDatabaseHas('notification_event_settings', [
             'event_key' => 'lease_expiring_soon',
             'is_enabled' => 0,
-            'email_enabled' => 1,
+            'email_enabled' => 0,
             'whatsapp_enabled' => 0,
             'lead_days' => 10,
         ]);
@@ -85,7 +89,7 @@ class NotificationCenterTest extends TestCase
 
         $this->actingAs($superAdmin)
             ->post(route('admin.notifications.retry-one', $delivery))
-            ->assertRedirect(route('admin.notifications.index'));
+            ->assertRedirect(route('admin.notifications.deliveries.email'));
 
         $this->assertDatabaseHas('notification_deliveries', [
             'id' => $delivery->id,
@@ -157,17 +161,15 @@ class NotificationCenterTest extends TestCase
         ];
 
         $this->actingAs($superAdmin)
-            ->get(route('admin.notifications.index', $query))
+            ->get(route('admin.notifications.deliveries.email', $query))
             ->assertOk()
-            ->assertSee('Failed only')
-            ->assertSee('Today')
-            ->assertSee('Last 7 days')
-            ->assertSee('Recent failures')
+            ->assertSee('Date from')
+            ->assertSee('Date to')
             ->assertSee('beta@example.test')
             ->assertDontSee('alpha@example.test');
 
         $this->actingAs($superAdmin)
-            ->get(route('admin.notifications.index', [
+            ->get(route('admin.notifications.deliveries.email', [
                 'status' => 'failed',
                 'date_from' => now()->subDays(6)->toDateString(),
                 'date_to' => now()->toDateString(),
@@ -211,23 +213,23 @@ class NotificationCenterTest extends TestCase
         ]);
 
         $this->actingAs($superAdmin)
-            ->get(route('admin.notifications.index', ['status' => 'failed']))
+            ->get(route('admin.notifications.deliveries.email', ['status' => 'failed']))
             ->assertOk()
             ->assertSee('visible@example.test')
             ->assertDontSee('hidden@example.test');
 
         $this->actingAs($superAdmin)
-            ->get(route('admin.notifications.index'))
+            ->get(route('admin.notifications.deliveries.email'))
             ->assertOk()
             ->assertSee('visible@example.test')
             ->assertDontSee('hidden@example.test');
 
         $this->actingAs($superAdmin)
-            ->get(route('admin.notifications.index', ['reset' => 1]))
-            ->assertRedirect(route('admin.notifications.index'));
+            ->get(route('admin.notifications.deliveries.email', ['reset' => 1]))
+            ->assertRedirect(route('admin.notifications.deliveries.email'));
 
         $this->actingAs($superAdmin)
-            ->get(route('admin.notifications.index'))
+            ->get(route('admin.notifications.deliveries.email'))
             ->assertOk()
             ->assertSee('visible@example.test')
             ->assertSee('hidden@example.test');

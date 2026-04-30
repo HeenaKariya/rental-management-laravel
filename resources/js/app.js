@@ -78,5 +78,19 @@ document.addEventListener('click', (event) => {
 				panel.classList.toggle('is-visible', panel.getAttribute('data-toggle-panel') === target);
 			});
 		}
+		return;
+	}
+
+	const submenuToggle = event.target.closest('[data-sidebar-submenu-toggle]');
+
+	if (submenuToggle) {
+		const group = submenuToggle.closest('[data-sidebar-submenu]');
+
+		if (!group) {
+			return;
+		}
+
+		const isOpen = group.classList.toggle('is-open');
+		submenuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 	}
 });

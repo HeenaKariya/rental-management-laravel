@@ -167,8 +167,18 @@ Route::post('/two-factor-challenge/otp/resend', [TwoFactorOtpController::class, 
 Route::middleware(['auth', 'full-auth-session', 'role:super_admin'])->group(function () {
     Route::get('/admin/notifications', [NotificationCenterController::class, 'index'])
         ->name('admin.notifications.index');
+    Route::get('/admin/notifications/settings', [NotificationCenterController::class, 'settings'])
+        ->name('admin.notifications.settings');
+    Route::get('/admin/notifications/deliveries', [NotificationCenterController::class, 'deliveries'])
+        ->name('admin.notifications.deliveries');
+    Route::get('/admin/notifications/deliveries/email', [NotificationCenterController::class, 'emailDeliveries'])
+        ->name('admin.notifications.deliveries.email');
+    Route::get('/admin/notifications/deliveries/whatsapp', [NotificationCenterController::class, 'whatsappDeliveries'])
+        ->name('admin.notifications.deliveries.whatsapp');
     Route::get('/admin/notifications/export.csv', [NotificationCenterController::class, 'exportCsv'])
         ->name('admin.notifications.export.csv');
+    Route::get('/admin/notifications/export/{channel}.csv', [NotificationCenterController::class, 'exportChannelCsv'])
+        ->name('admin.notifications.export.channel.csv');
     Route::put('/admin/notifications/settings', [NotificationCenterController::class, 'updateSettings'])
         ->name('admin.notifications.settings.update');
     Route::post('/admin/notifications/dispatch-now', [NotificationCenterController::class, 'dispatchNow'])

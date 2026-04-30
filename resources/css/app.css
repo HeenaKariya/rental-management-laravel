@@ -1,3 +1,4 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
@@ -207,6 +208,97 @@ input {
 	opacity: 0.85;
 }
 
+.app-nav-group {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.app-nav-group-toggle {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	width: 100%;
+	padding: 10px 12px;
+	border: 0;
+	border-radius: 14px;
+	background: transparent;
+	font-weight: 500;
+	font-size: 0.9rem;
+	color: var(--ink2);
+	cursor: pointer;
+	text-align: left;
+	transition: 160ms ease;
+}
+
+.app-nav-group-toggle:hover,
+.app-nav-group-toggle.is-active,
+.app-nav-group.is-open .app-nav-group-toggle {
+	background: var(--card);
+	color: var(--ink);
+	box-shadow: var(--shadow-soft);
+}
+
+.app-nav-group.is-open .app-nav-group-toggle {
+	border: 1px solid var(--line);
+}
+
+.app-nav-caret {
+	font-size: 0.78rem;
+	line-height: 1;
+	color: var(--ink3);
+	transition: transform 160ms ease;
+}
+
+.app-nav-group.is-open .app-nav-caret {
+	transform: rotate(180deg);
+}
+
+.app-nav-submenu {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 4px 0 0 14px;
+	max-height: 0;
+	opacity: 0;
+	overflow: hidden;
+	transform: translateY(-4px);
+	pointer-events: none;
+	transition:
+		max-height 220ms ease,
+		opacity 180ms ease,
+		transform 180ms ease;
+}
+
+.app-nav-group.is-open .app-nav-submenu {
+	max-height: 180px;
+	opacity: 1;
+	transform: translateY(0);
+	pointer-events: auto;
+}
+
+.app-nav-sublink {
+	display: block;
+	padding: 8px 10px;
+	border-radius: 10px;
+	text-decoration: none;
+	font-size: 0.84rem;
+	font-weight: 500;
+	color: var(--ink3);
+	transition: 160ms ease;
+}
+
+.app-nav-sublink:hover,
+.app-nav-sublink.is-active {
+	background: var(--card);
+	color: var(--ink);
+}
+
+.app-nav-sublink.is-active {
+	border: 1px solid var(--line);
+}
+
 .app-main {
 	min-width: 0;
 	display: flex;
@@ -370,6 +462,29 @@ input {
 
 .app-content {
 	min-width: 0;
+	animation: app-content-enter 220ms ease-out;
+}
+
+@keyframes app-content-enter {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.app-nav-submenu,
+	.app-content,
+	.app-nav-link,
+	.app-nav-group-toggle,
+	.app-nav-sublink {
+		transition: none;
+		animation: none;
+	}
 }
 
 .dashboard-stack {
@@ -1562,7 +1677,7 @@ input {
 .mono-text.is-gold { color: var(--gold-ink); }
 .mono-text.is-coral { color: var(--coral-ink); }
 
-.two-up-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.two-up-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 
 .pending-row,
 .feed-item {
