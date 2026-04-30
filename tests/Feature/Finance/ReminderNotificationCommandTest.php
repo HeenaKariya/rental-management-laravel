@@ -22,6 +22,66 @@ class ReminderNotificationCommandTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_dispatch_command_skips_all_notifications_when_events_are_disabled(): void
+    {
+        Carbon::setTestNow('2026-05-01 09:00:00');
+        $this->disableAllEvents();
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-disabled@example.test']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $manager */
+        $manager = User::factory()->create(['email' => 'manager-disabled@example.test']);
+        $manager->assignRole('manager');
+
+        /** @var User $tenantUser */
+        $tenantUser = User::factory()->create(['email' => 'tenant-disabled@example.test']);
+        $tenantUser->assignRole('tenant');
+
+        $property = Property::factory()->create();
+        $property->assignManager($manager, $superAdmin);
+        $unit = Unit::factory()->for($property)->create();
+        $tenant = Tenant::factory()->create([
+            'unit_id' => $unit->id,
+            'user_id' => $tenantUser->id,
+            'kyc_status' => 'pending',
+        ]);
+
+        $lease = Lease::factory()->create([
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'status' => 'active',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-12-31',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        RentLedger::query()->create([
+            'lease_id' => $lease->id,
+            'payment_month' => '2026-05-01',
+            'due_on' => '2026-05-04',
+            'base_rent_amount' => 10000,
+            'carried_arrears' => 0,
+            'credit_brought_forward' => 0,
+            'total_due' => 10000,
+            'total_received' => 0,
+            'late_fee_total' => 0,
+            'outstanding_balance' => 10000,
+            'status' => 'unpaid',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseCount('notification_deliveries', 0);
+
+        Carbon::setTestNow();
+    }
+
     public function test_dispatch_command_creates_delivery_logs_for_due_rent_event(): void
     {
         Carbon::setTestNow('2026-05-01 09:00:00');
@@ -233,6 +293,50 @@ class ReminderNotificationCommandTest extends TestCase
         ]);
     }
 
+    public function test_dispatch_command_logs_failed_delivery_when_recipient_email_is_missing(): void
+    {
+        $this->configureOnlyEvent('kyc_pending', 0);
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-missing@example.test']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $manager */
+        $manager = User::factory()->create(['email' => 'manager-missing@example.test']);
+        $manager->assignRole('manager');
+
+        /** @var User $tenantUser */
+        $tenantUser = User::factory()->create(['email' => '']);
+        $tenantUser->assignRole('tenant');
+
+        $property = Property::factory()->create();
+        $property->assignManager($manager, $superAdmin);
+
+        $unit = Unit::factory()->for($property)->create();
+        Tenant::factory()->create([
+            'unit_id' => $unit->id,
+            'user_id' => $tenantUser->id,
+            'kyc_status' => 'pending',
+        ]);
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'kyc_pending',
+            'status' => 'failed',
+            'notifiable_type' => User::class,
+            'notifiable_id' => $tenantUser->id,
+            'failure_reason' => 'Recipient email is missing for this notification.',
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'kyc_pending',
+            'status' => 'sent',
+            'recipient_email' => 'manager-missing@example.test',
+        ]);
+    }
+
     public function test_dispatch_command_creates_delivery_logs_for_emi_due_event(): void
     {
         Carbon::setTestNow('2026-05-01 09:00:00');
@@ -424,6 +528,19 @@ class ReminderNotificationCommandTest extends TestCase
                 'event_key' => $key,
                 'is_enabled' => $key === $eventKey,
                 'lead_days' => $key === $eventKey ? $leadDays : $defaultLeadDays,
+            ]);
+        }
+    }
+
+    private function disableAllEvents(): void
+    {
+        NotificationEventSetting::query()->delete();
+
+        foreach (ReminderNotificationService::EVENTS as $key => $defaultLeadDays) {
+            NotificationEventSetting::query()->create([
+                'event_key' => $key,
+                'is_enabled' => false,
+                'lead_days' => $defaultLeadDays,
             ]);
         }
     }
