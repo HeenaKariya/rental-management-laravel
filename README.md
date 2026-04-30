@@ -7,6 +7,39 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Demo Data Quickstart
+
+Use the seeders to load a complete demo environment with properties, ownership splits, tenancy, rent ledgers, returns, sale lifecycle records, and agreement signing states.
+
+### Seed Command
+
+- Run migrations and seed data with: php artisan migrate:fresh --seed
+
+### Demo Logins
+
+- Super Admin: test(at)example.com / password
+- Manager 1: manager.one(at)example.com / password
+- Manager 2: manager.two(at)example.com / password
+- Owner: owner(at)example.com / password
+- Co-owner: owner.co(at)example.com / password
+- Tenant 1: tenant.one(at)example.com / password
+- Tenant 2: tenant.two(at)example.com / password
+
+### Scenario Coverage Included
+
+- Properties: residential, commercial, and land assets with active, stabilized, and sold lifecycle examples.
+- Ownership and reports: multi-owner split, single-owner asset, and inactive owner history.
+- Ledger and finance workflow: approved entries, pending-review expenses, rejected expenses, loan and EMI logs.
+- Sale lifecycle: active listing with leads plus closed sale with net proceeds and profit or loss.
+- Tenancy and rent: active, draft, and terminated leases with partial payment and void/reversal examples.
+- Agreements: active/inactive templates and generated, viewed, voided, signed, verified, and tampered integrity states.
+
+### Main Records to Explore
+
+- Riverfront Residency: active tenancy and rent history, multi-owner split, and signed agreement progression.
+- Market Square Arcade: corrected-payment flow after void, listing/lead funnel, and tampered integrity example.
+- Northgate Land Parcel: closed sale flow and sold-lifecycle behavior.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

@@ -53,6 +53,11 @@
                         <h2 class="stat-value">{{ $property->photos->count() }}</h2>
                         <p class="stat-meta"><span>{{ $property->activityLogs->count() }} activity records</span></p>
                     </article>
+                    <article class="stat-card">
+                        <p class="stat-label">Net income</p>
+                        <h2 class="stat-value">{{ number_format((float) $financeSummary['net_income'], 2) }}</h2>
+                        <p class="stat-meta"><span>income {{ number_format((float) $financeSummary['total_income'], 2) }} · expense {{ number_format((float) $financeSummary['total_expense'], 2) }}</span></p>
+                    </article>
                 </section>
 
                 <section class="dashboard-grid">
@@ -62,6 +67,12 @@
                                 <div>
                                     <p class="row-label">Overview</p>
                                     <h3 class="dashboard-panel-title">Property summary</h3>
+                                </div>
+                                <div class="btn-strip">
+                                    <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.ledger.index', $property) }}">Open finance ledger</a>
+                                    <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.purchase.show', $property) }}">Purchase and loan</a>
+                                    <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.sale.show', $property) }}">Sale lifecycle</a>
+                                    <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.reports.show', $property) }}">Owner reports</a>
                                 </div>
                             </div>
 
@@ -130,6 +141,85 @@
                                         </select>
                                     </label>
                                     <button class="btn btn-solid" type="submit">Assign manager</button>
+                                </form>
+                            @endcan
+                        </article>
+
+                        <article class="table-card dashboard-panel">
+                            <div class="dashboard-panel-head">
+                                <div>
+                                    <p class="row-label">Ownership</p>
+                                    <h3 class="dashboard-panel-title">Current ownership splits</h3>
+                                </div>
+                            </div>
+
+                            <div class="data-table-card">
+                                <table class="data-table data-table-compact">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Owner</th>
+                                            <th scope="col">Share</th>
+                                            <th scope="col">Capital</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($property->owners as $owner)
+                                            <tr>
+                                                <td>
+                                                    <div class="data-table-primary">{{ $owner->user?->name ?: $owner->owner_name }}</div>
+                                                    <div class="data-table-secondary">{{ $owner->user?->email ?: 'External owner' }}</div>
+                                                </td>
+                                                <td>{{ number_format((float) $owner->ownership_pct, 2) }}%</td>
+                                                <td>{{ number_format((float) $owner->capital_contribution, 2) }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="3" class="data-table-empty">No ownership splits configured yet.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            @can('assignManager', $property)
+                                <form class="form-card property-inline-form" method="POST" action="{{ route('properties.owners.sync', $property) }}">
+                                    @csrf
+                                    <div class="two-up-grid">
+                                        @for ($row = 0; $row < max(3, $property->owners->count()); $row++)
+                                            @php $ownerRow = $property->owners->get($row); @endphp
+                                            <div class="table-card" style="padding: 0.75rem;">
+                                                <label class="field-group">
+                                                    <span class="field-label">Owner user</span>
+                                                    <select class="field-input" name="owners[{{ $row }}][user_id]">
+                                                        <option value="">External / named owner</option>
+                                                        @foreach ($ownerOptions as $ownerOption)
+                                                            <option value="{{ $ownerOption->id }}" @selected((int) old("owners.$row.user_id", $ownerRow?->user_id) === $ownerOption->id)>{{ $ownerOption->name }} · {{ $ownerOption->email }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </label>
+                                                <label class="field-group">
+                                                    <span class="field-label">Owner name</span>
+                                                    <input class="field-input" type="text" name="owners[{{ $row }}][owner_name]" value="{{ old("owners.$row.owner_name", $ownerRow?->owner_name) }}">
+                                                </label>
+                                                <div class="two-up-grid">
+                                                    <label class="field-group">
+                                                        <span class="field-label">Share %</span>
+                                                        <input class="field-input" type="number" step="0.01" min="0" max="100" name="owners[{{ $row }}][ownership_pct]" value="{{ old("owners.$row.ownership_pct", $ownerRow?->ownership_pct) }}">
+                                                    </label>
+                                                    <label class="field-group">
+                                                        <span class="field-label">Capital</span>
+                                                        <input class="field-input" type="number" step="0.01" min="0" name="owners[{{ $row }}][capital_contribution]" value="{{ old("owners.$row.capital_contribution", $ownerRow?->capital_contribution) }}">
+                                                    </label>
+                                                </div>
+                                                <label class="field-group">
+                                                    <span class="field-label">Notes</span>
+                                                    <input class="field-input" type="text" name="owners[{{ $row }}][notes]" value="{{ old("owners.$row.notes", $ownerRow?->notes) }}">
+                                                </label>
+                                            </div>
+                                        @endfor
+                                    </div>
+
+                                    <button class="btn btn-solid" type="submit">Save ownership splits</button>
                                 </form>
                             @endcan
                         </article>

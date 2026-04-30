@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -30,6 +31,7 @@ class Property extends Model
         'stabilized',
         'under_maintenance',
         'off_market',
+        'sold',
     ];
 
     protected $fillable = [
@@ -115,6 +117,31 @@ class Property extends Model
         return $this->hasMany(PropertyPhoto::class)->orderBy('sort_order');
     }
 
+    public function owners(): HasMany
+    {
+        return $this->hasMany(PropertyOwner::class)->orderByDesc('ownership_pct');
+    }
+
+    public function ledgerEntries(): HasMany
+    {
+        return $this->hasMany(PropertyLedgerEntry::class)->latest('entry_date');
+    }
+
+    public function purchase(): HasOne
+    {
+        return $this->hasOne(PropertyPurchase::class);
+    }
+
+    public function loan(): HasOne
+    {
+        return $this->hasOne(PropertyLoan::class);
+    }
+
+    public function sale(): HasOne
+    {
+        return $this->hasOne(PropertySale::class);
+    }
+
     public function units(): HasMany
     {
         return $this->hasMany(Unit::class)->orderBy('unit_number');
@@ -137,6 +164,14 @@ class Property extends Model
             });
         }
 
+        if ($user->hasRole('owner')) {
+            return $query->whereHas('owners', function (Builder $ownerQuery) use ($user) {
+                $ownerQuery
+                    ->where('is_active', true)
+                    ->where('user_id', $user->id);
+            });
+        }
+
         return $query->whereRaw('1 = 0');
     }
 
@@ -147,6 +182,18 @@ class Property extends Model
         }
 
         return $this->activeManagerAssignments()->where('manager_id', $user->id)->exists();
+    }
+
+    public function isOwnedBy(User $user): bool
+    {
+        if (! $user->hasRole('owner')) {
+            return false;
+        }
+
+        return $this->owners()
+            ->where('is_active', true)
+            ->where('user_id', $user->id)
+            ->exists();
     }
 
     public function assignManager(User $manager, ?User $actor = null): PropertyManagerAssignment

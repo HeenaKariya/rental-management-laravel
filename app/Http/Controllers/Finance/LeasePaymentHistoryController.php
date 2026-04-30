@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lease;
+use App\Models\PropertyLedgerEntry;
 use App\Models\RentInstalment;
 use App\Models\RentLedger;
 use App\Models\User;
@@ -69,7 +70,7 @@ class LeasePaymentHistoryController extends Controller
             ]);
         }
 
-        $ledger->recordInstalment([
+        $instalment = $ledger->recordInstalment([
             'amount_paid' => $data['amount_paid'],
             'late_fee_charged' => $lateFeeCharged,
             'payment_date' => $paymentDate->toDateString(),
@@ -78,6 +79,8 @@ class LeasePaymentHistoryController extends Controller
             'late_fee_waiver_reason' => $data['late_fee_waiver_reason'] ?? null,
             'notes' => $data['notes'] ?? null,
         ], $user);
+
+        PropertyLedgerEntry::recordRentInstalment($instalment, $user);
 
         return back()->with('status', 'Instalment recorded.');
     }
@@ -117,6 +120,7 @@ class LeasePaymentHistoryController extends Controller
 
         try {
             $instalment->void($data['void_reason'], $request->user());
+            PropertyLedgerEntry::recordRentReversal($instalment->fresh(), $request->user());
         } catch (InvalidArgumentException $exception) {
             return back()->withErrors(['void_reason' => $exception->getMessage()]);
         }

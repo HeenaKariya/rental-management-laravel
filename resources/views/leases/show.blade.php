@@ -14,6 +14,9 @@
                     <div class="page-actions">
                         <a class="btn btn-ghost" href="{{ $user?->hasRole('tenant') ? route('dashboard') : route('leases.index') }}">{{ $user?->hasRole('tenant') ? 'Back to portal' : 'Back to leases' }}</a>
                         <a class="btn btn-ghost" href="{{ route('leases.payments.show', $lease) }}">Payment history</a>
+                        @can('update', $lease)
+                            <a class="btn btn-ghost" href="{{ route('leases.agreement.show', $lease) }}">Agreement</a>
+                        @endcan
                         @if ($lease->rentReturn)
                             <a class="btn btn-ghost" href="{{ route('leases.rent-return.show', [$lease, $lease->rentReturn]) }}">Rent return</a>
                         @elseif ($rentReturnDraft && (float) $rentReturnDraft['suggested_amount'] > 0)

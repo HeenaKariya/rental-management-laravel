@@ -112,6 +112,11 @@ class Lease extends Model
         return $this->hasMany(RentLedger::class)->orderBy('payment_month');
     }
 
+    public function agreements(): HasMany
+    {
+        return $this->hasMany(RentAgreement::class)->latest();
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

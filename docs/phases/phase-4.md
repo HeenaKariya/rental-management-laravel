@@ -39,3 +39,4 @@ Date: 2026-04-29
 
 - The first Phase 4 slice attaches directly to the lease because billing day, tenant scope, and tenant portal visibility already exist there.
 - Arrears and credits are recalculated sequentially across the ledger timeline whenever a new instalment is recorded.
+- Phase 5 continuation starts with owner splits, property ledger entries, and flagged expense review queue handoff.

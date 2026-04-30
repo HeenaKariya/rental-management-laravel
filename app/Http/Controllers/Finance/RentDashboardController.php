@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Finance;
 use App\Http\Controllers\Controller;
 use App\Models\Lease;
 use App\Models\Property;
+use App\Models\PropertyLedgerEntry;
 use App\Models\RentInstalment;
 use App\Models\RentLedger;
 use App\Models\Unit;
@@ -79,8 +80,18 @@ class RentDashboardController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        $flaggedExpenses = PropertyLedgerEntry::query()
+            ->visibleTo($user)
+            ->with('property')
+            ->where('entry_type', 'expense')
+            ->where('status', 'pending_review')
+            ->orderByDesc('entry_date')
+            ->orderByDesc('id')
+            ->get();
+
         return view('finance.index', [
             'arrearsTracker' => $arrearsTracker,
+            'flaggedExpenses' => $flaggedExpenses,
             'filters' => $filters,
             'overdue' => $overdue,
             'partiallyPaid' => $partiallyPaid,

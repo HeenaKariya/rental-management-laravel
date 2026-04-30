@@ -77,6 +77,10 @@ class LeaseController extends Controller
         $unit = $this->findVisibleUnitOrFail($user, (int) $data['unit_id']);
         $tenant = $this->findVisibleTenantOrFail($user, (int) $data['tenant_id'], $unit->id);
 
+        if ($unit->property?->lifecycle_stage === 'sold') {
+            return back()->withInput()->withErrors(['unit_id' => 'This property is sold and cannot accept new leases.']);
+        }
+
         if ($conflictingLease = $this->findVacancyGapConflict($user, $unit->id, $data['start_on'])) {
             return back()->withInput()->withErrors([
                 'start_on' => sprintf(
@@ -155,6 +159,10 @@ class LeaseController extends Controller
         $unit = $this->findVisibleUnitOrFail($user, (int) $data['unit_id']);
         $tenant = $this->findVisibleTenantOrFail($user, (int) $data['tenant_id'], $unit->id);
 
+        if ($unit->property?->lifecycle_stage === 'sold') {
+            return back()->withInput()->withErrors(['unit_id' => 'This property is sold and cannot accept new leases.']);
+        }
+
         if ($conflictingLease = $this->findVacancyGapConflict($user, $unit->id, $data['start_on'], $lease)) {
             return back()->withInput()->withErrors([
                 'start_on' => sprintf(
@@ -208,6 +216,12 @@ class LeaseController extends Controller
         $user = $request->user();
 
         DB::transaction(function () use ($lease, $data, $user): void {
+            if ($lease->unit->property?->lifecycle_stage === 'sold') {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'unit_id' => 'This property is sold and cannot accept new leases.',
+                ]);
+            }
+
             $lease->forceFill([
                 'status' => 'renewed',
                 'updated_by' => $user->id,
@@ -260,6 +274,7 @@ class LeaseController extends Controller
         return Unit::query()
             ->visibleTo($user)
             ->with('property')
+            ->whereHas('property', fn ($query) => $query->where('lifecycle_stage', '!=', 'sold'))
             ->get()
             ->sortBy(fn (Unit $unit) => $unit->property->title.'-'.$unit->unit_number)
             ->values();

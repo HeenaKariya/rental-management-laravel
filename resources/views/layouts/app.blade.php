@@ -17,12 +17,12 @@
             $isTenant = $authUser?->hasRole('tenant');
             $appNavigation = collect([
                 ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'dashboard', 'active' => request()->routeIs('dashboard'), 'visible' => true, 'badge' => null],
-                ['label' => 'Properties', 'route' => 'properties.index', 'icon' => 'property', 'active' => request()->routeIs('properties.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 2'],
-                ['label' => 'Units', 'route' => 'units.index', 'icon' => 'unit', 'active' => request()->routeIs('units.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 3'],
-                ['label' => 'Tenants', 'route' => 'tenants.index', 'icon' => 'tenant', 'active' => request()->routeIs('tenants.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 3'],
-                ['label' => 'Leases', 'route' => 'leases.index', 'icon' => 'lease', 'active' => request()->routeIs('leases.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 3'],
-                ['label' => 'Deposits', 'route' => 'deposits.index', 'icon' => 'finance', 'active' => request()->routeIs('deposits.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 3'],
-                ['label' => 'Finance', 'route' => 'finance.index', 'icon' => 'finance', 'active' => request()->routeIs('finance.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager']), 'badge' => 'Phase 4'],
+                ['label' => 'Properties', 'route' => 'properties.index', 'icon' => 'property', 'active' => request()->routeIs('properties.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager'])],
+                ['label' => 'Units', 'route' => 'units.index', 'icon' => 'unit', 'active' => request()->routeIs('units.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager'])],
+                ['label' => 'Tenants', 'route' => 'tenants.index', 'icon' => 'tenant', 'active' => request()->routeIs('tenants.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager'])],
+                ['label' => 'Leases', 'route' => 'leases.index', 'icon' => 'lease', 'active' => request()->routeIs('leases.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager'])],
+                ['label' => 'Deposits', 'route' => 'deposits.index', 'icon' => 'finance', 'active' => request()->routeIs('deposits.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager'])],
+                ['label' => 'Finance', 'route' => 'finance.index', 'icon' => 'finance', 'active' => request()->routeIs('finance.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager'])],
                 ['label' => 'Security', 'route' => 'settings.security', 'icon' => 'security', 'active' => request()->routeIs('settings.security*'), 'visible' => true, 'badge' => null],
                 ['label' => '2FA Oversight', 'route' => 'admin.security.two-factor.index', 'icon' => 'shield', 'active' => request()->routeIs('admin.security.two-factor.*'), 'visible' => $isSuperAdmin, 'badge' => null],
                 ['label' => 'Invitations', 'route' => 'invitations.create', 'icon' => 'invite', 'active' => request()->routeIs('invitations.create') || request()->routeIs('invitations.store'), 'visible' => $isSuperAdmin, 'badge' => null],
@@ -52,9 +52,9 @@
                                 @include('partials.app-icon', ['icon' => $item['icon']])
                                 <span>{{ $item['label'] }}</span>
                             </span>
-                            @if ($item['badge'])
+                            {{-- @if ($item['badge'])
                                 <span class="nav-chip">{{ $item['badge'] }}</span>
-                            @endif
+                            @endif --}}
                         </a>
                     @endforeach
                 </nav>

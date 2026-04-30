@@ -20,6 +20,7 @@
 
                     <div class="page-actions">
                         <a class="btn btn-ghost" href="{{ route('dashboard') }}">Dashboard</a>
+                        <a class="btn btn-ghost" href="{{ route('finance.reports.rent-returns.index') }}">Rent return report</a>
                     </div>
                 </section>
 
@@ -43,6 +44,11 @@
                         <p class="stat-label">Arrears tracker</p>
                         <h2 class="stat-value">{{ $arrearsTracker->count() }}</h2>
                         <p class="stat-meta"><span>{{ number_format($arrearsExpected, 2) }} brought forward</span></p>
+                    </article>
+                    <article class="stat-card">
+                        <p class="stat-label">Flagged expenses</p>
+                        <h2 class="stat-value">{{ $flaggedExpenses->count() }}</h2>
+                        <p class="stat-meta"><span>pending review queue</span></p>
                     </article>
                 </section>
 
@@ -232,6 +238,31 @@
                             @empty
                                 <p class="security-empty">No instalments were recorded in the last 7 days.</p>
                             @endforelse
+                        </article>
+
+                        <article class="table-card dashboard-panel">
+                            <div class="dashboard-panel-head">
+                                <div>
+                                    <p class="row-label">Expense review</p>
+                                    <h3 class="dashboard-panel-title">Flagged queue</h3>
+                                </div>
+                            </div>
+
+                            @if ($flaggedExpenses->isEmpty())
+                                <p class="security-empty">No flagged expenses are waiting for review.</p>
+                            @else
+                                @foreach ($flaggedExpenses as $expense)
+                                    <div class="table-row">
+                                        <div>
+                                            <div class="tenant-name">{{ $expense->property->title }}</div>
+                                            <div class="tenant-unit">{{ str($expense->category)->replace('_', ' ')->title() }} · {{ number_format((float) $expense->amount, 2) }}</div>
+                                        </div>
+                                        <div>
+                                            <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.ledger.index', $expense->property) }}">Open ledger</a>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
                         </article>
                     </div>
                 </section>

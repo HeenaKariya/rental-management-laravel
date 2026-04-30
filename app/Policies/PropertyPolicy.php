@@ -9,12 +9,12 @@ class PropertyPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['super_admin', 'manager']);
+        return $user->hasAnyRole(['super_admin', 'manager', 'owner']);
     }
 
     public function view(User $user, Property $property): bool
     {
-        return $user->hasRole('super_admin') || $property->isManagedBy($user);
+        return $user->hasRole('super_admin') || $property->isManagedBy($user) || $property->isOwnedBy($user);
     }
 
     public function create(User $user): bool

@@ -65,6 +65,17 @@ class PropertyActivityLog extends Model
             'property.archived' => 'Property archived',
             'property.manager_assigned' => 'Manager assigned',
             'property.manager_revoked' => 'Manager revoked',
+            'property.ownership_updated' => 'Ownership updated',
+            'property.purchase_updated' => 'Purchase details updated',
+            'property.loan_updated' => 'Loan details updated',
+            'property.loan_emi_recorded' => 'EMI payment recorded',
+            'property.sale_listed' => 'Sale listing updated',
+            'property.sale_lead_logged' => 'Sale lead logged',
+            'property.sale_closed' => 'Sale closed',
+            'property.agreement_generated' => 'Agreement generated',
+            'property.agreement_signed' => 'Agreement signed',
+            'property.agreement_integrity_verified' => 'Agreement integrity verified',
+            'property.agreement_integrity_failed' => 'Agreement integrity failed',
             default => str($this->event)->replace('.', ' ')->title()->toString(),
         };
     }
@@ -76,6 +87,8 @@ class PropertyActivityLog extends Model
             'property.lifecycle_changed' => 'badge-violet',
             'property.manager_assigned' => 'badge-green',
             'property.manager_revoked' => 'badge-gold',
+            'property.agreement_integrity_failed' => 'badge-coral',
+            'property.agreement_integrity_verified' => 'badge-green',
             default => 'badge-outline',
         };
     }

@@ -91,12 +91,24 @@ class PropertyController extends Controller
             'activeManagerAssignments.manager',
             'activityLogs.actor',
             'activityLogs.subjectUser',
+            'owners.user',
             'managers.roles',
             'photos',
         ]);
 
+        $property->loadSum('ledgerEntries as total_income_amount', 'amount');
+
+        $totalIncome = (float) $property->ledgerEntries()->where('entry_type', 'income')->where('status', 'approved')->sum('amount');
+        $totalExpense = (float) $property->ledgerEntries()->where('entry_type', 'expense')->where('status', 'approved')->sum('amount');
+
         return view('properties.show', [
+            'financeSummary' => [
+                'total_expense' => $totalExpense,
+                'total_income' => $totalIncome,
+                'net_income' => $totalIncome - $totalExpense,
+            ],
             'managerOptions' => $this->managerOptions(),
+            'ownerOptions' => User::query()->whereHas('roles', fn ($query) => $query->where('slug', 'owner'))->orderBy('name')->get(),
             'property' => $property,
             'user' => $request->user(),
         ]);

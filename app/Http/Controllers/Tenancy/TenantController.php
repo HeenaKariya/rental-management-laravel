@@ -62,6 +62,10 @@ class TenantController extends Controller
 
         $unit = $this->findVisibleUnitOrFail($user, (int) $data['unit_id']);
 
+        if ($unit->property?->lifecycle_stage === 'sold') {
+            return back()->withInput()->withErrors(['unit_id' => 'This property is sold and cannot accept new tenants.']);
+        }
+
         $tenant = Tenant::query()->create([
             ...$data,
             'unit_id' => $unit->id,
@@ -111,6 +115,10 @@ class TenantController extends Controller
 
         $unit = $this->findVisibleUnitOrFail($user, (int) $data['unit_id']);
 
+        if ($unit->property?->lifecycle_stage === 'sold') {
+            return back()->withInput()->withErrors(['unit_id' => 'This property is sold and cannot accept new tenants.']);
+        }
+
         $tenant->fill([
             ...$data,
             'unit_id' => $unit->id,
@@ -149,6 +157,7 @@ class TenantController extends Controller
         return Unit::query()
             ->visibleTo($user)
             ->with('property')
+            ->whereHas('property', fn ($query) => $query->where('lifecycle_stage', '!=', 'sold'))
             ->get()
             ->sortBy(fn (Unit $unit) => $unit->property->title.'-'.$unit->unit_number)
             ->values();
