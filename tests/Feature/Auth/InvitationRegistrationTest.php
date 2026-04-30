@@ -103,6 +103,81 @@ class InvitationRegistrationTest extends TestCase
         ]);
     }
 
+    public function test_super_admin_can_create_whatsapp_only_invitation_without_email(): void
+    {
+        Notification::fake();
+
+        $this->app->instance(WhatsappNotificationGateway::class, new class implements WhatsappNotificationGateway
+        {
+            public function send(string $phone, string $message): void {}
+        });
+
+        /** @var User $user */
+        $user = User::factory()->create();
+        $user->assignRole('super_admin');
+
+        NotificationEventSetting::query()->updateOrCreate(
+            ['event_key' => 'user_invitation_issued'],
+            ['is_enabled' => true, 'email_enabled' => false, 'whatsapp_enabled' => true, 'lead_days' => 0],
+        );
+
+        $this->actingAs($user)
+            ->post('/admin/invitations', [
+                'email' => '',
+                'phone' => '+15550008888',
+                'role' => 'manager',
+            ])
+            ->assertRedirect(route('invitations.create'));
+
+        $invitation = Invitation::query()->latest('id')->firstOrFail();
+
+        $this->assertSame('+15550008888', $invitation->phone);
+        $this->assertStringEndsWith('@invite.local', (string) $invitation->email);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'user_invitation_issued',
+            'status' => 'sent',
+            'channel' => 'whatsapp',
+            'recipient_email' => '+15550008888',
+        ]);
+
+        $this->assertDatabaseMissing('notification_deliveries', [
+            'event_key' => 'user_invitation_issued',
+            'channel' => 'email',
+            'status' => 'sent',
+        ]);
+    }
+
+    public function test_phone_only_invitation_allows_registration_with_different_email(): void
+    {
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create();
+        $superAdmin->assignRole('super_admin');
+
+        $managerRoleId = Role::query()->where('slug', 'manager')->value('id');
+
+        $invitation = Invitation::issue([
+            'email' => 'wa-919999999999-abcd1234@invite.local',
+            'phone' => '+919999999999',
+            'role_id' => $managerRoleId,
+            'invited_by' => $superAdmin->id,
+        ]);
+
+        $this->post('/register', [
+            'name' => 'Phone Only Invite User',
+            'email' => 'new.user@example.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+            'invitation_token' => $invitation->token,
+        ])->assertRedirect('/dashboard');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'new.user@example.com',
+        ]);
+
+        $this->assertNotNull($invitation->fresh()?->accepted_at);
+    }
+
     public function test_non_super_admin_cannot_create_invitations(): void
     {
         /** @var User $user */

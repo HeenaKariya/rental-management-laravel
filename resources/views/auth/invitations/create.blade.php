@@ -8,7 +8,7 @@
                     <div>
                         <p class="page-kicker">Invitation admin</p>
                         <h1 class="page-title">Create invitation</h1>
-                        <p class="page-description">Issue a role-scoped onboarding link for a manager, owner, or tenant from the same full workspace layout as the dashboard.</p>
+                        <p class="page-description">Send a role-based onboarding invite by email and optional WhatsApp.</p>
                     </div>
 
                     <div class="page-actions">
@@ -16,36 +16,13 @@
                     </div>
                 </section>
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
-                        <p class="stat-label">Available roles</p>
-                        <h2 class="stat-value">{{ $roles->count() }}</h2>
-                        <p class="stat-meta"><span>role-scoped invites</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Invite flow</p>
-                        <h2 class="stat-value">Scoped</h2>
-                        <p class="stat-meta"><span>time-limited onboarding</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Registration model</p>
-                        <h2 class="stat-value">Closed</h2>
-                        <p class="stat-meta"><span>invitation-only access</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Latest output</p>
-                        <h2 class="stat-value">{{ session('invitation_url') ? 'Ready' : 'Idle' }}</h2>
-                        <p class="stat-meta"><span>{{ session('invitation_url') ? 'link generated' : 'awaiting submission' }}</span></p>
-                    </article>
-                </section>
-
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="form-card dashboard-panel">
-                            <div class="dashboard-panel-head">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8">
+                        <article class="table-card dashboard-panel p-3 p-md-4">
+                            <div class="dashboard-panel-head mb-3">
                                 <div>
                                     <p class="row-label">Invitation composer</p>
-                                    <h3 class="dashboard-panel-title">Generate a role-scoped invite</h3>
+                                    <h3 class="dashboard-panel-title">Generate role-scoped invite</h3>
                                 </div>
                             </div>
 
@@ -53,39 +30,47 @@
                                 <div class="auth-alert auth-alert-success">{{ session('status') }}</div>
                             @endif
 
-                            <form method="POST" action="{{ route('invitations.store') }}" class="auth-form-grid">
+                            @if ($whatsappOnlyMode)
+                                <div class="auth-alert auth-alert-info">Email channel is disabled for invitation delivery. WhatsApp phone is required; email becomes optional for send channel.</div>
+                            @endif
+
+                            <form method="POST" action="{{ route('invitations.store') }}" class="row g-3">
                                 @csrf
 
-                                <label class="field-group">
-                                    <span class="field-label">Invitee email</span>
-                                    <input class="field-input @error('email') is-error @enderror" type="email" name="email" value="{{ old('email') }}" required>
-                                    @error('email')<span class="field-hint is-error">{{ $message }}</span>@enderror
-                                </label>
+                                <div class="col-12">
+                                    <label class="field-label" for="invite_email">Invitee email{{ $whatsappOnlyMode ? ' (optional)' : '' }}</label>
+                                    <input id="invite_email" class="form-control @error('email') is-invalid @enderror" type="email" name="email" value="{{ old('email') }}" placeholder="name@example.com" @if(! $whatsappOnlyMode) required @endif>
+                                    <div class="form-text">Used for account registration identity. Required unless invitation delivery is configured as WhatsApp-only.</div>
+                                    @error('email')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                </div>
 
-                                <label class="field-group">
-                                    <span class="field-label">Invitee WhatsApp phone (optional)</span>
-                                    <input class="field-input @error('phone') is-error @enderror" type="text" name="phone" value="{{ old('phone') }}" placeholder="+15550001111">
-                                    @error('phone')<span class="field-hint is-error">{{ $message }}</span>@enderror
-                                </label>
+                                <div class="col-12 col-md-6">
+                                    <label class="field-label" for="invite_phone">WhatsApp phone{{ $whatsappOnlyMode ? '' : ' (optional)' }}</label>
+                                    <input id="invite_phone" class="form-control @error('phone') is-invalid @enderror" type="text" name="phone" value="{{ old('phone') }}" placeholder="+919999999999" @if($whatsappOnlyMode) required @endif>
+                                    @error('phone')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                </div>
 
-                                <label class="field-group">
-                                    <span class="field-label">Role</span>
-                                    <select class="field-input @error('role') is-error @enderror" name="role" required>
+                                <div class="col-12 col-md-6">
+                                    <label class="field-label" for="invite_role">Role</label>
+                                    <select id="invite_role" class="form-select @error('role') is-invalid @enderror" name="role" required>
                                         <option value="">Select a role</option>
                                         @foreach ($roles as $role)
                                             <option value="{{ $role->slug }}" @selected(old('role') === $role->slug)>{{ $role->name }}</option>
                                         @endforeach
                                     </select>
-                                    @error('role')<span class="field-hint is-error">{{ $message }}</span>@enderror
-                                </label>
+                                    @error('role')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                </div>
 
-                                <button class="btn btn-solid" type="submit">Generate invitation</button>
+                                <div class="col-12 d-flex gap-2">
+                                    <button class="btn btn-solid" type="submit">Generate invitation</button>
+                                    <a class="btn btn-ghost" href="{{ route('dashboard') }}">Cancel</a>
+                                </div>
                             </form>
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
-                        <article class="security-card dashboard-panel">
+                    <div class="col-12 col-xl-4">
+                        <article class="security-card dashboard-panel h-100">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Latest invitation</p>
@@ -95,10 +80,11 @@
 
                             @if (session('invitation_url'))
                                 <div class="auth-alert auth-alert-info">
-                                    Invitation link: <a class="auth-link" href="{{ session('invitation_url') }}">{{ session('invitation_url') }}</a>
+                                    <p class="mb-2"><strong>Invitation URL</strong></p>
+                                    <a class="auth-link" href="{{ session('invitation_url') }}">{{ session('invitation_url') }}</a>
                                 </div>
                             @else
-                                <p class="security-empty">Generate an invitation to display the onboarding link here.</p>
+                                <p class="security-empty">Generate an invitation and the onboarding URL will appear here.</p>
                             @endif
                         </article>
                     </div>

@@ -44,7 +44,7 @@ class CreateNewUser implements CreatesNewUsers
                 return;
             }
 
-            if ($invitation->email !== $input['email']) {
+            if (! $invitation->isPhoneOnlyInvitation() && $invitation->email !== $input['email']) {
                 $validator->errors()->add('email', 'The registration email must match the invitation email.');
             }
         })->validate();

@@ -71,4 +71,9 @@ class Invitation extends Model
             'accepted_at' => now(),
         ])->save();
     }
+
+    public function isPhoneOnlyInvitation(): bool
+    {
+        return str_ends_with((string) $this->email, '@invite.local');
+    }
 }
