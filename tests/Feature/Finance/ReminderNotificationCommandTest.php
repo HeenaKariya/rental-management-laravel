@@ -452,6 +452,96 @@ class ReminderNotificationCommandTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_deposit_refund_overdue_event_honors_threshold_boundary(): void
+    {
+        Carbon::setTestNow('2026-05-20 09:00:00');
+        $this->configureOnlyEvent('deposit_refund_overdue', 14);
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-deposit-boundary@example.test']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $managerEligible */
+        $managerEligible = User::factory()->create(['email' => 'manager-deposit-eligible@example.test']);
+        $managerEligible->assignRole('manager');
+
+        /** @var User $managerRecent */
+        $managerRecent = User::factory()->create(['email' => 'manager-deposit-recent@example.test']);
+        $managerRecent->assignRole('manager');
+
+        $eligibleProperty = Property::factory()->create();
+        $eligibleProperty->assignManager($managerEligible, $superAdmin);
+        $eligibleUnit = Unit::factory()->for($eligibleProperty)->create();
+        $eligibleTenant = Tenant::factory()->create(['unit_id' => $eligibleUnit->id]);
+
+        $recentProperty = Property::factory()->create();
+        $recentProperty->assignManager($managerRecent, $superAdmin);
+        $recentUnit = Unit::factory()->for($recentProperty)->create();
+        $recentTenant = Tenant::factory()->create(['unit_id' => $recentUnit->id]);
+
+        $eligibleLease = Lease::factory()->create([
+            'unit_id' => $eligibleUnit->id,
+            'tenant_id' => $eligibleTenant->id,
+            'status' => 'terminated',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-04-30',
+            'terminated_at' => '2026-05-06 00:00:00',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $recentLease = Lease::factory()->create([
+            'unit_id' => $recentUnit->id,
+            'tenant_id' => $recentTenant->id,
+            'status' => 'terminated',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-05-01',
+            'terminated_at' => '2026-05-07 00:00:00',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        LeaseDeposit::factory()->create([
+            'lease_id' => $eligibleLease->id,
+            'expected_amount' => 20000,
+            'current_balance' => 5000,
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        LeaseDeposit::factory()->create([
+            'lease_id' => $recentLease->id,
+            'expected_amount' => 20000,
+            'current_balance' => 5000,
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'deposit_refund_overdue',
+            'status' => 'sent',
+            'recipient_email' => 'manager-deposit-eligible@example.test',
+        ]);
+
+        $this->assertDatabaseMissing('notification_deliveries', [
+            'event_key' => 'deposit_refund_overdue',
+            'recipient_email' => 'manager-deposit-recent@example.test',
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'deposit_refund_overdue',
+            'status' => 'sent',
+            'recipient_email' => 'admin-deposit-boundary@example.test',
+        ]);
+
+        $this->assertSame(2, NotificationDelivery::query()->where('event_key', 'deposit_refund_overdue')->count());
+
+        Carbon::setTestNow();
+    }
+
     public function test_dispatch_command_creates_delivery_logs_for_rent_return_pending_settlement_overdue_event(): void
     {
         Carbon::setTestNow('2026-05-20 09:00:00');
@@ -515,6 +605,132 @@ class ReminderNotificationCommandTest extends TestCase
             'status' => 'sent',
             'recipient_email' => 'manager-return@example.test',
         ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_rent_return_pending_settlement_overdue_event_honors_threshold_boundary(): void
+    {
+        Carbon::setTestNow('2026-05-20 09:00:00');
+        $this->configureOnlyEvent('rent_return_pending_settlement_overdue', 7);
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-return-boundary@example.test']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $managerEligible */
+        $managerEligible = User::factory()->create(['email' => 'manager-return-eligible@example.test']);
+        $managerEligible->assignRole('manager');
+
+        /** @var User $managerRecent */
+        $managerRecent = User::factory()->create(['email' => 'manager-return-recent@example.test']);
+        $managerRecent->assignRole('manager');
+
+        $eligibleProperty = Property::factory()->create();
+        $eligibleProperty->assignManager($managerEligible, $superAdmin);
+        $eligibleUnit = Unit::factory()->for($eligibleProperty)->create();
+        $eligibleTenant = Tenant::factory()->create(['unit_id' => $eligibleUnit->id]);
+
+        $recentProperty = Property::factory()->create();
+        $recentProperty->assignManager($managerRecent, $superAdmin);
+        $recentUnit = Unit::factory()->for($recentProperty)->create();
+        $recentTenant = Tenant::factory()->create(['unit_id' => $recentUnit->id]);
+
+        $eligibleLease = Lease::factory()->create([
+            'unit_id' => $eligibleUnit->id,
+            'tenant_id' => $eligibleTenant->id,
+            'status' => 'terminated',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-04-30',
+            'terminated_at' => '2026-05-01 09:00:00',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $recentLease = Lease::factory()->create([
+            'unit_id' => $recentUnit->id,
+            'tenant_id' => $recentTenant->id,
+            'status' => 'terminated',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-04-30',
+            'terminated_at' => '2026-05-01 09:00:00',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $eligibleReturn = RentReturn::query()->create([
+            'lease_id' => $eligibleLease->id,
+            'tenant_id' => $eligibleLease->tenant_id,
+            'unit_id' => $eligibleLease->unit_id,
+            'property_id' => $eligibleLease->unit->property_id,
+            'vacation_date' => '2026-05-01',
+            'last_paid_through_date' => '2026-05-31',
+            'billing_month' => '2026-05-01',
+            'daily_rate' => 300,
+            'unused_days' => 15,
+            'suggested_amount' => 4500,
+            'status' => 'pending_settlement',
+            'settlement_method' => null,
+            'settlement_amount' => null,
+            'ledger_posted' => false,
+            'initiated_by' => $superAdmin->id,
+            'initiated_at' => now()->subDays(8),
+            'processed_by' => null,
+            'processed_at' => null,
+        ]);
+
+        $recentReturn = RentReturn::query()->create([
+            'lease_id' => $recentLease->id,
+            'tenant_id' => $recentLease->tenant_id,
+            'unit_id' => $recentLease->unit_id,
+            'property_id' => $recentLease->unit->property_id,
+            'vacation_date' => '2026-05-10',
+            'last_paid_through_date' => '2026-05-31',
+            'billing_month' => '2026-05-01',
+            'daily_rate' => 300,
+            'unused_days' => 10,
+            'suggested_amount' => 3000,
+            'status' => 'pending_settlement',
+            'settlement_method' => null,
+            'settlement_amount' => null,
+            'ledger_posted' => false,
+            'initiated_by' => $superAdmin->id,
+            'initiated_at' => now()->subDays(5),
+            'processed_by' => null,
+            'processed_at' => null,
+        ]);
+
+        $eligibleReturn->forceFill([
+            'created_at' => now()->subDays(20),
+            'updated_at' => '2026-05-13 00:00:00',
+        ])->save();
+
+        $recentReturn->forceFill([
+            'created_at' => now()->subDays(5),
+            'updated_at' => '2026-05-13 00:00:01',
+        ])->save();
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'rent_return_pending_settlement_overdue',
+            'status' => 'sent',
+            'recipient_email' => 'manager-return-eligible@example.test',
+        ]);
+
+        $this->assertDatabaseMissing('notification_deliveries', [
+            'event_key' => 'rent_return_pending_settlement_overdue',
+            'recipient_email' => 'manager-return-recent@example.test',
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'rent_return_pending_settlement_overdue',
+            'status' => 'sent',
+            'recipient_email' => 'admin-return-boundary@example.test',
+        ]);
+
+        $this->assertSame(2, NotificationDelivery::query()->where('event_key', 'rent_return_pending_settlement_overdue')->count());
 
         Carbon::setTestNow();
     }
