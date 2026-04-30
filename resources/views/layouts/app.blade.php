@@ -24,6 +24,7 @@
                 ['label' => 'Deposits', 'route' => 'deposits.index', 'icon' => 'finance', 'active' => request()->routeIs('deposits.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager'])],
                 ['label' => 'Finance', 'route' => 'finance.index', 'icon' => 'finance', 'active' => request()->routeIs('finance.*'), 'visible' => $authUser?->hasAnyRole(['super_admin', 'manager'])],
                 ['label' => 'Security', 'route' => 'settings.security', 'icon' => 'security', 'active' => request()->routeIs('settings.security*'), 'visible' => true, 'badge' => null],
+                ['label' => 'Notifications', 'route' => 'admin.notifications.index', 'icon' => 'finance', 'active' => request()->routeIs('admin.notifications.*'), 'visible' => $isSuperAdmin, 'badge' => null],
                 ['label' => '2FA Oversight', 'route' => 'admin.security.two-factor.index', 'icon' => 'shield', 'active' => request()->routeIs('admin.security.two-factor.*'), 'visible' => $isSuperAdmin, 'badge' => null],
                 ['label' => 'Invitations', 'route' => 'invitations.create', 'icon' => 'invite', 'active' => request()->routeIs('invitations.create') || request()->routeIs('invitations.store'), 'visible' => $isSuperAdmin, 'badge' => null],
             ])->where('visible');
@@ -84,6 +85,7 @@
                                 <div class="app-profile-dropdown">
                                     <a class="app-profile-link" href="{{ route('settings.security') }}">@include('partials.app-icon', ['icon' => 'security'])<span>Security settings</span></a>
                                     @if ($isSuperAdmin)
+                                        <a class="app-profile-link" href="{{ route('admin.notifications.index') }}">@include('partials.app-icon', ['icon' => 'finance'])<span>Notification center</span></a>
                                         <a class="app-profile-link" href="{{ route('admin.security.two-factor.index') }}">@include('partials.app-icon', ['icon' => 'shield'])<span>2FA oversight</span></a>
                                     @endif
                                     <form method="POST" action="{{ route('logout') }}">

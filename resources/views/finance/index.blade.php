@@ -20,7 +20,12 @@
 
                     <div class="page-actions">
                         <a class="btn btn-ghost" href="{{ route('dashboard') }}">Dashboard</a>
+                        <a class="btn btn-ghost" href="{{ route('finance.reports.arrears.index') }}">Arrears report</a>
+                        <a class="btn btn-ghost" href="{{ route('finance.reports.deposits.index') }}">Deposits report</a>
+                        <a class="btn btn-ghost" href="{{ route('finance.reports.rent-collection.index') }}">Rent collection report</a>
+                        <a class="btn btn-ghost" href="{{ route('finance.reports.expenses.index') }}">Expense report</a>
                         <a class="btn btn-ghost" href="{{ route('finance.reports.rent-returns.index') }}">Rent return report</a>
+                        <a class="btn btn-ghost" href="{{ route('finance.reports.loan-schedule.index') }}">Loan schedule report</a>
                     </div>
                 </section>
 

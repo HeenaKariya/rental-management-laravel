@@ -4,12 +4,17 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Agreement\AgreementTemplateController;
 use App\Http\Controllers\Agreement\LeaseAgreementController;
 use App\Http\Controllers\Agreement\PublicAgreementSigningController;
+use App\Http\Controllers\Finance\ArrearsReportController;
+use App\Http\Controllers\Finance\DepositReportController;
+use App\Http\Controllers\Finance\ExpenseReportController;
 use App\Http\Controllers\Finance\RentDashboardController;
 use App\Http\Controllers\Finance\PropertyLedgerController;
 use App\Http\Controllers\Finance\PropertyPurchaseController;
 use App\Http\Controllers\Finance\PropertyReportController;
 use App\Http\Controllers\Finance\PropertySaleController;
+use App\Http\Controllers\Finance\RentCollectionReportController;
 use App\Http\Controllers\Finance\LeasePaymentHistoryController;
+use App\Http\Controllers\Finance\LoanScheduleReportController;
 use App\Http\Controllers\Finance\RentReturnReportController;
 use App\Http\Controllers\Finance\RentReturnController;
 use App\Http\Controllers\Property\PropertyController;
@@ -20,6 +25,7 @@ use App\Http\Controllers\Tenancy\LeaseController;
 use App\Http\Controllers\Tenancy\TenantController;
 use App\Http\Controllers\Tenancy\UnitController;
 use App\Http\Controllers\Admin\TwoFactorOversightController;
+use App\Http\Controllers\Admin\NotificationCenterController;
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Auth\TwoFactorOtpController;
 use App\Http\Controllers\Settings\SecuritySettingsController;
@@ -38,9 +44,24 @@ Route::get('/dashboard', DashboardController::class)
 
 Route::middleware(['auth', 'full-auth-session'])->group(function () {
     Route::get('/finance', RentDashboardController::class)->name('finance.index');
+    Route::get('/finance/reports/arrears', [ArrearsReportController::class, 'index'])->name('finance.reports.arrears.index');
+    Route::get('/finance/reports/arrears.csv', [ArrearsReportController::class, 'csv'])->name('finance.reports.arrears.csv');
+    Route::get('/finance/reports/arrears.pdf', [ArrearsReportController::class, 'pdf'])->name('finance.reports.arrears.pdf');
+    Route::get('/finance/reports/deposits', [DepositReportController::class, 'index'])->name('finance.reports.deposits.index');
+    Route::get('/finance/reports/deposits.csv', [DepositReportController::class, 'csv'])->name('finance.reports.deposits.csv');
+    Route::get('/finance/reports/deposits.pdf', [DepositReportController::class, 'pdf'])->name('finance.reports.deposits.pdf');
+    Route::get('/finance/reports/rent-collection', [RentCollectionReportController::class, 'index'])->name('finance.reports.rent-collection.index');
+    Route::get('/finance/reports/rent-collection.csv', [RentCollectionReportController::class, 'csv'])->name('finance.reports.rent-collection.csv');
+    Route::get('/finance/reports/rent-collection.pdf', [RentCollectionReportController::class, 'pdf'])->name('finance.reports.rent-collection.pdf');
+    Route::get('/finance/reports/expenses', [ExpenseReportController::class, 'index'])->name('finance.reports.expenses.index');
+    Route::get('/finance/reports/expenses.csv', [ExpenseReportController::class, 'csv'])->name('finance.reports.expenses.csv');
+    Route::get('/finance/reports/expenses.pdf', [ExpenseReportController::class, 'pdf'])->name('finance.reports.expenses.pdf');
     Route::get('/finance/reports/rent-returns', [RentReturnReportController::class, 'index'])->name('finance.reports.rent-returns.index');
     Route::get('/finance/reports/rent-returns.csv', [RentReturnReportController::class, 'csv'])->name('finance.reports.rent-returns.csv');
     Route::get('/finance/reports/rent-returns.pdf', [RentReturnReportController::class, 'pdf'])->name('finance.reports.rent-returns.pdf');
+    Route::get('/finance/reports/loan-schedule', [LoanScheduleReportController::class, 'index'])->name('finance.reports.loan-schedule.index');
+    Route::get('/finance/reports/loan-schedule.csv', [LoanScheduleReportController::class, 'csv'])->name('finance.reports.loan-schedule.csv');
+    Route::get('/finance/reports/loan-schedule.pdf', [LoanScheduleReportController::class, 'pdf'])->name('finance.reports.loan-schedule.pdf');
     Route::get('/settings/security', [SecuritySettingsController::class, 'show'])->name('settings.security');
     Route::get('/properties', [PropertyController::class, 'index'])->name('properties.index');
     Route::get('/properties/create', [PropertyController::class, 'create'])->name('properties.create');
@@ -135,6 +156,19 @@ Route::post('/two-factor-challenge/otp/resend', [TwoFactorOtpController::class, 
     ->name('two-factor.otp.resend');
 
 Route::middleware(['auth', 'full-auth-session', 'role:super_admin'])->group(function () {
+    Route::get('/admin/notifications', [NotificationCenterController::class, 'index'])
+        ->name('admin.notifications.index');
+    Route::get('/admin/notifications/export.csv', [NotificationCenterController::class, 'exportCsv'])
+        ->name('admin.notifications.export.csv');
+    Route::put('/admin/notifications/settings', [NotificationCenterController::class, 'updateSettings'])
+        ->name('admin.notifications.settings.update');
+    Route::post('/admin/notifications/dispatch-now', [NotificationCenterController::class, 'dispatchNow'])
+        ->name('admin.notifications.dispatch-now');
+    Route::post('/admin/notifications/retry-failed', [NotificationCenterController::class, 'retryFailed'])
+        ->name('admin.notifications.retry-failed');
+    Route::post('/admin/notifications/deliveries/{delivery}/retry', [NotificationCenterController::class, 'retryOne'])
+        ->name('admin.notifications.retry-one');
+
     Route::get('/admin/security/two-factor', [TwoFactorOversightController::class, 'index'])
         ->name('admin.security.two-factor.index');
     Route::post('/admin/security/two-factor/{user}/release-lock', [TwoFactorOversightController::class, 'releaseLock'])
