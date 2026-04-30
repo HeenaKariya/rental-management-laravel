@@ -30,14 +30,30 @@ class TenantAccessTest extends TestCase
 
         $unit = Unit::factory()->create();
 
-        $this->actingAs($superAdmin)
+        $response = $this->actingAs($superAdmin)
             ->post(route('tenants.store'), $this->tenantPayload([
                 'unit_id' => $unit->id,
+                'email' => 'tenant-create-kyc@example.com',
                 'kyc_documents' => [UploadedFile::fake()->create('identity-proof.pdf', 120, 'application/pdf')],
-            ]))
-            ->assertRedirect();
+            ]));
 
-        $tenant = Tenant::query()->firstOrFail();
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('tenants', [
+            'unit_id' => $unit->id,
+            'full_name' => 'Sample Tenant',
+            'email' => 'tenant-create-kyc@example.com',
+        ]);
+
+        $tenant = Tenant::query()
+            ->where('unit_id', $unit->id)
+            ->where('email', 'tenant-create-kyc@example.com')
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($tenant);
+
+        $response->assertRedirect(route('tenants.show', $tenant));
 
         $this->assertDatabaseHas('tenant_documents', [
             'tenant_id' => $tenant->id,

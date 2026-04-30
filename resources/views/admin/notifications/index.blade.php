@@ -74,6 +74,18 @@
                                             <input type="checkbox" name="events[{{ $setting['event_key'] }}][is_enabled]" value="1" @checked($setting['is_enabled'])>
                                             <span class="muted-text">Enabled</span>
                                         </label>
+                                        <div class="btn-strip" style="margin-bottom: 0.5rem;">
+                                            <label class="field-group" style="margin-bottom: 0;">
+                                                <input type="hidden" name="events[{{ $setting['event_key'] }}][email_enabled]" value="0">
+                                                <input type="checkbox" name="events[{{ $setting['event_key'] }}][email_enabled]" value="1" @checked($setting['email_enabled'])>
+                                                <span class="muted-text">Email</span>
+                                            </label>
+                                            <label class="field-group" style="margin-bottom: 0;">
+                                                <input type="hidden" name="events[{{ $setting['event_key'] }}][whatsapp_enabled]" value="0">
+                                                <input type="checkbox" name="events[{{ $setting['event_key'] }}][whatsapp_enabled]" value="1" @checked($setting['whatsapp_enabled'])>
+                                                <span class="muted-text">WhatsApp</span>
+                                            </label>
+                                        </div>
                                         <label class="field-group">
                                             <span class="field-label">Lead / offset days</span>
                                             <input class="field-input" type="number" min="0" max="365" name="events[{{ $setting['event_key'] }}][lead_days]" value="{{ $setting['lead_days'] }}">

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Agreement;
 
+use App\Domain\Agreement\Notifications\SignedAgreementCopyNotification;
 use App\Models\AgreementTemplate;
 use App\Models\Lease;
 use App\Models\Property;
@@ -10,6 +11,8 @@ use App\Models\Tenant;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -174,11 +177,110 @@ class AgreementFlowTest extends TestCase
         ]);
     }
 
-    private function createActiveLease(): Lease
+    public function test_super_admin_can_upload_and_review_notarized_agreement(): void
+    {
+        Storage::fake('public');
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create();
+        $superAdmin->assignRole('super_admin');
+
+        $lease = $this->createActiveLease();
+
+        $this->actingAs($superAdmin)
+            ->post(route('leases.agreement.notarized.store', $lease), [
+                'document' => UploadedFile::fake()->create('notarized-copy.pdf', 128, 'application/pdf'),
+                'review_notes' => 'Uploaded after tenant signing.',
+            ])->assertRedirect(route('leases.agreement.show', $lease));
+
+        $this->assertDatabaseHas('notarized_agreements', [
+            'lease_id' => $lease->id,
+            'status' => 'uploaded',
+            'uploaded_by' => $superAdmin->id,
+            'original_name' => 'notarized-copy.pdf',
+        ]);
+
+        $this->assertDatabaseHas('property_activity_logs', [
+            'property_id' => $lease->unit->property_id,
+            'event' => 'property.notarized_agreement_uploaded',
+        ]);
+
+        $notarizedAgreement = $lease->notarizedAgreements()->firstOrFail();
+
+        $this->actingAs($superAdmin)
+            ->patch(route('leases.agreement.notarized.update', [$lease, $notarizedAgreement]), [
+                'status' => 'verified',
+                'review_notes' => 'All pages verified with original hardcopy.',
+            ])->assertRedirect(route('leases.agreement.show', $lease));
+
+        $this->assertDatabaseHas('notarized_agreements', [
+            'id' => $notarizedAgreement->id,
+            'status' => 'verified',
+            'reviewed_by' => $superAdmin->id,
+            'review_notes' => 'All pages verified with original hardcopy.',
+        ]);
+
+        $this->assertDatabaseHas('property_activity_logs', [
+            'property_id' => $lease->unit->property_id,
+            'event' => 'property.notarized_agreement_status_updated',
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('leases.agreement.notarized.download', [$lease, $notarizedAgreement]))
+            ->assertOk();
+    }
+
+    public function test_public_signing_sends_signed_pdf_copy_to_tenant_and_logs_delivery(): void
+    {
+        Storage::fake('public');
+        Notification::fake();
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create();
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $tenantUser */
+        $tenantUser = User::factory()->create(['email' => 'tenant-agreement-copy@example.test']);
+        $tenantUser->assignRole('tenant');
+
+        $lease = $this->createActiveLease($tenantUser);
+
+        $template = AgreementTemplate::query()->create([
+            'name' => 'Tenant Copy Template',
+            'body_html' => '<p>{{tenant_name}} agreement copy</p>',
+            'status' => 'active',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->post(route('leases.agreement.store', $lease), ['template_id' => $template->id])
+            ->assertRedirect();
+
+        $agreement = RentAgreement::query()->where('lease_id', $lease->id)->latest()->firstOrFail();
+
+        $this->post(route('agreements.public.sign', $agreement->token), [
+            'signature_label' => 'Tenant Signature',
+        ])->assertRedirect();
+
+        Notification::assertSentTo($tenantUser, SignedAgreementCopyNotification::class);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'agreement_signed_tenant_copy',
+            'status' => 'sent',
+            'recipient_email' => 'tenant-agreement-copy@example.test',
+        ]);
+    }
+
+    private function createActiveLease(?User $tenantUser = null): Lease
     {
         $property = Property::factory()->create();
         $unit = Unit::factory()->for($property)->create();
-        $tenant = Tenant::factory()->create(['unit_id' => $unit->id]);
+        $tenant = Tenant::factory()->create([
+            'unit_id' => $unit->id,
+            'user_id' => $tenantUser?->id,
+            'email' => $tenantUser?->email,
+        ]);
         $actor = User::factory()->create();
 
         return Lease::factory()->create([

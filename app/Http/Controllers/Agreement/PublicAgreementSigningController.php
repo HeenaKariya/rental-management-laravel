@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers\Agreement;
 
+use App\Domain\Agreement\Notifications\SignedAgreementCopyNotification;
+use App\Domain\Notifications\NotificationDeliveryLogger;
 use App\Http\Controllers\Controller;
 use App\Models\PropertyActivityLog;
 use App\Models\RentAgreement;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 use Illuminate\View\View;
 
 class PublicAgreementSigningController extends Controller
@@ -75,6 +79,63 @@ class PublicAgreementSigningController extends Controller
             'signing_method' => 'typed_name',
         ]);
 
+        $this->sendSignedCopyToTenant($agreement, $pdfBinary);
+
         return back()->with('status', 'Agreement signed successfully.');
+    }
+
+    private function sendSignedCopyToTenant(RentAgreement $agreement, string $pdfBinary): void
+    {
+        $agreement->loadMissing(['lease', 'tenant.user']);
+
+        $tenantUser = $agreement->tenant?->user;
+        $subject = 'Your signed lease agreement copy';
+        $messagePreview = 'Your signed lease agreement PDF is attached for lease '.$agreement->lease?->lease_number.'.';
+        $payload = [
+            'event' => 'agreement_signed_tenant_copy',
+            'agreement_id' => $agreement->id,
+            'lease_id' => $agreement->lease_id,
+            'tenant_id' => $agreement->tenant_id,
+        ];
+
+        /** @var NotificationDeliveryLogger $logger */
+        $logger = app(NotificationDeliveryLogger::class);
+
+        if (! $tenantUser || blank($tenantUser->email)) {
+            $logger->logFailed(
+                'agreement_signed_tenant_copy',
+                $tenantUser,
+                $subject,
+                $messagePreview,
+                'Recipient email is missing for this notification.',
+                $payload,
+            );
+
+            return;
+        }
+
+        try {
+            Notification::send(
+                $tenantUser,
+                new SignedAgreementCopyNotification($agreement, $pdfBinary)
+            );
+
+            $logger->logSent(
+                'agreement_signed_tenant_copy',
+                $tenantUser,
+                $subject,
+                $messagePreview,
+                $payload,
+            );
+        } catch (Throwable $exception) {
+            $logger->logFailed(
+                'agreement_signed_tenant_copy',
+                $tenantUser,
+                $subject,
+                $messagePreview,
+                'Delivery failed: '.$exception->getMessage(),
+                $payload,
+            );
+        }
     }
 }

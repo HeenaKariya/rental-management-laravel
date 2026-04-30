@@ -117,6 +117,16 @@ class Lease extends Model
         return $this->hasMany(RentAgreement::class)->latest();
     }
 
+    public function notarizedAgreements(): HasMany
+    {
+        return $this->hasMany(NotarizedAgreement::class)->latest();
+    }
+
+    public function latestNotarizedAgreement(): HasOne
+    {
+        return $this->hasOne(NotarizedAgreement::class)->latestOfMany();
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

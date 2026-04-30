@@ -71,6 +71,11 @@ class Unit extends Model
         return $this->hasMany(Lease::class)->latest('start_on');
     }
 
+    public function maintenanceRequests(): HasMany
+    {
+        return $this->hasMany(MaintenanceRequest::class)->latest();
+    }
+
     public function activeLease(): HasMany
     {
         return $this->leases()->where('status', 'active');

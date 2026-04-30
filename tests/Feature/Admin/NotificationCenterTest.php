@@ -27,8 +27,18 @@ class NotificationCenterTest extends TestCase
         $this->actingAs($superAdmin)
             ->put(route('admin.notifications.settings.update'), [
                 'events' => [
-                    'rent_due_reminder' => ['is_enabled' => '1', 'lead_days' => 5],
-                    'lease_expiring_soon' => ['is_enabled' => '0', 'lead_days' => 10],
+                    'rent_due_reminder' => [
+                        'is_enabled' => '1',
+                        'email_enabled' => '1',
+                        'whatsapp_enabled' => '1',
+                        'lead_days' => 5,
+                    ],
+                    'lease_expiring_soon' => [
+                        'is_enabled' => '0',
+                        'email_enabled' => '1',
+                        'whatsapp_enabled' => '0',
+                        'lead_days' => 10,
+                    ],
                 ],
             ])
             ->assertRedirect(route('admin.notifications.index'));
@@ -36,12 +46,16 @@ class NotificationCenterTest extends TestCase
         $this->assertDatabaseHas('notification_event_settings', [
             'event_key' => 'rent_due_reminder',
             'is_enabled' => 1,
+            'email_enabled' => 1,
+            'whatsapp_enabled' => 1,
             'lead_days' => 5,
         ]);
 
         $this->assertDatabaseHas('notification_event_settings', [
             'event_key' => 'lease_expiring_soon',
             'is_enabled' => 0,
+            'email_enabled' => 1,
+            'whatsapp_enabled' => 0,
             'lead_days' => 10,
         ]);
     }

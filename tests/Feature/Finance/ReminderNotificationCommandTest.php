@@ -9,6 +9,8 @@ use App\Models\NotificationDelivery;
 use App\Models\NotificationEventSetting;
 use App\Models\Property;
 use App\Models\PropertyLoan;
+use App\Models\RentAgreement;
+use App\Models\RentInstalment;
 use App\Models\RentLedger;
 use App\Models\RentReturn;
 use App\Models\Tenant;
@@ -147,6 +149,79 @@ class ReminderNotificationCommandTest extends TestCase
             'event_key' => 'rent_due_reminder',
             'status' => 'sent',
             'recipient_email' => 'manager@example.test',
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_dispatch_command_can_log_whatsapp_channel_delivery_when_enabled(): void
+    {
+        Carbon::setTestNow('2026-05-01 09:00:00');
+        $this->configureOnlyEvent('rent_due_reminder', 3, false, true);
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-ws@example.test', 'phone' => '+15550001000']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $manager */
+        $manager = User::factory()->create(['email' => 'manager-ws@example.test', 'phone' => '+15550001001']);
+        $manager->assignRole('manager');
+
+        /** @var User $tenantUser */
+        $tenantUser = User::factory()->create(['email' => 'tenant-ws@example.test', 'phone' => '+15550001002']);
+        $tenantUser->assignRole('tenant');
+
+        $property = Property::factory()->create();
+        $property->assignManager($manager, $superAdmin);
+
+        $unit = Unit::factory()->for($property)->create();
+        $tenant = Tenant::factory()->create([
+            'unit_id' => $unit->id,
+            'user_id' => $tenantUser->id,
+            'kyc_status' => 'verified',
+        ]);
+
+        $lease = Lease::factory()->create([
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'status' => 'active',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-12-31',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        RentLedger::query()->create([
+            'lease_id' => $lease->id,
+            'payment_month' => '2026-05-01',
+            'due_on' => '2026-05-04',
+            'base_rent_amount' => 10000,
+            'carried_arrears' => 0,
+            'credit_brought_forward' => 0,
+            'total_due' => 10000,
+            'total_received' => 0,
+            'late_fee_total' => 0,
+            'outstanding_balance' => 10000,
+            'status' => 'unpaid',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'rent_due_reminder',
+            'status' => 'sent',
+            'channel' => 'whatsapp',
+            'recipient_email' => '+15550001002',
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'rent_due_reminder',
+            'status' => 'sent',
+            'channel' => 'whatsapp',
+            'recipient_email' => '+15550001001',
         ]);
 
         Carbon::setTestNow();
@@ -735,7 +810,578 @@ class ReminderNotificationCommandTest extends TestCase
         Carbon::setTestNow();
     }
 
-    private function configureOnlyEvent(string $eventKey, int $leadDays): void
+    public function test_dispatch_command_creates_delivery_logs_for_rent_overdue_event(): void
+    {
+        Carbon::setTestNow('2026-05-20 09:00:00');
+        $this->configureOnlyEvent('rent_overdue', 0);
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-overdue@example.test']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $manager */
+        $manager = User::factory()->create(['email' => 'manager-overdue@example.test']);
+        $manager->assignRole('manager');
+
+        /** @var User $tenantUser */
+        $tenantUser = User::factory()->create(['email' => 'tenant-overdue@example.test']);
+        $tenantUser->assignRole('tenant');
+
+        $property = Property::factory()->create();
+        $property->assignManager($manager, $superAdmin);
+        $unit = Unit::factory()->for($property)->create();
+        $tenant = Tenant::factory()->create([
+            'unit_id' => $unit->id,
+            'user_id' => $tenantUser->id,
+        ]);
+
+        $lease = Lease::factory()->create([
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'status' => 'active',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-12-31',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        RentLedger::query()->create([
+            'lease_id' => $lease->id,
+            'payment_month' => '2026-05-01',
+            'due_on' => '2026-05-10',
+            'base_rent_amount' => 10000,
+            'carried_arrears' => 0,
+            'credit_brought_forward' => 0,
+            'total_due' => 10000,
+            'total_received' => 0,
+            'late_fee_total' => 0,
+            'outstanding_balance' => 10000,
+            'status' => 'overdue',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'rent_overdue',
+            'status' => 'sent',
+            'recipient_email' => 'tenant-overdue@example.test',
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'rent_overdue',
+            'status' => 'sent',
+            'recipient_email' => 'manager-overdue@example.test',
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_dispatch_command_creates_delivery_logs_for_lease_expired_event(): void
+    {
+        Carbon::setTestNow('2026-05-20 09:00:00');
+        $this->configureOnlyEvent('lease_expired', 0);
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-expired@example.test']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $manager */
+        $manager = User::factory()->create(['email' => 'manager-expired@example.test']);
+        $manager->assignRole('manager');
+
+        $property = Property::factory()->create();
+        $property->assignManager($manager, $superAdmin);
+        $unit = Unit::factory()->for($property)->create();
+        $tenant = Tenant::factory()->create(['unit_id' => $unit->id]);
+
+        Lease::factory()->create([
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'status' => 'active',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-05-10',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'lease_expired',
+            'status' => 'sent',
+            'recipient_email' => 'manager-expired@example.test',
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_dispatch_command_creates_delivery_logs_for_partial_payment_received_event(): void
+    {
+        Carbon::setTestNow('2026-05-20 09:00:00');
+        $this->configureOnlyEvent('partial_payment_received', 0);
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-partial@example.test']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $manager */
+        $manager = User::factory()->create(['email' => 'manager-partial@example.test']);
+        $manager->assignRole('manager');
+
+        /** @var User $tenantUser */
+        $tenantUser = User::factory()->create(['email' => 'tenant-partial@example.test']);
+        $tenantUser->assignRole('tenant');
+
+        $property = Property::factory()->create();
+        $property->assignManager($manager, $superAdmin);
+        $unit = Unit::factory()->for($property)->create();
+        $tenant = Tenant::factory()->create([
+            'unit_id' => $unit->id,
+            'user_id' => $tenantUser->id,
+        ]);
+
+        $lease = Lease::factory()->create([
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'status' => 'active',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-12-31',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $ledger = RentLedger::query()->create([
+            'lease_id' => $lease->id,
+            'payment_month' => '2026-05-01',
+            'due_on' => '2026-05-20',
+            'base_rent_amount' => 10000,
+            'carried_arrears' => 0,
+            'credit_brought_forward' => 0,
+            'total_due' => 10000,
+            'total_received' => 7000,
+            'late_fee_total' => 0,
+            'outstanding_balance' => 3000,
+            'status' => 'partially_paid',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        RentInstalment::query()->create([
+            'rent_ledger_id' => $ledger->id,
+            'instalment_number' => 1,
+            'payment_date' => '2026-05-20',
+            'amount_paid' => 7000,
+            'payment_mode' => 'bank_transfer',
+            'reference_number' => 'PARTIAL-001',
+            'notes' => null,
+            'recorded_by' => $superAdmin->id,
+        ]);
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'partial_payment_received',
+            'status' => 'sent',
+            'recipient_email' => 'tenant-partial@example.test',
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'partial_payment_received',
+            'status' => 'sent',
+            'recipient_email' => 'manager-partial@example.test',
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_dispatch_command_creates_delivery_logs_for_arrears_carried_forward_event(): void
+    {
+        Carbon::setTestNow('2026-05-20 09:00:00');
+        $this->configureOnlyEvent('arrears_carried_forward', 0);
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-arrears@example.test']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $manager */
+        $manager = User::factory()->create(['email' => 'manager-arrears@example.test']);
+        $manager->assignRole('manager');
+
+        /** @var User $tenantUser */
+        $tenantUser = User::factory()->create(['email' => 'tenant-arrears@example.test']);
+        $tenantUser->assignRole('tenant');
+
+        $property = Property::factory()->create();
+        $property->assignManager($manager, $superAdmin);
+        $unit = Unit::factory()->for($property)->create();
+        $tenant = Tenant::factory()->create([
+            'unit_id' => $unit->id,
+            'user_id' => $tenantUser->id,
+        ]);
+
+        $lease = Lease::factory()->create([
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'status' => 'active',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-12-31',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        RentLedger::query()->create([
+            'lease_id' => $lease->id,
+            'payment_month' => '2026-05-01',
+            'due_on' => '2026-05-20',
+            'base_rent_amount' => 10000,
+            'carried_arrears' => 2500,
+            'credit_brought_forward' => 0,
+            'total_due' => 12500,
+            'total_received' => 0,
+            'late_fee_total' => 0,
+            'outstanding_balance' => 12500,
+            'status' => 'unpaid',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'arrears_carried_forward',
+            'status' => 'sent',
+            'recipient_email' => 'tenant-arrears@example.test',
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'arrears_carried_forward',
+            'status' => 'sent',
+            'recipient_email' => 'manager-arrears@example.test',
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_dispatch_command_creates_delivery_logs_for_instalment_receipt_generated_event(): void
+    {
+        Carbon::setTestNow('2026-05-20 09:00:00');
+        $this->configureOnlyEvent('instalment_receipt_generated', 0);
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-receipt@example.test']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $manager */
+        $manager = User::factory()->create(['email' => 'manager-receipt@example.test']);
+        $manager->assignRole('manager');
+
+        /** @var User $tenantUser */
+        $tenantUser = User::factory()->create(['email' => 'tenant-receipt@example.test']);
+        $tenantUser->assignRole('tenant');
+
+        $property = Property::factory()->create();
+        $property->assignManager($manager, $superAdmin);
+        $unit = Unit::factory()->for($property)->create();
+        $tenant = Tenant::factory()->create([
+            'unit_id' => $unit->id,
+            'user_id' => $tenantUser->id,
+        ]);
+
+        $lease = Lease::factory()->create([
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'status' => 'active',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-12-31',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $ledger = RentLedger::query()->create([
+            'lease_id' => $lease->id,
+            'payment_month' => '2026-05-01',
+            'due_on' => '2026-05-20',
+            'base_rent_amount' => 10000,
+            'carried_arrears' => 0,
+            'credit_brought_forward' => 0,
+            'total_due' => 10000,
+            'total_received' => 10000,
+            'late_fee_total' => 0,
+            'outstanding_balance' => 0,
+            'status' => 'paid',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        RentInstalment::query()->create([
+            'rent_ledger_id' => $ledger->id,
+            'instalment_number' => 1,
+            'payment_date' => '2026-05-20',
+            'amount_paid' => 10000,
+            'payment_mode' => 'bank_transfer',
+            'reference_number' => 'RECEIPT-001',
+            'notes' => null,
+            'recorded_by' => $superAdmin->id,
+        ]);
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'instalment_receipt_generated',
+            'status' => 'sent',
+            'recipient_email' => 'tenant-receipt@example.test',
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_dispatch_command_creates_delivery_logs_for_agreement_signature_pending_event(): void
+    {
+        Carbon::setTestNow('2026-05-20 09:00:00');
+        $this->configureOnlyEvent('agreement_signature_pending', 7);
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-agreement-pending@example.test']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $manager */
+        $manager = User::factory()->create(['email' => 'manager-agreement-pending@example.test']);
+        $manager->assignRole('manager');
+
+        /** @var User $tenantUser */
+        $tenantUser = User::factory()->create(['email' => 'tenant-agreement-pending@example.test']);
+        $tenantUser->assignRole('tenant');
+
+        $property = Property::factory()->create();
+        $property->assignManager($manager, $superAdmin);
+        $unit = Unit::factory()->for($property)->create();
+        $tenant = Tenant::factory()->create([
+            'unit_id' => $unit->id,
+            'user_id' => $tenantUser->id,
+        ]);
+
+        $lease = Lease::factory()->create([
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'status' => 'active',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-12-31',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $agreement = RentAgreement::query()->create([
+            'lease_id' => $lease->id,
+            'tenant_id' => $tenant->id,
+            'template_id' => null,
+            'generated_content' => '<p>Agreement pending signature</p>',
+            'token' => 'pending-signature-token-1',
+            'status' => 'generated',
+            'generated_by' => $superAdmin->id,
+        ]);
+
+        $agreement->forceFill([
+            'created_at' => now()->subDays(8),
+            'updated_at' => now()->subDays(8),
+        ])->save();
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'agreement_signature_pending',
+            'status' => 'sent',
+            'recipient_email' => 'tenant-agreement-pending@example.test',
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'agreement_signature_pending',
+            'status' => 'sent',
+            'recipient_email' => 'manager-agreement-pending@example.test',
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_dispatch_command_creates_delivery_logs_for_agreement_signed_event(): void
+    {
+        Carbon::setTestNow('2026-05-20 09:00:00');
+        $this->configureOnlyEvent('agreement_signed', 0);
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-agreement-signed@example.test']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $manager */
+        $manager = User::factory()->create(['email' => 'manager-agreement-signed@example.test']);
+        $manager->assignRole('manager');
+
+        /** @var User $tenantUser */
+        $tenantUser = User::factory()->create(['email' => 'tenant-agreement-signed@example.test']);
+        $tenantUser->assignRole('tenant');
+
+        $property = Property::factory()->create();
+        $property->assignManager($manager, $superAdmin);
+        $unit = Unit::factory()->for($property)->create();
+        $tenant = Tenant::factory()->create([
+            'unit_id' => $unit->id,
+            'user_id' => $tenantUser->id,
+        ]);
+
+        $lease = Lease::factory()->create([
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'status' => 'active',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-12-31',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        RentAgreement::query()->create([
+            'lease_id' => $lease->id,
+            'tenant_id' => $tenant->id,
+            'template_id' => null,
+            'generated_content' => '<p>Signed agreement</p>',
+            'token' => 'agreement-signed-token-1',
+            'status' => 'signed',
+            'signed_at' => now(),
+            'signature_label' => 'Tenant Signature',
+            'generated_by' => $superAdmin->id,
+        ]);
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'agreement_signed',
+            'status' => 'sent',
+            'recipient_email' => 'tenant-agreement-signed@example.test',
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'agreement_signed',
+            'status' => 'sent',
+            'recipient_email' => 'manager-agreement-signed@example.test',
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_dispatch_command_creates_delivery_logs_for_agreement_integrity_failed_event(): void
+    {
+        Carbon::setTestNow('2026-05-20 09:00:00');
+        $this->configureOnlyEvent('agreement_integrity_failed', 0);
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-agreement-integrity@example.test']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $manager */
+        $manager = User::factory()->create(['email' => 'manager-agreement-integrity@example.test']);
+        $manager->assignRole('manager');
+
+        $property = Property::factory()->create();
+        $property->assignManager($manager, $superAdmin);
+        $unit = Unit::factory()->for($property)->create();
+        $tenant = Tenant::factory()->create(['unit_id' => $unit->id]);
+
+        $lease = Lease::factory()->create([
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'status' => 'active',
+            'start_on' => '2026-01-01',
+            'end_on' => '2026-12-31',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        RentAgreement::query()->create([
+            'lease_id' => $lease->id,
+            'tenant_id' => $tenant->id,
+            'template_id' => null,
+            'generated_content' => '<p>Tampered agreement</p>',
+            'token' => 'agreement-integrity-token-1',
+            'status' => 'signed',
+            'signed_at' => now()->subDay(),
+            'signed_pdf_hash' => str_repeat('a', 64),
+            'integrity_check_status' => 'tampered',
+            'integrity_last_checked_at' => now(),
+            'generated_by' => $superAdmin->id,
+        ]);
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'agreement_integrity_failed',
+            'status' => 'sent',
+            'recipient_email' => 'manager-agreement-integrity@example.test',
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'agreement_integrity_failed',
+            'status' => 'sent',
+            'recipient_email' => 'admin-agreement-integrity@example.test',
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_dispatch_command_creates_delivery_logs_for_notarized_agreement_upload_pending_event(): void
+    {
+        Carbon::setTestNow('2026-05-20 09:00:00');
+        $this->configureOnlyEvent('notarized_agreement_upload_pending', 7);
+
+        /** @var User $superAdmin */
+        $superAdmin = User::factory()->create(['email' => 'admin-notarized-pending@example.test']);
+        $superAdmin->assignRole('super_admin');
+
+        /** @var User $manager */
+        $manager = User::factory()->create(['email' => 'manager-notarized-pending@example.test']);
+        $manager->assignRole('manager');
+
+        $property = Property::factory()->create();
+        $property->assignManager($manager, $superAdmin);
+        $unit = Unit::factory()->for($property)->create();
+        $tenant = Tenant::factory()->create(['unit_id' => $unit->id]);
+
+        Lease::factory()->create([
+            'unit_id' => $unit->id,
+            'tenant_id' => $tenant->id,
+            'status' => 'active',
+            'start_on' => '2026-05-01',
+            'end_on' => '2027-04-30',
+            'created_by' => $superAdmin->id,
+            'updated_by' => $superAdmin->id,
+        ]);
+
+        $this->artisan('phase7:dispatch-reminders')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'notarized_agreement_upload_pending',
+            'status' => 'sent',
+            'recipient_email' => 'manager-notarized-pending@example.test',
+        ]);
+
+        $this->assertDatabaseHas('notification_deliveries', [
+            'event_key' => 'notarized_agreement_upload_pending',
+            'status' => 'sent',
+            'recipient_email' => 'admin-notarized-pending@example.test',
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    private function configureOnlyEvent(string $eventKey, int $leadDays, bool $emailEnabled = true, bool $whatsappEnabled = false): void
     {
         NotificationEventSetting::query()->delete();
 
@@ -743,6 +1389,8 @@ class ReminderNotificationCommandTest extends TestCase
             NotificationEventSetting::query()->create([
                 'event_key' => $key,
                 'is_enabled' => $key === $eventKey,
+                'email_enabled' => $key === $eventKey ? $emailEnabled : true,
+                'whatsapp_enabled' => $key === $eventKey ? $whatsappEnabled : false,
                 'lead_days' => $key === $eventKey ? $leadDays : $defaultLeadDays,
             ]);
         }
@@ -756,6 +1404,8 @@ class ReminderNotificationCommandTest extends TestCase
             NotificationEventSetting::query()->create([
                 'event_key' => $key,
                 'is_enabled' => false,
+                'email_enabled' => true,
+                'whatsapp_enabled' => false,
                 'lead_days' => $defaultLeadDays,
             ]);
         }

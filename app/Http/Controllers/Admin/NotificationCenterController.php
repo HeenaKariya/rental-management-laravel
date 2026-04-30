@@ -35,6 +35,8 @@ class NotificationCenterController extends Controller
                 return [
                     'event_key' => $eventKey,
                     'is_enabled' => $config['is_enabled'],
+                    'email_enabled' => $config['email_enabled'],
+                    'whatsapp_enabled' => $config['whatsapp_enabled'],
                     'lead_days' => $config['lead_days'],
                     'default_lead_days' => $defaultLeadDays,
                 ];
@@ -104,6 +106,8 @@ class NotificationCenterController extends Controller
         $payload = $request->validate([
             'events' => ['required', 'array'],
             'events.*.is_enabled' => ['nullable', 'boolean'],
+            'events.*.email_enabled' => ['nullable', 'boolean'],
+            'events.*.whatsapp_enabled' => ['nullable', 'boolean'],
             'events.*.lead_days' => ['nullable', 'integer', 'min:0', 'max:365'],
         ]);
 
@@ -114,6 +118,8 @@ class NotificationCenterController extends Controller
                 ['event_key' => $eventKey],
                 [
                     'is_enabled' => isset($row['is_enabled']) ? (bool) $row['is_enabled'] : false,
+                    'email_enabled' => isset($row['email_enabled']) ? (bool) $row['email_enabled'] : false,
+                    'whatsapp_enabled' => isset($row['whatsapp_enabled']) ? (bool) $row['whatsapp_enabled'] : false,
                     'lead_days' => isset($row['lead_days']) ? (int) $row['lead_days'] : $defaultLeadDays,
                 ]
             );

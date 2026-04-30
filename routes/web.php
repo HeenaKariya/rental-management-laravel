@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Agreement\AgreementTemplateController;
 use App\Http\Controllers\Agreement\LeaseAgreementController;
 use App\Http\Controllers\Agreement\PublicAgreementSigningController;
+use App\Http\Controllers\Maintenance\MaintenanceRequestController;
 use App\Http\Controllers\Finance\ArrearsReportController;
 use App\Http\Controllers\Finance\DepositReportController;
 use App\Http\Controllers\Finance\ExpenseReportController;
@@ -106,6 +107,9 @@ Route::middleware(['auth', 'full-auth-session'])->group(function () {
     Route::get('/leases/{lease}', [LeaseController::class, 'show'])->name('leases.show');
     Route::get('/leases/{lease}/agreement', [LeaseAgreementController::class, 'show'])->name('leases.agreement.show');
     Route::post('/leases/{lease}/agreement', [LeaseAgreementController::class, 'store'])->name('leases.agreement.store');
+    Route::post('/leases/{lease}/agreement/notarized', [LeaseAgreementController::class, 'storeNotarized'])->name('leases.agreement.notarized.store');
+    Route::patch('/leases/{lease}/agreement/notarized/{notarizedAgreement}', [LeaseAgreementController::class, 'updateNotarizedStatus'])->name('leases.agreement.notarized.update');
+    Route::get('/leases/{lease}/agreement/notarized/{notarizedAgreement}/download', [LeaseAgreementController::class, 'downloadNotarized'])->name('leases.agreement.notarized.download');
     Route::post('/leases/{lease}/agreement/{agreement}/verify-integrity', [LeaseAgreementController::class, 'verifyIntegrity'])->name('leases.agreement.verify-integrity');
     Route::get('/leases/{lease}/agreement/{agreement}/signed-pdf', [LeaseAgreementController::class, 'downloadSignedPdf'])->name('leases.agreement.download-signed-pdf');
     Route::get('/leases/{lease}/rent-return/create', [RentReturnController::class, 'create'])->name('leases.rent-return.create');
@@ -125,6 +129,11 @@ Route::middleware(['auth', 'full-auth-session'])->group(function () {
     Route::post('/deposits', [LeaseDepositController::class, 'store'])->name('deposits.store');
     Route::get('/deposits/{deposit}', [LeaseDepositController::class, 'show'])->name('deposits.show');
     Route::post('/deposits/{deposit}/entries', [LeaseDepositController::class, 'postEntry'])->name('deposits.entries.store');
+    Route::get('/maintenance-requests', [MaintenanceRequestController::class, 'index'])->name('maintenance.index');
+    Route::get('/maintenance-requests/create', [MaintenanceRequestController::class, 'create'])->name('maintenance.create');
+    Route::post('/maintenance-requests', [MaintenanceRequestController::class, 'store'])->name('maintenance.store');
+    Route::get('/maintenance-requests/{maintenanceRequest}', [MaintenanceRequestController::class, 'show'])->name('maintenance.show');
+    Route::patch('/maintenance-requests/{maintenanceRequest}', [MaintenanceRequestController::class, 'update'])->name('maintenance.update');
     Route::post('/properties/{property}/assignments', [PropertyManagerAssignmentController::class, 'store'])
         ->name('properties.assignments.store');
     Route::delete('/properties/{property}/assignments/{assignment}', [PropertyManagerAssignmentController::class, 'destroy'])

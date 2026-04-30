@@ -79,6 +79,11 @@ class Tenant extends Model
         return $this->hasMany(Lease::class)->latest('start_on');
     }
 
+    public function maintenanceRequests(): HasMany
+    {
+        return $this->hasMany(MaintenanceRequest::class)->latest();
+    }
+
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
         if ($user->hasRole('super_admin')) {

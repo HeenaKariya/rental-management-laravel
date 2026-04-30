@@ -112,6 +112,82 @@
                                 <button class="btn btn-solid" type="submit">Generate agreement</button>
                             </form>
                         </article>
+
+                        <article class="security-card dashboard-panel" style="margin-top: 1rem;">
+                            <div class="dashboard-panel-head">
+                                <div>
+                                    <p class="row-label">Notarized agreement</p>
+                                    <h3 class="dashboard-panel-title">Upload and review status</h3>
+                                </div>
+                            </div>
+
+                            @if ($lease->notarizedAgreements->isEmpty())
+                                <p class="security-empty">No notarized agreement uploaded yet.</p>
+                            @else
+                                <div class="data-table-card" style="margin-bottom: 0.75rem;">
+                                    <table class="data-table data-table-compact">
+                                        <thead>
+                                            <tr>
+                                                <th>Uploaded</th>
+                                                <th>Status</th>
+                                                <th>Document</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($lease->notarizedAgreements as $notarizedAgreement)
+                                                <tr>
+                                                    <td>{{ $notarizedAgreement->uploaded_at?->format('M j, Y g:i A') ?: $notarizedAgreement->created_at->format('M j, Y g:i A') }}</td>
+                                                    <td>
+                                                        {{ str($notarizedAgreement->status)->replace('_', ' ')->title() }}
+                                                        @if ($notarizedAgreement->reviewed_at)
+                                                            <br><span class="muted-text">Reviewed {{ $notarizedAgreement->reviewed_at->format('M j, g:i A') }}</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        <a href="{{ route('leases.agreement.notarized.download', [$lease, $notarizedAgreement]) }}">Download</a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                @can('update', $lease)
+                                    <form method="POST" action="{{ route('leases.agreement.notarized.update', [$lease, $lease->notarizedAgreements->first()]) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <label class="field-group">
+                                            <span class="field-label">Latest document status</span>
+                                            <select class="field-input" name="status" required>
+                                                @foreach (['uploaded', 'verified', 'rejected'] as $status)
+                                                    <option value="{{ $status }}" @selected($lease->notarizedAgreements->first()->status === $status)>{{ str($status)->replace('_', ' ')->title() }}</option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                        <label class="field-group">
+                                            <span class="field-label">Review notes (optional)</span>
+                                            <textarea class="field-input" name="review_notes" rows="3">{{ old('review_notes', $lease->notarizedAgreements->first()->review_notes) }}</textarea>
+                                        </label>
+                                        <button class="btn btn-ghost btn-sm" type="submit">Update status</button>
+                                    </form>
+                                @endcan
+                            @endif
+
+                            @can('update', $lease)
+                                <form method="POST" action="{{ route('leases.agreement.notarized.store', $lease) }}" enctype="multipart/form-data" style="margin-top: 0.9rem;">
+                                    @csrf
+                                    <label class="field-group">
+                                        <span class="field-label">Upload notarized document</span>
+                                        <input class="field-input" type="file" name="document" accept=".pdf,.jpg,.jpeg,.png" required>
+                                    </label>
+                                    <label class="field-group">
+                                        <span class="field-label">Upload notes (optional)</span>
+                                        <textarea class="field-input" name="review_notes" rows="3">{{ old('review_notes') }}</textarea>
+                                    </label>
+                                    <button class="btn btn-solid" type="submit">Upload notarized agreement</button>
+                                </form>
+                            @endcan
+                        </article>
                     </div>
                 </section>
             </div>

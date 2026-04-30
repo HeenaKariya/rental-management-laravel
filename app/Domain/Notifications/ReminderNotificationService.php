@@ -2,16 +2,20 @@
 
 namespace App\Domain\Notifications;
 
+use App\Domain\Notifications\Contracts\WhatsappNotificationGateway;
 use App\Models\Lease;
 use App\Models\NotificationDelivery;
 use App\Models\NotificationEventSetting;
 use App\Models\PropertyLoan;
+use App\Models\RentAgreement;
+use App\Models\RentInstalment;
 use App\Models\RentLedger;
 use App\Models\RentReturn;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Throwable;
 
 class ReminderNotificationService
 {
@@ -23,6 +27,16 @@ class ReminderNotificationService
         'deposit_collection_pending' => 7,
         'deposit_refund_overdue' => 14,
         'rent_return_pending_settlement_overdue' => 7,
+        'maintenance_request_status_changed' => 0,
+        'rent_overdue' => 0,
+        'lease_expired' => 0,
+        'partial_payment_received' => 0,
+        'arrears_carried_forward' => 0,
+        'instalment_receipt_generated' => 0,
+        'agreement_signature_pending' => 7,
+        'agreement_signed' => 0,
+        'agreement_integrity_failed' => 0,
+        'notarized_agreement_upload_pending' => 7,
     ];
 
     public function dispatch(?Carbon $today = null): array
@@ -43,12 +57,14 @@ class ReminderNotificationService
             $snapshots = $this->snapshotForEvent($eventKey, $today, $leadDays);
 
             foreach ($snapshots as $snapshot) {
-                $delivery = $this->deliver($eventKey, $snapshot);
+                $deliveries = $this->deliver($eventKey, $snapshot, $eventConfig);
 
-                if ($delivery->status === 'sent') {
-                    $sent++;
-                } else {
-                    $failed++;
+                foreach ($deliveries as $delivery) {
+                    if ($delivery->status === 'sent') {
+                        $sent++;
+                    } else {
+                        $failed++;
+                    }
                 }
             }
         }
@@ -66,7 +82,7 @@ class ReminderNotificationService
 
         NotificationDelivery::query()
             ->where('status', 'failed')
-            ->where('channel', 'email')
+            ->whereIn('channel', ['email', 'whatsapp'])
             ->orderBy('id')
             ->chunkById(100, function (Collection $deliveries) use (&$retried, &$resolved): void {
                 foreach ($deliveries as $delivery) {
@@ -87,6 +103,48 @@ class ReminderNotificationService
     public function retryDelivery(NotificationDelivery $delivery): bool
     {
         $recipient = $delivery->notifiable instanceof User ? $delivery->notifiable : null;
+        $channel = (string) ($delivery->channel ?: 'email');
+
+        if ($channel === 'whatsapp') {
+            $phone = $recipient?->phone ?: $delivery->recipient_email;
+
+            if (! filled($phone)) {
+                $delivery->forceFill([
+                    'retry_count' => ((int) $delivery->retry_count) + 1,
+                    'failure_reason' => 'Retry failed: recipient phone is still missing.',
+                    'failed_at' => now(),
+                ])->save();
+
+                return false;
+            }
+
+            try {
+                app(WhatsappNotificationGateway::class)->send(
+                    (string) $phone,
+                    (string) ($delivery->message_preview ?: $delivery->subject ?: 'PropMgr notification')
+                );
+
+                $delivery->forceFill([
+                    'status' => 'sent',
+                    'sent_at' => now(),
+                    'failed_at' => null,
+                    'failure_reason' => null,
+                    'retry_count' => ((int) $delivery->retry_count) + 1,
+                    'recipient_email' => $phone,
+                ])->save();
+
+                return true;
+            } catch (Throwable $exception) {
+                $delivery->forceFill([
+                    'retry_count' => ((int) $delivery->retry_count) + 1,
+                    'failure_reason' => 'Retry failed: '.$exception->getMessage(),
+                    'failed_at' => now(),
+                ])->save();
+
+                return false;
+            }
+        }
+
         $recipientEmail = $recipient?->email ?: $delivery->recipient_email;
 
         if (filled($recipientEmail)) {
@@ -111,9 +169,10 @@ class ReminderNotificationService
         return false;
     }
 
-    private function deliver(string $eventKey, array $snapshot): NotificationDelivery
+    private function deliver(string $eventKey, array $snapshot, array $eventConfig): array
     {
         $logger = app(NotificationDeliveryLogger::class);
+        $whatsappGateway = app(WhatsappNotificationGateway::class);
 
         /** @var User|null $recipient */
         $recipient = $snapshot['recipient'] ?? null;
@@ -121,18 +180,86 @@ class ReminderNotificationService
         $messagePreview = $snapshot['message_preview'] ?? '';
         $payload = $snapshot['payload'] ?? [];
 
-        if (! $recipient || blank($recipient->email)) {
-            return $logger->logFailed(
+        $deliveries = [];
+
+        if ((bool) ($eventConfig['email_enabled'] ?? true)) {
+            if (! $recipient || blank($recipient->email)) {
+                $deliveries[] = $logger->logFailed(
+                    $eventKey,
+                    $recipient,
+                    $subject,
+                    $messagePreview,
+                    'Recipient email is missing for this notification.',
+                    $payload,
+                    'email',
+                );
+            } else {
+                $deliveries[] = $logger->logSent(
+                    $eventKey,
+                    $recipient,
+                    $subject,
+                    $messagePreview,
+                    $payload,
+                    'email',
+                );
+            }
+        }
+
+        if ((bool) ($eventConfig['whatsapp_enabled'] ?? false)) {
+            $phone = $recipient?->phone;
+
+            if (! $recipient || blank($phone)) {
+                $deliveries[] = $logger->logFailed(
+                    $eventKey,
+                    $recipient,
+                    $subject,
+                    $messagePreview,
+                    'Recipient phone is missing for WhatsApp notification.',
+                    $payload,
+                    'whatsapp',
+                    $phone,
+                );
+            } else {
+                try {
+                    $whatsappGateway->send((string) $phone, $messagePreview ?: $subject);
+
+                    $deliveries[] = $logger->logSent(
+                        $eventKey,
+                        $recipient,
+                        $subject,
+                        $messagePreview,
+                        $payload,
+                        'whatsapp',
+                        (string) $phone,
+                    );
+                } catch (Throwable $exception) {
+                    $deliveries[] = $logger->logFailed(
+                        $eventKey,
+                        $recipient,
+                        $subject,
+                        $messagePreview,
+                        'WhatsApp delivery failed: '.$exception->getMessage(),
+                        $payload,
+                        'whatsapp',
+                        (string) $phone,
+                    );
+                }
+            }
+        }
+
+        if ($deliveries === []) {
+            $deliveries[] = $logger->logFailed(
                 $eventKey,
                 $recipient,
                 $subject,
                 $messagePreview,
-                'Recipient email is missing for this notification.',
+                'No channels are enabled for this notification event.',
                 $payload,
+                'email',
             );
         }
 
-        return $logger->logSent($eventKey, $recipient, $subject, $messagePreview, $payload);
+        return $deliveries;
     }
 
     private function snapshotForEvent(string $eventKey, Carbon $today, int $leadDays): array
@@ -145,6 +272,15 @@ class ReminderNotificationService
             'deposit_collection_pending' => $this->depositCollectionPendingSnapshots($today, $leadDays),
             'deposit_refund_overdue' => $this->depositRefundOverdueSnapshots($today, $leadDays),
             'rent_return_pending_settlement_overdue' => $this->rentReturnPendingSnapshots($today, $leadDays),
+            'rent_overdue' => $this->rentOverdueSnapshots($today),
+            'lease_expired' => $this->leaseExpiredSnapshots($today),
+            'partial_payment_received' => $this->partialPaymentSnapshots($today, $leadDays),
+            'arrears_carried_forward' => $this->arrearsCarriedForwardSnapshots($today),
+            'instalment_receipt_generated' => $this->instalmentReceiptSnapshots($today, $leadDays),
+            'agreement_signature_pending' => $this->agreementSignaturePendingSnapshots($today, $leadDays),
+            'agreement_signed' => $this->agreementSignedSnapshots($today, $leadDays),
+            'agreement_integrity_failed' => $this->agreementIntegrityFailedSnapshots($today, $leadDays),
+            'notarized_agreement_upload_pending' => $this->notarizedAgreementUploadPendingSnapshots($today, $leadDays),
             default => [],
         };
     }
@@ -399,6 +535,354 @@ class ReminderNotificationService
                         'event' => 'rent_return_pending_settlement_overdue',
                         'rent_return_id' => $rentReturn->id,
                         'lease_id' => $rentReturn->lease_id,
+                    ],
+                ];
+            }
+        }
+
+        return $snapshots;
+    }
+
+    private function rentOverdueSnapshots(Carbon $today): array
+    {
+        $ledgers = RentLedger::query()
+            ->with(['lease.tenant.user', 'lease.unit.property.activeManagerAssignments.manager'])
+            ->where(function ($query) use ($today) {
+                $query->where('status', 'overdue')
+                    ->orWhere(function ($subQuery) use ($today) {
+                        $subQuery
+                            ->whereDate('due_on', '<', $today->toDateString())
+                            ->where('outstanding_balance', '>', 0);
+                    });
+            })
+            ->get();
+
+        $snapshots = [];
+
+        foreach ($ledgers as $ledger) {
+            $lease = $ledger->lease;
+            $property = $lease?->unit?->property;
+
+            $recipients = $this->collectRecipients(
+                [$lease?->tenant?->user],
+                $property?->activeManagerAssignments?->pluck('manager')->all() ?? [],
+                $this->superAdmins()->all(),
+            );
+
+            foreach ($recipients as $recipient) {
+                $snapshots[] = [
+                    'recipient' => $recipient,
+                    'subject' => 'Rent overdue',
+                    'message_preview' => 'Rent payment is overdue for lease '.$lease?->lease_number.'.',
+                    'payload' => [
+                        'event' => 'rent_overdue',
+                        'lease_id' => $lease?->id,
+                        'rent_ledger_id' => $ledger->id,
+                    ],
+                ];
+            }
+        }
+
+        return $snapshots;
+    }
+
+    private function leaseExpiredSnapshots(Carbon $today): array
+    {
+        $leases = Lease::query()
+            ->with(['unit.property.activeManagerAssignments.manager'])
+            ->where('status', 'active')
+            ->whereDate('end_on', '<', $today->toDateString())
+            ->get();
+
+        $snapshots = [];
+
+        foreach ($leases as $lease) {
+            $property = $lease->unit?->property;
+            $recipients = $this->collectRecipients(
+                $property?->activeManagerAssignments?->pluck('manager')->all() ?? [],
+                $this->superAdmins()->all(),
+            );
+
+            foreach ($recipients as $recipient) {
+                $snapshots[] = [
+                    'recipient' => $recipient,
+                    'subject' => 'Lease expired',
+                    'message_preview' => 'Lease '.$lease->lease_number.' has expired.',
+                    'payload' => [
+                        'event' => 'lease_expired',
+                        'lease_id' => $lease->id,
+                    ],
+                ];
+            }
+        }
+
+        return $snapshots;
+    }
+
+    private function partialPaymentSnapshots(Carbon $today, int $leadDays): array
+    {
+        $targetDate = $today->copy()->subDays($leadDays)->toDateString();
+
+        $instalments = RentInstalment::query()
+            ->with(['ledger.lease.tenant.user', 'ledger.lease.unit.property.activeManagerAssignments.manager'])
+            ->whereNull('voided_at')
+            ->whereDate('payment_date', $targetDate)
+            ->whereHas('ledger', fn ($query) => $query->where('status', 'partially_paid'))
+            ->get();
+
+        $snapshots = [];
+
+        foreach ($instalments as $instalment) {
+            $ledger = $instalment->ledger;
+            $lease = $ledger?->lease;
+            $property = $lease?->unit?->property;
+
+            $recipients = $this->collectRecipients(
+                [$lease?->tenant?->user],
+                $property?->activeManagerAssignments?->pluck('manager')->all() ?? [],
+            );
+
+            foreach ($recipients as $recipient) {
+                $snapshots[] = [
+                    'recipient' => $recipient,
+                    'subject' => 'Partial payment received',
+                    'message_preview' => 'A partial rent payment was recorded for lease '.$lease?->lease_number.'.',
+                    'payload' => [
+                        'event' => 'partial_payment_received',
+                        'rent_instalment_id' => $instalment->id,
+                        'rent_ledger_id' => $ledger?->id,
+                        'lease_id' => $lease?->id,
+                    ],
+                ];
+            }
+        }
+
+        return $snapshots;
+    }
+
+    private function arrearsCarriedForwardSnapshots(Carbon $today): array
+    {
+        $ledgers = RentLedger::query()
+            ->with(['lease.tenant.user', 'lease.unit.property.activeManagerAssignments.manager'])
+            ->whereDate('payment_month', $today->copy()->startOfMonth()->toDateString())
+            ->where('carried_arrears', '>', 0)
+            ->get();
+
+        $snapshots = [];
+
+        foreach ($ledgers as $ledger) {
+            $lease = $ledger->lease;
+            $property = $lease?->unit?->property;
+
+            $recipients = $this->collectRecipients(
+                [$lease?->tenant?->user],
+                $property?->activeManagerAssignments?->pluck('manager')->all() ?? [],
+                $this->superAdmins()->all(),
+            );
+
+            foreach ($recipients as $recipient) {
+                $snapshots[] = [
+                    'recipient' => $recipient,
+                    'subject' => 'Arrears carried forward',
+                    'message_preview' => 'Arrears were carried forward for lease '.$lease?->lease_number.'.',
+                    'payload' => [
+                        'event' => 'arrears_carried_forward',
+                        'lease_id' => $lease?->id,
+                        'rent_ledger_id' => $ledger->id,
+                    ],
+                ];
+            }
+        }
+
+        return $snapshots;
+    }
+
+    private function instalmentReceiptSnapshots(Carbon $today, int $leadDays): array
+    {
+        $targetDate = $today->copy()->subDays($leadDays)->toDateString();
+
+        $instalments = RentInstalment::query()
+            ->with(['ledger.lease.tenant.user'])
+            ->whereNull('voided_at')
+            ->whereDate('payment_date', $targetDate)
+            ->get();
+
+        $snapshots = [];
+
+        foreach ($instalments as $instalment) {
+            $lease = $instalment->ledger?->lease;
+            $tenantUser = $lease?->tenant?->user;
+
+            if (! $tenantUser) {
+                continue;
+            }
+
+            $snapshots[] = [
+                'recipient' => $tenantUser,
+                'subject' => 'Instalment receipt generated',
+                'message_preview' => 'Your rent instalment receipt is available for lease '.$lease?->lease_number.'.',
+                'payload' => [
+                    'event' => 'instalment_receipt_generated',
+                    'rent_instalment_id' => $instalment->id,
+                    'rent_ledger_id' => $instalment->rent_ledger_id,
+                    'lease_id' => $lease?->id,
+                ],
+            ];
+        }
+
+        return $snapshots;
+    }
+
+    private function agreementSignaturePendingSnapshots(Carbon $today, int $leadDays): array
+    {
+        $thresholdDate = $today->copy()->subDays($leadDays)->toDateString();
+
+        $agreements = RentAgreement::query()
+            ->with(['lease.tenant.user', 'lease.unit.property.activeManagerAssignments.manager'])
+            ->whereIn('status', ['generated', 'viewed'])
+            ->whereDate('created_at', '<=', $thresholdDate)
+            ->get();
+
+        $snapshots = [];
+
+        foreach ($agreements as $agreement) {
+            $lease = $agreement->lease;
+            $property = $lease?->unit?->property;
+
+            $recipients = $this->collectRecipients(
+                [$lease?->tenant?->user],
+                $property?->activeManagerAssignments?->pluck('manager')->all() ?? [],
+                $this->superAdmins()->all(),
+            );
+
+            foreach ($recipients as $recipient) {
+                $snapshots[] = [
+                    'recipient' => $recipient,
+                    'subject' => 'Agreement signature pending',
+                    'message_preview' => 'Lease agreement '.$agreement->id.' is still pending signature.',
+                    'payload' => [
+                        'event' => 'agreement_signature_pending',
+                        'agreement_id' => $agreement->id,
+                        'lease_id' => $lease?->id,
+                        'status' => $agreement->status,
+                    ],
+                ];
+            }
+        }
+
+        return $snapshots;
+    }
+
+    private function agreementSignedSnapshots(Carbon $today, int $leadDays): array
+    {
+        $targetDate = $today->copy()->subDays($leadDays)->toDateString();
+
+        $agreements = RentAgreement::query()
+            ->with(['lease.tenant.user', 'lease.unit.property.activeManagerAssignments.manager'])
+            ->where('status', 'signed')
+            ->whereNotNull('signed_at')
+            ->whereDate('signed_at', $targetDate)
+            ->get();
+
+        $snapshots = [];
+
+        foreach ($agreements as $agreement) {
+            $lease = $agreement->lease;
+            $property = $lease?->unit?->property;
+
+            $recipients = $this->collectRecipients(
+                [$lease?->tenant?->user],
+                $property?->activeManagerAssignments?->pluck('manager')->all() ?? [],
+                $this->superAdmins()->all(),
+            );
+
+            foreach ($recipients as $recipient) {
+                $snapshots[] = [
+                    'recipient' => $recipient,
+                    'subject' => 'Agreement signed',
+                    'message_preview' => 'Lease agreement '.$agreement->id.' was signed.',
+                    'payload' => [
+                        'event' => 'agreement_signed',
+                        'agreement_id' => $agreement->id,
+                        'lease_id' => $lease?->id,
+                        'signed_at' => $agreement->signed_at?->toDateTimeString(),
+                    ],
+                ];
+            }
+        }
+
+        return $snapshots;
+    }
+
+    private function agreementIntegrityFailedSnapshots(Carbon $today, int $leadDays): array
+    {
+        $targetDate = $today->copy()->subDays($leadDays)->toDateString();
+
+        $agreements = RentAgreement::query()
+            ->with(['lease.unit.property.activeManagerAssignments.manager'])
+            ->where('integrity_check_status', 'tampered')
+            ->whereNotNull('integrity_last_checked_at')
+            ->whereDate('integrity_last_checked_at', $targetDate)
+            ->get();
+
+        $snapshots = [];
+
+        foreach ($agreements as $agreement) {
+            $lease = $agreement->lease;
+            $property = $lease?->unit?->property;
+
+            $recipients = $this->collectRecipients(
+                $property?->activeManagerAssignments?->pluck('manager')->all() ?? [],
+                $this->superAdmins()->all(),
+            );
+
+            foreach ($recipients as $recipient) {
+                $snapshots[] = [
+                    'recipient' => $recipient,
+                    'subject' => 'Agreement integrity check failed',
+                    'message_preview' => 'Agreement '.$agreement->id.' failed integrity verification.',
+                    'payload' => [
+                        'event' => 'agreement_integrity_failed',
+                        'agreement_id' => $agreement->id,
+                        'lease_id' => $lease?->id,
+                        'checked_at' => $agreement->integrity_last_checked_at?->toDateTimeString(),
+                    ],
+                ];
+            }
+        }
+
+        return $snapshots;
+    }
+
+    private function notarizedAgreementUploadPendingSnapshots(Carbon $today, int $leadDays): array
+    {
+        $thresholdDate = $today->copy()->subDays($leadDays)->toDateString();
+
+        $leases = Lease::query()
+            ->with(['unit.property.activeManagerAssignments.manager'])
+            ->where('status', 'active')
+            ->whereDate('start_on', '<=', $thresholdDate)
+            ->whereDoesntHave('notarizedAgreements')
+            ->get();
+
+        $snapshots = [];
+
+        foreach ($leases as $lease) {
+            $property = $lease->unit?->property;
+            $recipients = $this->collectRecipients(
+                $property?->activeManagerAssignments?->pluck('manager')->all() ?? [],
+                $this->superAdmins()->all(),
+            );
+
+            foreach ($recipients as $recipient) {
+                $snapshots[] = [
+                    'recipient' => $recipient,
+                    'subject' => 'Notarized agreement upload pending',
+                    'message_preview' => 'Lease '.$lease->lease_number.' is pending notarized agreement upload.',
+                    'payload' => [
+                        'event' => 'notarized_agreement_upload_pending',
+                        'lease_id' => $lease->id,
+                        'start_on' => $lease->start_on?->toDateString(),
                     ],
                 ];
             }

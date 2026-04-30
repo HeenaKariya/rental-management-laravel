@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Agreement;
 use App\Http\Controllers\Controller;
 use App\Models\AgreementTemplate;
 use App\Models\Lease;
+use App\Models\NotarizedAgreement;
 use App\Models\PropertyActivityLog;
 use App\Models\RentAgreement;
 use App\Models\User;
@@ -22,7 +23,15 @@ class LeaseAgreementController extends Controller
     {
         $this->authorize('view', $lease);
 
-        $lease->loadMissing(['tenant.user', 'unit.property', 'deposit', 'agreements.template', 'agreements.integrityChecker']);
+        $lease->loadMissing([
+            'tenant.user',
+            'unit.property',
+            'deposit',
+            'agreements.template',
+            'agreements.integrityChecker',
+            'notarizedAgreements.uploader',
+            'notarizedAgreements.reviewer',
+        ]);
 
         return view('agreements.lease', [
             'activeTemplates' => AgreementTemplate::query()->where('status', 'active')->orderBy('name')->get(),
@@ -76,6 +85,87 @@ class LeaseAgreementController extends Controller
 
         return to_route('leases.agreement.show', $lease)
             ->with('status', 'Agreement generated. Share link: '.route('agreements.public.show', $agreement->token));
+    }
+
+    public function storeNotarized(Request $request, Lease $lease): RedirectResponse
+    {
+        $this->authorize('update', $lease);
+
+        /** @var User $user */
+        $user = $request->user();
+
+        $data = $request->validate([
+            'document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
+            'review_notes' => ['nullable', 'string'],
+        ]);
+
+        $document = $request->file('document');
+
+        abort_unless($document !== null, 422);
+
+        $notarizedAgreement = NotarizedAgreement::query()->create([
+            'lease_id' => $lease->id,
+            'disk' => 'public',
+            'path' => $document->store('agreements/notarized/'.$lease->id, 'public'),
+            'original_name' => $document->getClientOriginalName(),
+            'mime_type' => $document->getMimeType(),
+            'file_size' => $document->getSize(),
+            'status' => 'uploaded',
+            'uploaded_at' => now(),
+            'uploaded_by' => $user->id,
+            'review_notes' => $data['review_notes'] ?? null,
+        ]);
+
+        PropertyActivityLog::record($lease->unit->property, 'property.notarized_agreement_uploaded', $user, [
+            'notarized_agreement_id' => $notarizedAgreement->id,
+            'lease_id' => $lease->id,
+            'status' => $notarizedAgreement->status,
+        ]);
+
+        return to_route('leases.agreement.show', $lease)->with('status', 'Notarized agreement uploaded.');
+    }
+
+    public function updateNotarizedStatus(Request $request, Lease $lease, NotarizedAgreement $notarizedAgreement): RedirectResponse
+    {
+        $this->authorize('update', $lease);
+        abort_unless($notarizedAgreement->lease_id === $lease->id, 404);
+
+        /** @var User $user */
+        $user = $request->user();
+
+        $data = $request->validate([
+            'status' => ['required', 'string', Rule::in(NotarizedAgreement::STATUSES)],
+            'review_notes' => ['nullable', 'string'],
+        ]);
+
+        $notarizedAgreement->forceFill([
+            'status' => $data['status'],
+            'review_notes' => $data['review_notes'] ?? null,
+            'reviewed_at' => now(),
+            'reviewed_by' => $user->id,
+        ])->save();
+
+        PropertyActivityLog::record($lease->unit->property, 'property.notarized_agreement_status_updated', $user, [
+            'notarized_agreement_id' => $notarizedAgreement->id,
+            'lease_id' => $lease->id,
+            'status' => $notarizedAgreement->status,
+        ]);
+
+        return to_route('leases.agreement.show', $lease)->with('status', 'Notarized agreement status updated.');
+    }
+
+    public function downloadNotarized(Request $request, Lease $lease, NotarizedAgreement $notarizedAgreement): BinaryFileResponse
+    {
+        $this->authorize('view', $lease);
+        abort_unless($notarizedAgreement->lease_id === $lease->id, 404);
+        abort_unless(Storage::disk($notarizedAgreement->disk)->exists($notarizedAgreement->path), 404);
+
+        $fileName = $notarizedAgreement->original_name ?: sprintf('notarized-agreement-%s.%s', $lease->lease_number, 'pdf');
+
+        return response()->download(
+            Storage::disk($notarizedAgreement->disk)->path($notarizedAgreement->path),
+            $fileName
+        );
     }
 
     public function verifyIntegrity(Request $request, Lease $lease, RentAgreement $agreement): RedirectResponse
