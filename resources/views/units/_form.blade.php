@@ -1,8 +1,8 @@
 @csrf
 
 @if ($errors->any())
-    <div class="table-card" style="margin-bottom: 1.25rem;">
-        <div class="pending-card">
+    <div class="card border-0 shadow-sm" style="margin-bottom: 1.25rem;">
+        <div class="card border-0 shadow-sm">
             @foreach ($errors->all() as $error)
                 <div class="pending-row"><span>{{ $error }}</span></div>
             @endforeach
@@ -20,7 +20,7 @@
             </div>
         </div>
 
-        <div class="form-card">
+        <div class="card border-0 shadow-sm">
             <div class="two-up-grid">
                 <label class="field-group">
                     <span class="field-label">Property</span>
@@ -65,7 +65,7 @@
             </div>
         </div>
 
-        <div class="form-card">
+        <div class="card border-0 shadow-sm">
             <div class="two-up-grid">
                 <label class="field-group">
                     <span class="field-label">Bedrooms</span>
@@ -110,6 +110,6 @@
 </div>
 
 <div class="btn-strip" style="margin-top: 1.5rem;">
-    <button class="btn btn-solid" type="submit">{{ $submitLabel }}</button>
-    <a class="btn btn-ghost" href="{{ $cancelUrl }}">Cancel</a>
+    <button class="btn btn-primary" type="submit">{{ $submitLabel }}</button>
+    <a class="btn btn-outline-secondary" href="{{ $cancelUrl }}">Cancel</a>
 </div>

@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Process Rent Return | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack property-detail-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3 property-detail-stack">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Rent return</p>
@@ -11,37 +11,37 @@
                         <p class="page-description">Prepare the pro-rata rent return for {{ $lease->tenant->full_name }} at {{ $lease->unit->property->title }} · {{ $lease->unit->unit_number }}.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('leases.show', $lease) }}">Back to lease</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('leases.show', $lease) }}">Back to lease</a>
                     </div>
                 </section>
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
+                <section class="row g-3">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Vacation date</p>
                         <h2 class="stat-value">{{ $draft['vacation_date']->format('M j, Y') }}</h2>
                         <p class="stat-meta"><span>from termination record</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Paid through</p>
                         <h2 class="stat-value">{{ $draft['last_paid_through_date']?->format('M j, Y') ?: 'Not detected' }}</h2>
                         <p class="stat-meta"><span>latest fully-paid month</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Unused days</p>
                         <h2 class="stat-value">{{ $draft['unused_days'] }}</h2>
                         <p class="stat-meta"><span>billing month has {{ $draft['billing_month_days'] }} days</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Suggested return</p>
                         <h2 class="stat-value">{{ number_format((float) $draft['suggested_amount'], 2) }}</h2>
                         <p class="stat-meta"><span>daily rate {{ number_format((float) $draft['daily_rate'], 4) }}</span></p>
                     </article>
                 </section>
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="form-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Calculation</p>
@@ -78,13 +78,13 @@
                                     <textarea class="field-input" name="notes" rows="4">{{ old('notes') }}</textarea>
                                 </label>
 
-                                <button class="btn btn-solid" type="submit">Save initiated return</button>
+                                <button class="btn btn-primary" type="submit">Save initiated return</button>
                             </form>
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
-                        <article class="security-card dashboard-panel">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Context</p>

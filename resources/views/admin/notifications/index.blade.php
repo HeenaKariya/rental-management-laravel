@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Notifications | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Super Admin panel</p>
@@ -11,17 +11,17 @@
                         <p class="page-description">Configure reminder triggers, run dispatch/retry actions, and monitor delivery outcomes.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost btn-sm" href="{{ route('admin.notifications.export.csv', $filterQuery) }}">Export CSV</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.notifications.export.csv', $filterQuery) }}">Export CSV</a>
                         <form method="POST" action="{{ route('admin.notifications.dispatch-now') }}">
                             @csrf
-                            <button class="btn btn-solid btn-sm" type="submit">Dispatch now</button>
+                            <button class="btn btn-primary btn-sm" type="submit">Dispatch now</button>
                         </form>
                         <form method="POST" action="{{ route('admin.notifications.retry-failed') }}">
                             @csrf
-                            <button class="btn btn-ghost btn-sm" type="submit">Retry failed</button>
+                            <button class="btn btn-outline-secondary btn-sm" type="submit">Retry failed</button>
                         </form>
-                        <a class="btn btn-ghost btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
                     </div>
                 </section>
 
@@ -29,32 +29,32 @@
                     <div class="auth-alert auth-alert-success">{{ session('status') }}</div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
+                <section class="row g-3">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Total records</p>
                         <h2 class="stat-value">{{ $summary['total'] }}</h2>
                         <p class="stat-meta"><span>latest delivery logs</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Sent</p>
                         <h2 class="stat-value">{{ $summary['sent'] }}</h2>
                         <p class="stat-meta"><span>successfully delivered</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Failed</p>
                         <h2 class="stat-value">{{ $summary['failed'] }}</h2>
                         <p class="stat-meta"><span>eligible for retry</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Pending</p>
                         <h2 class="stat-value">{{ $summary['pending'] }}</h2>
                         <p class="stat-meta"><span>queued status</span></p>
                     </article>
                 </section>
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-side">
-                        <article class="security-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Event settings</p>
@@ -67,7 +67,7 @@
                                 @method('PUT')
 
                                 @foreach ($settings as $setting)
-                                    <div class="table-card" style="padding: 0.75rem; margin-bottom: 0.75rem;">
+                                    <div class="card border-0 shadow-sm" style="padding: 0.75rem; margin-bottom: 0.75rem;">
                                         <label class="field-group" style="margin-bottom: 0.5rem;">
                                             <span class="field-label">{{ str($setting['event_key'])->replace('_', ' ')->title() }}</span>
                                             <input type="hidden" name="events[{{ $setting['event_key'] }}][is_enabled]" value="0">
@@ -94,13 +94,13 @@
                                     </div>
                                 @endforeach
 
-                                <button class="btn btn-solid" type="submit">Save trigger settings</button>
+                                <button class="btn btn-primary" type="submit">Save trigger settings</button>
                             </form>
                         </article>
                     </div>
 
-                    <div class="dashboard-column-wide">
-                        <article class="table-card dashboard-panel">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Delivery log</p>
@@ -109,10 +109,10 @@
                             </div>
 
                             <div class="btn-strip" style="margin-bottom: 0.75rem;">
-                                <a class="btn btn-ghost btn-sm" href="{{ route('admin.notifications.index', ['status' => 'failed']) }}">Failed only</a>
-                                <a class="btn btn-ghost btn-sm" href="{{ route('admin.notifications.index', ['date_from' => now()->toDateString(), 'date_to' => now()->toDateString()]) }}">Today</a>
-                                <a class="btn btn-ghost btn-sm" href="{{ route('admin.notifications.index', ['date_from' => now()->subDays(6)->toDateString(), 'date_to' => now()->toDateString()]) }}">Last 7 days</a>
-                                <a class="btn btn-ghost btn-sm" href="{{ route('admin.notifications.index', ['status' => 'failed', 'date_from' => now()->subDays(6)->toDateString(), 'date_to' => now()->toDateString()]) }}">Recent failures</a>
+                                <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.notifications.index', ['status' => 'failed']) }}">Failed only</a>
+                                <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.notifications.index', ['date_from' => now()->toDateString(), 'date_to' => now()->toDateString()]) }}">Today</a>
+                                <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.notifications.index', ['date_from' => now()->subDays(6)->toDateString(), 'date_to' => now()->toDateString()]) }}">Last 7 days</a>
+                                <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.notifications.index', ['status' => 'failed', 'date_from' => now()->subDays(6)->toDateString(), 'date_to' => now()->toDateString()]) }}">Recent failures</a>
                             </div>
 
                             <form method="GET" action="{{ route('admin.notifications.index') }}" style="margin-bottom: 0.75rem;">
@@ -149,16 +149,16 @@
                                     </label>
                                 </div>
                                 <div class="btn-strip" style="margin-top: 0.75rem;">
-                                    <button class="btn btn-solid btn-sm" type="submit">Apply filters</button>
-                                    <a class="btn btn-ghost btn-sm" href="{{ route('admin.notifications.index', ['reset' => 1]) }}">Reset</a>
+                                    <button class="btn btn-primary btn-sm" type="submit">Apply filters</button>
+                                    <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.notifications.index', ['reset' => 1]) }}">Reset</a>
                                 </div>
                             </form>
 
                             @if ($deliveries->isEmpty())
                                 <p class="security-empty">No notification deliveries found yet. Run dispatch to generate logs.</p>
                             @else
-                                <div class="data-table-card">
-                                    <table class="data-table data-table-compact">
+                                <div class="">
+                                    <table class="data-table data-table-compact table w-100">
                                         <thead>
                                             <tr>
                                                 <th>Event</th>
@@ -190,7 +190,7 @@
                                                         @if ($delivery->status === 'failed')
                                                             <form method="POST" action="{{ route('admin.notifications.retry-one', $delivery) }}">
                                                                 @csrf
-                                                                <button class="btn btn-ghost btn-sm" type="submit">Retry</button>
+                                                                <button class="btn btn-outline-secondary btn-sm" type="submit">Retry</button>
                                                             </form>
                                                         @else
                                                             <span class="muted-text">No action</span>

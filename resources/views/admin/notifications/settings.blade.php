@@ -11,7 +11,6 @@
     <style>
         .notification-settings-page {
             --ns-accent: #0f766e;
-            --ns-accent-soft: #ccfbf1;
             --ns-border: #d0d7e2;
             --ns-text-muted: #5f6b7f;
         }
@@ -19,7 +18,7 @@
         .notification-settings-page .settings-panel {
             background: linear-gradient(165deg, #f8fbff 0%, #ffffff 45%, #f6fffb 100%);
             border: 1px solid var(--ns-border);
-            border-radius: 1rem;
+            border-radius: var(--radius-lg);
             padding: 1rem;
         }
 
@@ -33,7 +32,7 @@
         .notification-settings-page .settings-pill {
             border: 1px solid var(--ns-border);
             background: #fff;
-            border-radius: 0.8rem;
+            border-radius: var(--radius-md);
             padding: 0.6rem 0.8rem;
         }
 
@@ -61,7 +60,7 @@
 
         .notification-settings-page .event-card {
             border: 1px solid var(--ns-border);
-            border-radius: 0.9rem;
+            border-radius: var(--radius-md);
             padding: 0.85rem;
             background: #fff;
             box-shadow: 0 10px 20px rgba(15, 23, 42, 0.04);
@@ -95,15 +94,6 @@
             align-items: center;
         }
 
-        .notification-settings-page .section-label {
-            margin: 0 0 0.35rem;
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--ns-text-muted);
-            font-weight: 700;
-        }
-
         .notification-settings-page .event-status {
             min-width: 118px;
             margin: 0;
@@ -118,7 +108,7 @@
             justify-content: space-between;
             gap: 0.5rem;
             border: 1px solid var(--ns-border);
-            border-radius: 0.7rem;
+            border-radius: var(--radius-sm);
             padding: 0.45rem 0.55rem;
             background: #fff;
         }
@@ -266,9 +256,9 @@
         }
     </style>
 
-    <div class="ui-shell notification-settings-page">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class=" notification-settings-page">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Super Admin panel</p>
@@ -276,8 +266,8 @@
                         <p class="page-description">Use switches to activate events and channels, then tune reminder offsets by days.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
                     </div>
                 </section>
 
@@ -377,7 +367,7 @@
                         </div>
 
                         <div class="save-strip">
-                            <button class="btn btn-solid" type="submit">Save trigger settings</button>
+                            <button class="btn btn-primary" type="submit">Save trigger settings</button>
                         </div>
                     </form>
                 </article>

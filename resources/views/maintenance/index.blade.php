@@ -1,18 +1,18 @@
 @extends('layouts.app', ['title' => 'Maintenance Requests | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Operations</p>
                         <h1 class="page-title">Maintenance requests</h1>
                         <p class="page-description">Track issue lifecycle across units with role-based visibility.</p>
                     </div>
-                    <div class="page-actions">
-                        <a class="btn btn-solid" href="{{ route('maintenance.create') }}">New request</a>
-                        <a class="btn btn-ghost" href="{{ route('dashboard') }}">Dashboard</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-primary" href="{{ route('maintenance.create') }}">New request</a>
+                        <a class="btn btn-outline-secondary" href="{{ route('dashboard') }}">Dashboard</a>
                     </div>
                 </section>
 
@@ -20,7 +20,7 @@
                     <div class="page-status"><span class="badge badge-green">{{ session('status') }}</span></div>
                 @endif
 
-                <article class="form-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <form method="GET" action="{{ route('maintenance.index') }}">
                         <div class="two-up-grid">
                             <label class="field-group">
@@ -43,13 +43,13 @@
                             </label>
                         </div>
                         <div class="btn-strip" style="margin-top: 0.75rem;">
-                            <button class="btn btn-solid btn-sm" type="submit">Apply</button>
-                            <a class="btn btn-ghost btn-sm" href="{{ route('maintenance.index') }}">Reset</a>
+                            <button class="btn btn-primary btn-sm" type="submit">Apply</button>
+                            <a class="btn btn-outline-secondary btn-sm" href="{{ route('maintenance.index') }}">Reset</a>
                         </div>
                     </form>
                 </article>
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Request list</p>
@@ -60,8 +60,8 @@
                     @if ($requests->isEmpty())
                         <p class="security-empty">No maintenance requests found for the selected filters.</p>
                     @else
-                        <div class="data-table-card">
-                            <table class="data-table data-table-compact">
+                        <div class="">
+                            <table class="data-table data-table-compact table w-100">
                                 <thead>
                                     <tr>
                                         <th>Title</th>
@@ -83,7 +83,7 @@
                                             <td>{{ str($maintenanceRequest->priority)->title() }}</td>
                                             <td>{{ str($maintenanceRequest->status)->replace('_', ' ')->title() }}</td>
                                             <td>{{ $maintenanceRequest->created_at?->format('M j, Y g:i A') }}</td>
-                                            <td><a class="btn btn-ghost btn-sm" href="{{ route('maintenance.show', $maintenanceRequest) }}">Open</a></td>
+                                            <td><a class="btn btn-outline-secondary btn-sm" href="{{ route('maintenance.show', $maintenanceRequest) }}">Open</a></td>
                                         </tr>
                                     @endforeach
                                 </tbody>

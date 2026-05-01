@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Lease Detail | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack property-detail-stack">
+    <div class=" property-workspace">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3 property-detail-stack">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Lease detail</p>
@@ -11,21 +11,21 @@
                         <p class="page-description">Lease lifecycle and renewal state for {{ $lease->tenant->full_name }} at {{ $lease->unit->property->title }} · {{ $lease->unit->unit_number }}.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ $user?->hasRole('tenant') ? route('dashboard') : route('leases.index') }}">{{ $user?->hasRole('tenant') ? 'Back to portal' : 'Back to leases' }}</a>
-                        <a class="btn btn-ghost" href="{{ route('leases.payments.show', $lease) }}">Payment history</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ $user?->hasRole('tenant') ? route('dashboard') : route('leases.index') }}">{{ $user?->hasRole('tenant') ? 'Back to portal' : 'Back to leases' }}</a>
+                        <a class="btn btn-outline-secondary" href="{{ route('leases.payments.show', $lease) }}">Payment history</a>
                         @can('update', $lease)
-                            <a class="btn btn-ghost" href="{{ route('leases.agreement.show', $lease) }}">Agreement</a>
+                            <a class="btn btn-outline-secondary" href="{{ route('leases.agreement.show', $lease) }}">Agreement</a>
                         @endcan
                         @if ($lease->rentReturn)
-                            <a class="btn btn-ghost" href="{{ route('leases.rent-return.show', [$lease, $lease->rentReturn]) }}">Rent return</a>
+                            <a class="btn btn-outline-secondary" href="{{ route('leases.rent-return.show', [$lease, $lease->rentReturn]) }}">Rent return</a>
                         @elseif ($rentReturnDraft && (float) $rentReturnDraft['suggested_amount'] > 0)
                             @can('update', $lease)
-                                <a class="btn btn-ghost" href="{{ route('leases.rent-return.create', $lease) }}">Process Rent Return</a>
+                                <a class="btn btn-outline-secondary" href="{{ route('leases.rent-return.create', $lease) }}">Process Rent Return</a>
                             @endcan
                         @endif
                         @can('update', $lease)
-                            <a class="btn btn-solid" href="{{ route('leases.edit', $lease) }}">Edit lease</a>
+                            <a class="btn btn-primary" href="{{ route('leases.edit', $lease) }}">Edit lease</a>
                         @endcan
                     </div>
                 </section>
@@ -36,32 +36,40 @@
                     </div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
-                        <p class="stat-label">Tenant</p>
-                        <h2 class="stat-value">{{ $lease->tenant->full_name }}</h2>
-                        <p class="stat-meta"><span>{{ $lease->unit->unit_number }}</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Status</p>
-                        <h2 class="stat-value">{{ str($lease->status)->replace('_', ' ')->title() }}</h2>
-                        <p class="stat-meta"><span>{{ $lease->isActive() ? 'occupancy enforced' : 'not current active lease' }}</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Rent</p>
-                        <h2 class="stat-value">{{ number_format((float) $lease->rent_amount, 2) }}</h2>
-                        <p class="stat-meta"><span>billing day {{ $lease->billing_day }}</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Dates</p>
-                        <h2 class="stat-value">{{ $lease->start_on->format('M j') }}</h2>
-                        <p class="stat-meta"><span>to {{ $lease->end_on->format('M j, Y') }}</span></p>
-                    </article>
+                <section class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3">
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Tenant</p>
+                            <h2 class="stat-value">{{ $lease->tenant->full_name }}</h2>
+                            <p class="stat-meta"><span>{{ $lease->unit->unit_number }}</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Status</p>
+                            <h2 class="stat-value">{{ str($lease->status)->replace('_', ' ')->title() }}</h2>
+                            <p class="stat-meta"><span>{{ $lease->isActive() ? 'occupancy enforced' : 'not current active lease' }}</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Rent</p>
+                            <h2 class="stat-value">{{ number_format((float) $lease->rent_amount, 2) }}</h2>
+                            <p class="stat-meta"><span>billing day {{ $lease->billing_day }}</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Dates</p>
+                            <h2 class="stat-value">{{ $lease->start_on->format('M j') }}</h2>
+                            <p class="stat-meta"><span>to {{ $lease->end_on->format('M j, Y') }}</span></p>
+                        </article>
+                    </div>
                 </section>
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="form-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Lease profile</p>
@@ -121,8 +129,8 @@
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
-                        <article class="security-card dashboard-panel">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Renewal</p>
@@ -153,7 +161,7 @@
                                         <span class="field-label">Renewal notes</span>
                                         <textarea class="field-input" name="notes" rows="3"></textarea>
                                     </label>
-                                    <button class="btn btn-solid" type="submit">Renew lease</button>
+                                    <button class="btn btn-primary" type="submit">Renew lease</button>
                                 </form>
                             @else
                                 <p class="security-empty">This lease is visible in read-only mode from the tenant portal.</p>

@@ -36,7 +36,7 @@
         </label>
 
         <div class="auth-actions">
-            <button class="btn btn-solid" type="submit">Login</button>
+            <button class="btn btn-primary" type="submit">Login</button>
             <a class="auth-link" href="{{ route('password.request') }}">Forgot password?</a>
         </div>
     </form>

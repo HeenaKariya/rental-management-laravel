@@ -1,7 +1,7 @@
 @extends('layouts.app', ['title' => 'Tenant Portal | PropMgr'])
 
 @section('content')
-    <div class="dashboard-stack">
+    <div class="d-flex flex-column gap-3">
         <section class="page-header card-soft">
             <div>
                 <p class="page-kicker">Tenant portal</p>
@@ -15,47 +15,47 @@
                 </p>
             </div>
 
-            <div class="page-actions">
+            <div class="d-flex flex-wrap gap-2">
                 @if ($tenant)
-                    <a class="btn btn-solid" href="{{ route('tenants.show', $tenant) }}">Open profile</a>
+                    <a class="btn btn-primary" href="{{ route('tenants.show', $tenant) }}">Open profile</a>
                 @endif
-                <a class="btn btn-ghost" href="{{ route('settings.security') }}">Security settings</a>
+                <a class="btn btn-outline-secondary" href="{{ route('settings.security') }}">Security settings</a>
             </div>
         </section>
 
-        <section class="stat-grid dashboard-stat-grid">
-            <article class="stat-card">
+        <section class="row g-3">
+            <article class="card shadow-sm h-100 p-3">
                 <p class="stat-label">Linked unit</p>
                 <h2 class="stat-value">{{ $tenant?->unit?->unit_number ?: 'Pending' }}</h2>
                 <p class="stat-meta"><span>{{ $tenant?->unit?->property?->title ?: 'Waiting for tenancy assignment' }}</span></p>
             </article>
-            <article class="stat-card">
+            <article class="card shadow-sm h-100 p-3">
                 <p class="stat-label">Leases</p>
                 <h2 class="stat-value">{{ $summary['leases'] }}</h2>
                 <p class="stat-meta"><span>{{ $summary['activeLeases'] }} active</span></p>
             </article>
-            <article class="stat-card">
+            <article class="card shadow-sm h-100 p-3">
                 <p class="stat-label">KYC documents</p>
                 <h2 class="stat-value">{{ $summary['documents'] }}</h2>
                 <p class="stat-meta"><span>{{ $tenant?->kyc_status ? str($tenant->kyc_status)->replace('_', ' ')->title() : 'not started' }}</span></p>
             </article>
-            <article class="stat-card">
+            <article class="card shadow-sm h-100 p-3">
                 <p class="stat-label">Deposit balance</p>
                 <h2 class="stat-value">{{ number_format($summary['depositBalance'], 2) }}</h2>
                 <p class="stat-meta"><span>visible deposit accounts</span></p>
             </article>
         </section>
 
-        <section class="dashboard-grid">
-            <div class="dashboard-column-wide">
-                <article class="table-card dashboard-panel">
+        <section class="row g-3">
+            <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Profile overview</p>
                             <h3 class="dashboard-panel-title">Tenant record</h3>
                         </div>
                         @if ($tenant)
-                            <a class="btn btn-ghost btn-sm" href="{{ route('tenants.show', $tenant) }}">Open detail</a>
+                            <a class="btn btn-outline-secondary btn-sm" href="{{ route('tenants.show', $tenant) }}">Open detail</a>
                         @endif
                     </div>
 
@@ -80,7 +80,7 @@
                     @endif
                 </article>
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Lease register</p>
@@ -111,7 +111,7 @@
                     @endif
                 </article>
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Deposit accounts</p>
@@ -143,14 +143,14 @@
                 </article>
             </div>
 
-            <div class="dashboard-column-side">
-                <article class="feed-card dashboard-panel">
+            <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Security activity</p>
                             <h3 class="dashboard-panel-title">Recent auth events</h3>
                         </div>
-                        <a class="btn btn-ghost btn-sm" href="{{ route('settings.security') }}">Open security</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('settings.security') }}">Open security</a>
                     </div>
 
                     @forelse ($authEvents as $event)

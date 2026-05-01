@@ -1,8 +1,8 @@
 @csrf
 
 @if ($errors->any())
-    <div class="table-card" style="margin-bottom: 1.25rem;">
-        <div class="pending-card">
+    <div class="property-form-errors" role="alert" aria-live="polite">
+        <div class="property-form-errors-list">
             @foreach ($errors->all() as $error)
                 <div class="pending-row"><span>{{ $error }}</span></div>
             @endforeach
@@ -20,8 +20,8 @@
             </div>
         </div>
 
-        <div class="form-card">
-            <div class="two-up-grid">
+        <div class="property-form-surface">
+            <div class="two-up-grid property-form-layout">
                 <label class="field-group">
                     <span class="field-label">Property title</span>
                     <input class="field-input" type="text" name="title" value="{{ old('title', $property->title) }}" required>
@@ -82,7 +82,7 @@
             </div>
         </div>
 
-        <div class="form-card">
+        <div class="property-form-surface">
             <label class="field-group">
                 <span class="field-label">Street address</span>
                 <input class="field-input" type="text" name="street_address" value="{{ old('street_address', $property->street_address) }}" required>
@@ -123,7 +123,7 @@
             </div>
         </div>
 
-        <div class="form-card">
+        <div class="property-form-surface">
             @if ($user->hasRole('super_admin'))
                 <label class="field-group">
                     <span class="field-label">Assigned manager</span>
@@ -177,7 +177,7 @@
     </section>
 </div>
 
-<div class="btn-strip" style="margin-top: 1.5rem;">
-    <button class="btn btn-solid" type="submit">{{ $submitLabel }}</button>
-    <a class="btn btn-ghost" href="{{ $cancelUrl }}">Cancel</a>
+<div class="btn-strip property-form-actions">
+    <button class="btn btn-primary" type="submit">{{ $submitLabel }}</button>
+    <a class="btn btn-outline-secondary" href="{{ $cancelUrl }}">Cancel</a>
 </div>

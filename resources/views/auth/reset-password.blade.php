@@ -31,6 +31,6 @@
             <input class="field-input" type="password" name="password_confirmation" required autocomplete="new-password">
         </label>
 
-        <button class="btn btn-solid" type="submit">Reset password</button>
+        <button class="btn btn-primary" type="submit">Reset password</button>
     </form>
 @endsection

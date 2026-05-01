@@ -1,58 +1,67 @@
 @extends('layouts.app', ['title' => 'Dashboard | PropMgr'])
 
 @section('content')
-    <div class="dashboard-stack">
+    <div class="">
+        <div class="py-2 d-flex flex-column gap-3">
         @if ($quickActions->isNotEmpty())
-            <section class="page-header card-soft">
-                <div>
-                    <p class="page-kicker">Workspace overview</p>
-                    <h1 class="page-title">Operations dashboard</h1>
-                    <p class="page-description">Move between the current property, security, and onboarding workstreams from one shared control surface.</p>
-                </div>
+        <section class="page-header card-soft">
+            <div>
+                <p class="page-kicker">Workspace overview</p>
+                <h1 class="page-title">Operations dashboard</h1>
+                <p class="page-description">Move between the current property, security, and onboarding workstreams from one shared control surface.</p>
+            </div>
 
-                <div class="page-actions">
-                    @foreach ($quickActions as $action)
-                        <a class="btn btn-{{ $action['style'] }}" href="{{ $action['route'] }}">{{ $action['label'] }}</a>
-                    @endforeach
-                </div>
-            </section>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach ($quickActions as $action)
+                    <a class="btn btn-{{ $action['style'] }}" href="{{ $action['route'] }}">{{ $action['label'] }}</a>
+                @endforeach
+            </div>
+        </section>
         @endif
 
-        <section class="stat-grid dashboard-stat-grid">
-            <article class="stat-card">
-                <p class="stat-label">Visible properties</p>
-                <h2 class="stat-value">{{ $summary['properties'] }}</h2>
-                <p class="stat-meta">
-                    <span class="stat-pill positive">{{ $summary['activeProperties'] }} active</span>
-                    <span>{{ $summary['draftProperties'] }} draft</span>
-                </p>
-            </article>
-            <article class="stat-card">
-                <p class="stat-label">Manager coverage</p>
-                <h2 class="stat-value">{{ $summary['managerAssignments'] }}</h2>
-                <p class="stat-meta"><span>{{ $user->hasRole('super_admin') ? 'manager accounts' : 'assigned properties' }}</span></p>
-            </article>
-            <article class="stat-card">
-                <p class="stat-label">Open invitations</p>
-                <h2 class="stat-value">{{ $summary['openInvitations'] }}</h2>
-                <p class="stat-meta"><span>{{ $user->hasRole('super_admin') ? 'pending acceptance' : 'super admin only' }}</span></p>
-            </article>
-            <article class="stat-card">
-                <p class="stat-label">Auth events · 24h</p>
-                <h2 class="stat-value">{{ $summary['recentAuthEvents'] }}</h2>
-                <p class="stat-meta"><span>latest monitored activity</span></p>
-            </article>
+        <section class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3">
+            <div class="col">
+                <article class="card shadow-sm h-100 p-3">
+                    <p class="stat-label">Visible properties</p>
+                    <h2 class="stat-value">{{ $summary['properties'] }}</h2>
+                    <p class="stat-meta">
+                        <span class="stat-pill positive">{{ $summary['activeProperties'] }} active</span>
+                        <span>{{ $summary['draftProperties'] }} draft</span>
+                    </p>
+                </article>
+            </div>
+            <div class="col">
+                <article class="card shadow-sm h-100 p-3">
+                    <p class="stat-label">Manager coverage</p>
+                    <h2 class="stat-value">{{ $summary['managerAssignments'] }}</h2>
+                    <p class="stat-meta"><span>{{ $user->hasRole('super_admin') ? 'manager accounts' : 'assigned properties' }}</span></p>
+                </article>
+            </div>
+            <div class="col">
+                <article class="card shadow-sm h-100 p-3">
+                    <p class="stat-label">Open invitations</p>
+                    <h2 class="stat-value">{{ $summary['openInvitations'] }}</h2>
+                    <p class="stat-meta"><span>{{ $user->hasRole('super_admin') ? 'pending acceptance' : 'super admin only' }}</span></p>
+                </article>
+            </div>
+            <div class="col">
+                <article class="card shadow-sm h-100 p-3">
+                    <p class="stat-label">Auth events · 24h</p>
+                    <h2 class="stat-value">{{ $summary['recentAuthEvents'] }}</h2>
+                    <p class="stat-meta"><span>latest monitored activity</span></p>
+                </article>
+            </div>
         </section>
 
-        <section class="dashboard-grid">
-            <div class="dashboard-column-wide">
-                <article class="table-card dashboard-panel">
+        <section class="row g-3">
+            <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Property overview</p>
                             <h3 class="dashboard-panel-title">Current portfolio</h3>
                         </div>
-                        <a class="btn btn-ghost btn-sm" href="{{ route('properties.index') }}">Open properties</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('properties.index') }}">Open properties</a>
                     </div>
 
                     @if ($properties->isEmpty())
@@ -79,7 +88,7 @@
                     @endif
                 </article>
 
-                <article class="pending-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Implementation focus</p>
@@ -94,15 +103,15 @@
                 </article>
             </div>
 
-            <div class="dashboard-column-side">
-                <article class="feed-card dashboard-panel">
+            <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Security activity</p>
                             <h3 class="dashboard-panel-title">Recent auth events</h3>
                         </div>
                         @if ($user->hasRole('super_admin'))
-                            <a class="btn btn-ghost btn-sm" href="{{ route('admin.security.two-factor.index') }}">Oversight</a>
+                            <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.security.two-factor.index') }}">Oversight</a>
                         @endif
                     </div>
 
@@ -154,5 +163,6 @@
                 </article>
             </div>
         </section>
+        </div>
     </div>
 @endsection

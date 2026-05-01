@@ -9,9 +9,9 @@
         $featuredProperty = $properties->first();
     @endphp
 
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Property workspace</p>
@@ -19,10 +19,10 @@
                         <p class="page-description">Review visibility, stage distribution, and manager coverage from one consistent property workspace.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('dashboard') }}">Dashboard</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('dashboard') }}">Dashboard</a>
                         @can('create', App\Models\Property::class)
-                            <a class="btn btn-solid" href="{{ route('properties.create') }}">Add property</a>
+                            <a class="btn btn-primary" href="{{ route('properties.create') }}">Add property</a>
                         @endcan
                     </div>
                 </section>
@@ -33,30 +33,38 @@
                     </div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
-                        <p class="stat-label">Visible properties</p>
-                        <h2 class="stat-value">{{ $visiblePropertyCount }}</h2>
-                        <p class="stat-meta"><span class="stat-pill positive">{{ $activePropertyCount }} active</span><span>{{ $draftPropertyCount }} draft</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Manager coverage</p>
-                        <h2 class="stat-value">{{ $assignedPropertyCount }}</h2>
-                        <p class="stat-meta"><span>assigned properties</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Property types</p>
-                        <h2 class="stat-value">{{ count($propertyTypes) }}</h2>
-                        <p class="stat-meta"><span>available classifications</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Lifecycle stages</p>
-                        <h2 class="stat-value">{{ count($stageOptions) }}</h2>
-                        <p class="stat-meta"><span>tracking statuses</span></p>
-                    </article>
+                <section class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3">
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Visible properties</p>
+                            <h2 class="stat-value">{{ $visiblePropertyCount }}</h2>
+                            <p class="stat-meta"><span class="stat-pill positive">{{ $activePropertyCount }} active</span><span>{{ $draftPropertyCount }} draft</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Manager coverage</p>
+                            <h2 class="stat-value">{{ $assignedPropertyCount }}</h2>
+                            <p class="stat-meta"><span>assigned properties</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Property types</p>
+                            <h2 class="stat-value">{{ count($propertyTypes) }}</h2>
+                            <p class="stat-meta"><span>available classifications</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Lifecycle stages</p>
+                            <h2 class="stat-value">{{ count($stageOptions) }}</h2>
+                            <p class="stat-meta"><span>tracking statuses</span></p>
+                        </article>
+                    </div>
                 </section>
 
-                <article class="form-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Portfolio filters</p>
@@ -65,8 +73,8 @@
                     </div>
 
                     <form method="GET" action="{{ route('properties.index') }}">
-                        <div class="two-up-grid">
-                            <label class="field-group">
+                        <div class="row">
+                            <label class="col-lg-3">
                                 <span class="field-label">Type</span>
                                 <select class="field-input" name="type">
                                     <option value="">All types</option>
@@ -78,7 +86,7 @@
                                 </select>
                             </label>
 
-                            <label class="field-group">
+                            <label class="col-lg-3">
                                 <span class="field-label">Lifecycle stage</span>
                                 <select class="field-input" name="lifecycle_stage">
                                     <option value="">All stages</option>
@@ -89,30 +97,35 @@
                                     @endforeach
                                 </select>
                             </label>
+                            @if ($user->hasRole('super_admin'))
+                              <label class="col-lg-3">
+                                  <span class="field-label">Assigned manager</span>
+                                  <select class="field-input" name="assigned_manager_id">
+                                      <option value="">All managers</option>
+                                      @foreach ($managerOptions as $managerOption)
+                                          <option value="{{ $managerOption->id }}" @selected((int) ($filters['assigned_manager_id'] ?? 0) === $managerOption->id)>
+                                              {{ $managerOption->name }}
+                                          </option>
+                                      @endforeach
+                                  </select>
+                              </label>
+                            @endif
+                            <div class="col-3">
+                              <div class="btn-strip" style="margin-top: 1.5rem;">
+                                <button class="btn btn-primary" type="submit">Apply filters</button>
+                                <a class="btn btn-outline-secondary" href="{{ route('properties.index') }}">Reset</a>
+                              </div>
+                            </div>
+                            
                         </div>
 
-                        @if ($user->hasRole('super_admin'))
-                            <label class="field-group">
-                                <span class="field-label">Assigned manager</span>
-                                <select class="field-input" name="assigned_manager_id">
-                                    <option value="">All managers</option>
-                                    @foreach ($managerOptions as $managerOption)
-                                        <option value="{{ $managerOption->id }}" @selected((int) ($filters['assigned_manager_id'] ?? 0) === $managerOption->id)>
-                                            {{ $managerOption->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </label>
-                        @endif
+                        
 
-                        <div class="btn-strip" style="margin-top: 1rem;">
-                            <button class="btn btn-solid" type="submit">Apply filters</button>
-                            <a class="btn btn-ghost" href="{{ route('properties.index') }}">Reset</a>
-                        </div>
+                        
                     </form>
                 </article>
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Property register</p>
@@ -124,8 +137,8 @@
                     @if ($properties->isEmpty())
                         <p class="security-empty">No properties are visible for the current filters or assignment scope.</p>
                     @else
-                        <div class="data-table-card">
-                            <table class="data-table js-data-table" data-page-size="10" data-empty-message="No properties matched the current filters.">
+                        <div class="">
+                            <table class="data-table js-data-table table w-100" data-page-size="10" data-empty-message="No properties matched the current filters.">
                                 <thead>
                                     <tr>
                                         <th scope="col" data-sortable="false">Row</th>
@@ -154,7 +167,7 @@
                                             <td>{{ $property->managers->pluck('name')->implode(', ') ?: 'Unassigned' }}</td>
                                             <td>{{ $property->city }}, {{ $property->state }}</td>
                                             <td>
-                                                <a class="btn btn-ghost btn-sm" href="{{ route('properties.show', $property) }}">Open</a>
+                                                <a class="btn btn-outline-secondary btn-sm" href="{{ route('properties.show', $property) }}">Open</a>
                                             </td>
                                         </tr>
                                     @endforeach

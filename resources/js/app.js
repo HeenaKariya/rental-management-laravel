@@ -2,7 +2,6 @@ import './bootstrap';
 import Alpine from 'alpinejs';
 import DataTable from 'datatables.net-bs5';
 import 'datatables.net-responsive-bs5';
-import { DataTable as SimpleDataTable } from 'simple-datatables';
 
 window.Alpine = Alpine;
 
@@ -16,6 +15,15 @@ const initializeDataTables = () => {
 
 		const pageSize = Number.parseInt(table.dataset.pageSize ?? '10', 10);
 		const emptyMessage = table.dataset.emptyMessage ?? 'No records found.';
+		const searchPlaceholder = table.dataset.searchPlaceholder ?? 'Search records';
+		const infoLabel = table.dataset.infoLabel ?? 'records';
+		const columnDefs = Array.from(table.querySelectorAll('thead th')).reduce((definitions, header, index) => {
+			if (header.dataset.sortable === 'false') {
+				definitions.push({ targets: index, orderable: false, searchable: false });
+			}
+
+			return definitions;
+		}, []);
 
 		const renumberRows = () => {
 			table.querySelectorAll('tbody [data-row-number]').forEach((cell, index) => {
@@ -23,22 +31,23 @@ const initializeDataTables = () => {
 			});
 		};
 
-		const dataTable = new SimpleDataTable(table, {
-			perPage: Number.isNaN(pageSize) ? 10 : pageSize,
-			perPageSelect: [10, 20, 30, 50],
-			searchable: true,
-			fixedHeight: false,
-			labels: {
-				placeholder: 'Search properties',
-				perPage: '{select} rows per page',
-				noRows: emptyMessage,
-				info: 'Showing {start} to {end} of {rows} properties',
+		const dataTable = new DataTable(table, {
+			pageLength: Number.isNaN(pageSize) ? 10 : pageSize,
+			lengthMenu: [10, 20, 30, 50],
+			autoWidth: false,
+			responsive: true,
+			columnDefs,
+			language: {
+				searchPlaceholder,
+				search: '',
+				lengthMenu: '_MENU_ rows per page',
+				zeroRecords: emptyMessage,
+				info: `Showing _START_ to _END_ of _TOTAL_ ${infoLabel}`,
+				infoEmpty: `No ${infoLabel} available`,
 			},
 		});
 
-		['datatable.init', 'datatable.page', 'datatable.sort', 'datatable.search', 'datatable.perpage', 'datatable.update'].forEach((eventName) => {
-			dataTable.on(eventName, renumberRows);
-		});
+		dataTable.on('draw', renumberRows);
 
 		renumberRows();
 		table.dataset.dataTableInitialized = 'true';

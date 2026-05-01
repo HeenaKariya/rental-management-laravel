@@ -8,9 +8,9 @@
         $unitCoverage = $leases->pluck('unit_id')->unique()->count();
     @endphp
 
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Lease workspace</p>
@@ -18,10 +18,10 @@
                         <p class="page-description">Manage active leases, successor renewals, and the unit-level occupancy boundary from one workspace.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('dashboard') }}">Dashboard</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('dashboard') }}">Dashboard</a>
                         @can('create', App\Models\Lease::class)
-                            <a class="btn btn-solid" href="{{ route('leases.create') }}">Add lease</a>
+                            <a class="btn btn-primary" href="{{ route('leases.create') }}">Add lease</a>
                         @endcan
                     </div>
                 </section>
@@ -32,30 +32,38 @@
                     </div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
-                        <p class="stat-label">Visible leases</p>
-                        <h2 class="stat-value">{{ $visibleLeaseCount }}</h2>
-                        <p class="stat-meta"><span>{{ $unitCoverage }} units covered</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Active</p>
-                        <h2 class="stat-value">{{ $activeLeaseCount }}</h2>
-                        <p class="stat-meta"><span>current billing boundary</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Renewed</p>
-                        <h2 class="stat-value">{{ $renewedLeaseCount }}</h2>
-                        <p class="stat-meta"><span>historical predecessors</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Statuses</p>
-                        <h2 class="stat-value">{{ count($statusOptions) }}</h2>
-                        <p class="stat-meta"><span>lease lifecycle states</span></p>
-                    </article>
+                <section class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3">
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Visible leases</p>
+                            <h2 class="stat-value">{{ $visibleLeaseCount }}</h2>
+                            <p class="stat-meta"><span>{{ $unitCoverage }} units covered</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Active</p>
+                            <h2 class="stat-value">{{ $activeLeaseCount }}</h2>
+                            <p class="stat-meta"><span>current billing boundary</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Renewed</p>
+                            <h2 class="stat-value">{{ $renewedLeaseCount }}</h2>
+                            <p class="stat-meta"><span>historical predecessors</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Statuses</p>
+                            <h2 class="stat-value">{{ count($statusOptions) }}</h2>
+                            <p class="stat-meta"><span>lease lifecycle states</span></p>
+                        </article>
+                    </div>
                 </section>
 
-                <article class="form-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Lease filters</p>
@@ -87,13 +95,13 @@
                         </div>
 
                         <div class="btn-strip" style="margin-top: 1rem;">
-                            <button class="btn btn-solid" type="submit">Apply filters</button>
-                            <a class="btn btn-ghost" href="{{ route('leases.index') }}">Reset</a>
+                            <button class="btn btn-primary" type="submit">Apply filters</button>
+                            <a class="btn btn-outline-secondary" href="{{ route('leases.index') }}">Reset</a>
                         </div>
                     </form>
                 </article>
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Lease register</p>
@@ -105,8 +113,8 @@
                     @if ($leases->isEmpty())
                         <p class="security-empty">No leases are visible for the current scope or filters.</p>
                     @else
-                        <div class="data-table-card">
-                            <table class="data-table js-data-table" data-page-size="10" data-empty-message="No leases matched the current filters.">
+                        <div class="">
+                            <table class="data-table js-data-table table w-100" data-page-size="10" data-empty-message="No leases matched the current filters.">
                                 <thead>
                                     <tr>
                                         <th scope="col" data-sortable="false">Row</th>
@@ -132,7 +140,7 @@
                                             <td>{{ $lease->start_on->format('M j, Y') }} - {{ $lease->end_on->format('M j, Y') }}</td>
                                             <td>{{ number_format((float) $lease->rent_amount, 2) }}</td>
                                             <td><span class="badge badge-violet compact-badge">{{ str($lease->status)->replace('_', ' ')->title() }}</span></td>
-                                            <td><a class="btn btn-ghost btn-sm" href="{{ route('leases.show', $lease) }}">Open</a></td>
+                                            <td><a class="btn btn-outline-secondary btn-sm" href="{{ route('leases.show', $lease) }}">Open</a></td>
                                         </tr>
                                     @endforeach
                                 </tbody>

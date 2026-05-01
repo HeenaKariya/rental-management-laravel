@@ -8,9 +8,9 @@
         $propertyCoverage = $units->pluck('property_id')->unique()->count();
     @endphp
 
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Unit workspace</p>
@@ -18,10 +18,10 @@
                         <p class="page-description">Manage unit inventory on top of the property scope already enforced in the workspace.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('dashboard') }}">Dashboard</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('dashboard') }}">Dashboard</a>
                         @can('create', App\Models\Unit::class)
-                            <a class="btn btn-solid" href="{{ route('units.create') }}">Add unit</a>
+                            <a class="btn btn-primary" href="{{ route('units.create') }}">Add unit</a>
                         @endcan
                     </div>
                 </section>
@@ -32,30 +32,38 @@
                     </div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
-                        <p class="stat-label">Visible units</p>
-                        <h2 class="stat-value">{{ $visibleUnitCount }}</h2>
-                        <p class="stat-meta"><span>{{ $propertyCoverage }} properties covered</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Vacant</p>
-                        <h2 class="stat-value">{{ $vacantUnitCount }}</h2>
-                        <p class="stat-meta"><span>ready for tenancy flow</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Occupied</p>
-                        <h2 class="stat-value">{{ $occupiedUnitCount }}</h2>
-                        <p class="stat-meta"><span>active occupancy</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Statuses</p>
-                        <h2 class="stat-value">{{ count($occupancyOptions) }}</h2>
-                        <p class="stat-meta"><span>unit lifecycle states</span></p>
-                    </article>
+                <section class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3">
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Visible units</p>
+                            <h2 class="stat-value">{{ $visibleUnitCount }}</h2>
+                            <p class="stat-meta"><span>{{ $propertyCoverage }} properties covered</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Vacant</p>
+                            <h2 class="stat-value">{{ $vacantUnitCount }}</h2>
+                            <p class="stat-meta"><span>ready for tenancy flow</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Occupied</p>
+                            <h2 class="stat-value">{{ $occupiedUnitCount }}</h2>
+                            <p class="stat-meta"><span>active occupancy</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Statuses</p>
+                            <h2 class="stat-value">{{ count($occupancyOptions) }}</h2>
+                            <p class="stat-meta"><span>unit lifecycle states</span></p>
+                        </article>
+                    </div>
                 </section>
 
-                <article class="form-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Inventory filters</p>
@@ -87,13 +95,13 @@
                         </div>
 
                         <div class="btn-strip" style="margin-top: 1rem;">
-                            <button class="btn btn-solid" type="submit">Apply filters</button>
-                            <a class="btn btn-ghost" href="{{ route('units.index') }}">Reset</a>
+                            <button class="btn btn-primary" type="submit">Apply filters</button>
+                            <a class="btn btn-outline-secondary" href="{{ route('units.index') }}">Reset</a>
                         </div>
                     </form>
                 </article>
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Unit register</p>
@@ -105,8 +113,8 @@
                     @if ($units->isEmpty())
                         <p class="security-empty">No units are visible for the current assignment scope or filter set.</p>
                     @else
-                        <div class="data-table-card">
-                            <table class="data-table js-data-table" data-page-size="10" data-empty-message="No units matched the current filters.">
+                        <div class="">
+                            <table class="data-table js-data-table table w-100" data-page-size="10" data-empty-message="No units matched the current filters.">
                                 <thead>
                                     <tr>
                                         <th scope="col" data-sortable="false">Row</th>
@@ -130,7 +138,7 @@
                                             <td><span class="badge badge-violet compact-badge">{{ str($unit->occupancy_status)->replace('_', ' ')->title() }}</span></td>
                                             <td>{{ $unit->bedrooms ?? 0 }} / {{ $unit->bathrooms ?? 0 }}</td>
                                             <td>{{ $unit->area ? rtrim(rtrim(number_format((float) $unit->area, 2, '.', ''), '0'), '.') : 'N/A' }} {{ $unit->area_unit }}</td>
-                                            <td><a class="btn btn-ghost btn-sm" href="{{ route('units.show', $unit) }}">Open</a></td>
+                                            <td><a class="btn btn-outline-secondary btn-sm" href="{{ route('units.show', $unit) }}">Open</a></td>
                                         </tr>
                                     @endforeach
                                 </tbody>

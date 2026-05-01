@@ -1,18 +1,18 @@
 @extends('layouts.app', ['title' => 'Lease Agreement | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack property-detail-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3 property-detail-stack">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 6 agreement</p>
                         <h1 class="page-title">Lease agreement · {{ $lease->lease_number }}</h1>
                         <p class="page-description">Generate digital agreement links and monitor signature lifecycle for {{ $lease->tenant->full_name }}.</p>
                     </div>
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('leases.show', $lease) }}">Back to lease</a>
-                        <a class="btn btn-ghost" href="{{ route('agreements.templates.index') }}">Templates</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('leases.show', $lease) }}">Back to lease</a>
+                        <a class="btn btn-outline-secondary" href="{{ route('agreements.templates.index') }}">Templates</a>
                     </div>
                 </section>
 
@@ -20,9 +20,9 @@
                     <div class="page-status"><span class="badge badge-green">{{ session('status') }}</span></div>
                 @endif
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="table-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Agreement history</p>
@@ -33,8 +33,8 @@
                             @if ($lease->agreements->isEmpty())
                                 <p class="security-empty">No agreements generated for this lease yet.</p>
                             @else
-                                <div class="data-table-card">
-                                    <table class="data-table data-table-compact">
+                                <div class="">
+                                    <table class="data-table data-table-compact table w-100">
                                         <thead>
                                             <tr>
                                                 <th>Status</th>
@@ -72,7 +72,7 @@
                                                             @if ($agreement->status === 'signed')
                                                                 <form method="POST" action="{{ route('leases.agreement.verify-integrity', [$lease, $agreement]) }}" style="margin-top: 0.5rem;">
                                                                     @csrf
-                                                                    <button class="btn btn-ghost btn-sm" type="submit">Verify</button>
+                                                                    <button class="btn btn-outline-secondary btn-sm" type="submit">Verify</button>
                                                                 </form>
                                                             @endif
                                                         @endcan
@@ -87,8 +87,8 @@
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
-                        <article class="security-card dashboard-panel">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Generate</p>
@@ -109,11 +109,11 @@
                                     <span class="field-label">Manual content override (optional)</span>
                                     <textarea class="field-input" name="manual_content" rows="6" placeholder="Leave empty to use resolved template placeholders."></textarea>
                                 </label>
-                                <button class="btn btn-solid" type="submit">Generate agreement</button>
+                                <button class="btn btn-primary" type="submit">Generate agreement</button>
                             </form>
                         </article>
 
-                        <article class="security-card dashboard-panel" style="margin-top: 1rem;">
+                        <article class="card border-0 shadow-sm dashboard-panel" style="margin-top: 1rem;">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Notarized agreement</p>
@@ -124,8 +124,8 @@
                             @if ($lease->notarizedAgreements->isEmpty())
                                 <p class="security-empty">No notarized agreement uploaded yet.</p>
                             @else
-                                <div class="data-table-card" style="margin-bottom: 0.75rem;">
-                                    <table class="data-table data-table-compact">
+                                <div class="" style="margin-bottom: 0.75rem;">
+                                    <table class="data-table data-table-compact table w-100">
                                         <thead>
                                             <tr>
                                                 <th>Uploaded</th>
@@ -168,7 +168,7 @@
                                             <span class="field-label">Review notes (optional)</span>
                                             <textarea class="field-input" name="review_notes" rows="3">{{ old('review_notes', $lease->notarizedAgreements->first()->review_notes) }}</textarea>
                                         </label>
-                                        <button class="btn btn-ghost btn-sm" type="submit">Update status</button>
+                                        <button class="btn btn-outline-secondary btn-sm" type="submit">Update status</button>
                                     </form>
                                 @endcan
                             @endif
@@ -184,7 +184,7 @@
                                         <span class="field-label">Upload notes (optional)</span>
                                         <textarea class="field-input" name="review_notes" rows="3">{{ old('review_notes') }}</textarea>
                                     </label>
-                                    <button class="btn btn-solid" type="submit">Upload notarized agreement</button>
+                                    <button class="btn btn-primary" type="submit">Upload notarized agreement</button>
                                 </form>
                             @endcan
                         </article>

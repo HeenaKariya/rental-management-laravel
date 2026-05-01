@@ -1,21 +1,21 @@
 @extends('layouts.app', ['title' => 'New Maintenance Request | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Operations</p>
                         <h1 class="page-title">Create maintenance request</h1>
                         <p class="page-description">Capture tenant-reported issues and dispatch for resolution.</p>
                     </div>
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('maintenance.index') }}">Back to requests</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('maintenance.index') }}">Back to requests</a>
                     </div>
                 </section>
 
-                <article class="form-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <form method="POST" action="{{ route('maintenance.store') }}" enctype="multipart/form-data">
                         @csrf
                         <div class="two-up-grid">
@@ -77,7 +77,7 @@
                         </label>
 
                         <div class="btn-strip" style="margin-top: 0.75rem;">
-                            <button class="btn btn-solid" type="submit">Create request</button>
+                            <button class="btn btn-primary" type="submit">Create request</button>
                         </div>
                     </form>
                 </article>

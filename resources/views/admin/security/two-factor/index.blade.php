@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => '2FA Oversight | PropMgr'])
 
 @section('content')
-    <div class="ui-shell oversight-page">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class=" oversight-page">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header">
                     <div>
                         <p class="page-kicker">Super Admin panel</p>
@@ -11,10 +11,10 @@
                         <p class="page-description">Monitor two-factor adoption and recent auth activity.</p>
                     </div>
 
-                    <div class="page-actions d-flex flex-wrap gap-2">
+                    <div class="d-flex flex-wrap gap-2">
                         <span class="badge badge-ink">{{ $users->count() }} monitored accounts</span>
-                        <a class="btn btn-violet btn-sm" href="{{ route('settings.security') }}">My security</a>
-                        <a class="btn btn-ghost btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
+                        <a class="btn btn-primary btn-sm" href="{{ route('settings.security') }}">My security</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
                     </div>
                 </section>
 
@@ -22,38 +22,46 @@
                     <div class="auth-alert auth-alert-success">{{ session('status') }}</div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
-                        <p class="stat-label">Confirmed</p>
-                        <h2 class="stat-value">{{ $summary['confirmed'] }}</h2>
-                        <p class="stat-meta"><span>fully confirmed enrollment</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Pending</p>
-                        <h2 class="stat-value">{{ $summary['pending'] }}</h2>
-                        <p class="stat-meta"><span>started but not confirmed</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Not enabled</p>
-                        <h2 class="stat-value">{{ $summary['notEnabled'] }}</h2>
-                        <p class="stat-meta"><span>still need enrollment</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Soft Locked</p>
-                        <h2 class="stat-value">{{ $summary['softLocked'] }}</h2>
-                        <p class="stat-meta"><span>temporary lock flow</span></p>
-                    </article>
+                <section class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3">
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Confirmed</p>
+                            <h2 class="stat-value">{{ $summary['confirmed'] }}</h2>
+                            <p class="stat-meta"><span>fully confirmed enrollment</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Pending</p>
+                            <h2 class="stat-value">{{ $summary['pending'] }}</h2>
+                            <p class="stat-meta"><span>started but not confirmed</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Not enabled</p>
+                            <h2 class="stat-value">{{ $summary['notEnabled'] }}</h2>
+                            <p class="stat-meta"><span>still need enrollment</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Soft Locked</p>
+                            <h2 class="stat-value">{{ $summary['softLocked'] }}</h2>
+                            <p class="stat-meta"><span>temporary lock flow</span></p>
+                        </article>
+                    </div>
                 </section>
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="table-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <p class="row-label mb-0">Account status</p>
                                 <h3 class="dashboard-panel-title mb-0">Monitored users</h3>
                             </div>
 
-                            <div class="oversight-table-card">
+                            <div class="">
                                 <table id="oversight-users-table" class="table w-100 data-table data-table-compact js-jquery-datatable">
                                     <thead>
                                         <tr>
@@ -111,14 +119,14 @@
                                                         @if ($user->isAuthLocked())
                                                             <form method="POST" action="{{ route('admin.security.two-factor.release-lock', $user) }}">
                                                                 @csrf
-                                                                <button class="btn btn-ghost btn-sm" type="submit">Release lock</button>
+                                                                <button class="btn btn-outline-secondary btn-sm" type="submit">Release lock</button>
                                                             </form>
                                                         @endif
 
                                                         @if ($user->two_factor_secret !== null)
                                                             <form method="POST" action="{{ route('admin.security.two-factor.reset', $user) }}">
                                                                 @csrf
-                                                                <button class="btn btn-violet btn-sm" type="submit">Reset 2FA</button>
+                                                                <button class="btn btn-primary btn-sm" type="submit">Reset 2FA</button>
                                                             </form>
                                                         @endif
                                                     </div>
@@ -131,11 +139,22 @@
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
-                        <aside class="security-card dashboard-panel">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+                        <aside class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <p class="row-label mb-0">Recent events</p>
                                 <h3 class="dashboard-panel-title mb-0">Platform authentication activity</h3>
+                            </div>
+
+                            <div class="mb-3 p-2 rounded bg-light-subtle">
+                                <p class="security-log-meta mb-2">Event key</p>
+                                <div class="badge-strip">
+                                    <span class="badge badge-green compact-badge">Success</span>
+                                    <span class="badge badge-sky compact-badge">Challenge / OTP</span>
+                                    <span class="badge badge-gold compact-badge">Warning</span>
+                                    <span class="badge badge-coral compact-badge">Failed / Locked</span>
+                                    <span class="badge badge-violet compact-badge">Admin action</span>
+                                </div>
                             </div>
 
                             <div class="security-log-list">
@@ -163,6 +182,7 @@
                             </div>
                         </aside>
                     </div>
+
                 </section>
             </div>
         </div>

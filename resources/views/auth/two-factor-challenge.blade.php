@@ -39,7 +39,7 @@
                 <form method="POST" action="{{ route('two-factor.otp.resend') }}">
                     @csrf
                     <input type="hidden" name="channel" value="{{ $channel }}">
-                    <button class="btn btn-ghost btn-sm" type="submit">Resend via {{ $channel === 'whatsapp' ? 'WhatsApp' : 'Email' }}</button>
+                    <button class="btn btn-outline-secondary btn-sm" type="submit">Resend via {{ $channel === 'whatsapp' ? 'WhatsApp' : 'Email' }}</button>
                 </form>
             @endforeach
         </div>
@@ -54,7 +54,7 @@
             @error('code')<span class="field-hint is-error">{{ $message }}</span>@enderror
         </label>
 
-        <button class="btn btn-solid" type="submit">{{ $usesDeliveredOtp ? 'Verify OTP' : 'Verify code' }}</button>
+        <button class="btn btn-primary" type="submit">{{ $usesDeliveredOtp ? 'Verify OTP' : 'Verify code' }}</button>
     </form>
 
     <form method="POST" action="{{ route('two-factor.login') }}" class="auth-form-grid auth-mode-panel" data-toggle-panel="recovery-panel">
@@ -66,6 +66,6 @@
             @error('recovery_code')<span class="field-hint is-error">{{ $message }}</span>@enderror
         </label>
 
-        <button class="btn btn-solid" type="submit">Use recovery code</button>
+        <button class="btn btn-primary" type="submit">Use recovery code</button>
     </form>
 @endsection

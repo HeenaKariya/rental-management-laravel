@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Invitations | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Invitation admin</p>
@@ -11,14 +11,14 @@
                         <p class="page-description">Send a role-based onboarding invite by email and optional WhatsApp.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
                     </div>
                 </section>
 
                 <section class="row g-3">
                     <div class="col-12 col-xl-8">
-                        <article class="table-card dashboard-panel p-3 p-md-4">
+                        <article class="card border-0 shadow-sm dashboard-panel p-3 p-md-4">
                             <div class="dashboard-panel-head mb-3">
                                 <div>
                                     <p class="row-label">Invitation composer</p>
@@ -62,15 +62,15 @@
                                 </div>
 
                                 <div class="col-12 d-flex gap-2">
-                                    <button class="btn btn-solid" type="submit">Generate invitation</button>
-                                    <a class="btn btn-ghost" href="{{ route('dashboard') }}">Cancel</a>
+                                    <button class="btn btn-primary" type="submit">Generate invitation</button>
+                                    <a class="btn btn-outline-secondary" href="{{ route('dashboard') }}">Cancel</a>
                                 </div>
                             </form>
                         </article>
                     </div>
 
                     <div class="col-12 col-xl-4">
-                        <article class="security-card dashboard-panel h-100">
+                        <article class="card border-0 shadow-sm dashboard-panel h-100">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Latest invitation</p>

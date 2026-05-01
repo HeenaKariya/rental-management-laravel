@@ -49,7 +49,7 @@
             </label>
 
             <div class="auth-actions">
-                <button class="btn btn-solid" type="submit">Register</button>
+                <button class="btn btn-primary" type="submit">Register</button>
                 <a class="auth-link" href="{{ route('login') }}">Back to login</a>
             </div>
         </form>

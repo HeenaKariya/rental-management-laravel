@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Arrears Report | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack property-detail-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3 property-detail-stack">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 7 reporting</p>
@@ -11,40 +11,40 @@
                         <p class="page-description">Review outstanding rent ledgers month-wise with instalment activity and arrears carry-forward risk signals.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('finance.index') }}">Back to finance</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('finance.index') }}">Back to finance</a>
                     </div>
                 </section>
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
+                <section class="row g-3">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Ledger rows</p>
                         <h2 class="stat-value">{{ $summary['count'] }}</h2>
                         <p class="stat-meta"><span>filtered rows</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Outstanding total</p>
                         <h2 class="stat-value">{{ number_format($summary['outstanding_total'], 2) }}</h2>
                         <p class="stat-meta"><span>open balances</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Carried arrears</p>
                         <h2 class="stat-value">{{ number_format($summary['carried_arrears_total'], 2) }}</h2>
                         <p class="stat-meta"><span>brought forward</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Partial + overdue</p>
                         <h2 class="stat-value">{{ $summary['partial_count'] + $summary['overdue_count'] }}</h2>
                         <p class="stat-meta"><span>{{ $summary['partial_count'] }} partial / {{ $summary['overdue_count'] }} overdue</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Alerted leases</p>
                         <h2 class="stat-value">{{ $summary['alerted_count'] }}</h2>
                         <p class="stat-meta"><span>threshold breached</span></p>
                     </article>
                 </section>
 
-                <article class="form-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Filters</p>
@@ -96,8 +96,8 @@
                         </div>
 
                         <div class="btn-strip" style="margin-top: 1rem;">
-                            <button class="btn btn-solid" type="submit">Apply filters</button>
-                            <a class="btn btn-ghost" href="{{ route('finance.reports.arrears.index') }}">Reset</a>
+                            <button class="btn btn-primary" type="submit">Apply filters</button>
+                            <a class="btn btn-outline-secondary" href="{{ route('finance.reports.arrears.index') }}">Reset</a>
                         </div>
                     </form>
                 </article>
@@ -113,7 +113,7 @@
                     ];
                 @endphp
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Exports</p>
@@ -124,12 +124,12 @@
                     <p class="security-meta" style="margin-bottom: 0.75rem;">Current period: {{ $filters['range_label'] }}</p>
 
                     <div class="btn-strip">
-                        <a class="btn btn-solid btn-sm" href="{{ route('finance.reports.arrears.csv', $exportQuery) }}">Export CSV</a>
-                        <a class="btn btn-ghost btn-sm" href="{{ route('finance.reports.arrears.pdf', $exportQuery) }}">Export PDF</a>
+                        <a class="btn btn-primary btn-sm" href="{{ route('finance.reports.arrears.csv', $exportQuery) }}">Export CSV</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('finance.reports.arrears.pdf', $exportQuery) }}">Export PDF</a>
                     </div>
                 </article>
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Month-wise ledger rows</p>
@@ -140,8 +140,8 @@
                     @if ($rows->isEmpty())
                         <p class="security-empty">No arrears rows matched the selected filters.</p>
                     @else
-                        <div class="data-table-card">
-                            <table class="data-table data-table-compact">
+                        <div class="">
+                            <table class="data-table data-table-compact table w-100">
                                 <thead>
                                     <tr>
                                         <th>Property</th>

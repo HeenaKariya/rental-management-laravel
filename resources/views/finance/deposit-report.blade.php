@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Deposits Report | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack property-detail-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3 property-detail-stack">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 7 reporting</p>
@@ -11,40 +11,40 @@
                         <p class="page-description">Track deposit account balances, adjustments, and settlement posture across visible properties.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('finance.index') }}">Back to finance</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('finance.index') }}">Back to finance</a>
                     </div>
                 </section>
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
+                <section class="row g-3">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Deposit accounts</p>
                         <h2 class="stat-value">{{ $summary['count'] }}</h2>
                         <p class="stat-meta"><span>filtered rows</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Expected total</p>
                         <h2 class="stat-value">{{ number_format($summary['expected_total'], 2) }}</h2>
                         <p class="stat-meta"><span>target deposits</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Held balance</p>
                         <h2 class="stat-value">{{ number_format($summary['balance_total'], 2) }}</h2>
                         <p class="stat-meta"><span>current balances</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Collected total</p>
                         <h2 class="stat-value">{{ number_format($summary['collected_total'], 2) }}</h2>
                         <p class="stat-meta"><span>including initial collection</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Released total</p>
                         <h2 class="stat-value">{{ number_format($summary['released_total'], 2) }}</h2>
                         <p class="stat-meta"><span>refund + deduction + forfeiture</span></p>
                     </article>
                 </section>
 
-                <article class="form-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Filters</p>
@@ -92,8 +92,8 @@
                         </div>
 
                         <div class="btn-strip" style="margin-top: 1rem;">
-                            <button class="btn btn-solid" type="submit">Apply filters</button>
-                            <a class="btn btn-ghost" href="{{ route('finance.reports.deposits.index') }}">Reset</a>
+                            <button class="btn btn-primary" type="submit">Apply filters</button>
+                            <a class="btn btn-outline-secondary" href="{{ route('finance.reports.deposits.index') }}">Reset</a>
                         </div>
                     </form>
                 </article>
@@ -108,7 +108,7 @@
                     ];
                 @endphp
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Exports</p>
@@ -119,12 +119,12 @@
                     <p class="security-meta" style="margin-bottom: 0.75rem;">Current period: {{ $filters['range_label'] }}</p>
 
                     <div class="btn-strip">
-                        <a class="btn btn-solid btn-sm" href="{{ route('finance.reports.deposits.csv', $exportQuery) }}">Export CSV</a>
-                        <a class="btn btn-ghost btn-sm" href="{{ route('finance.reports.deposits.pdf', $exportQuery) }}">Export PDF</a>
+                        <a class="btn btn-primary btn-sm" href="{{ route('finance.reports.deposits.csv', $exportQuery) }}">Export CSV</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('finance.reports.deposits.pdf', $exportQuery) }}">Export PDF</a>
                     </div>
                 </article>
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Deposit accounts</p>
@@ -135,8 +135,8 @@
                     @if ($rows->isEmpty())
                         <p class="security-empty">No deposit accounts matched the selected filters.</p>
                     @else
-                        <div class="data-table-card">
-                            <table class="data-table data-table-compact">
+                        <div class="">
+                            <table class="data-table data-table-compact table w-100">
                                 <thead>
                                     <tr>
                                         <th>Property</th>

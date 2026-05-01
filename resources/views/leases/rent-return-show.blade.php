@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Rent Return | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack property-detail-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3 property-detail-stack">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Rent return</p>
@@ -11,10 +11,10 @@
                         <p class="page-description">Rent return record for {{ $lease->tenant->full_name }} at {{ $lease->unit->property->title }} · {{ $lease->unit->unit_number }}.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('leases.show', $lease) }}">Back to lease</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('leases.show', $lease) }}">Back to lease</a>
                         @if ($rentReturn->canDownloadSummary())
-                            <a class="btn btn-ghost" href="{{ route('leases.rent-return.summary.download', [$lease, $rentReturn]) }}">Download summary</a>
+                            <a class="btn btn-outline-secondary" href="{{ route('leases.rent-return.summary.download', [$lease, $rentReturn]) }}">Download summary</a>
                         @endif
                     </div>
                 </section>
@@ -25,32 +25,32 @@
                     </div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
+                <section class="row g-3">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Status</p>
                         <h2 class="stat-value">{{ str($rentReturn->status)->replace('_', ' ')->title() }}</h2>
                         <p class="stat-meta"><span>initiated {{ $rentReturn->initiated_at?->format('M j, Y g:i A') }}</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Suggested</p>
                         <h2 class="stat-value">{{ number_format((float) $rentReturn->suggested_amount, 2) }}</h2>
                         <p class="stat-meta"><span>{{ $rentReturn->unused_days }} unused days at {{ number_format((float) $rentReturn->daily_rate, 4) }}/day</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Confirmed</p>
                         <h2 class="stat-value">{{ $rentReturn->confirmed_amount !== null ? number_format((float) $rentReturn->confirmed_amount, 2) : 'Pending' }}</h2>
                         <p class="stat-meta"><span>{{ $rentReturn->override_reason ? 'Override logged' : 'No override' }}</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Settlement</p>
                         <h2 class="stat-value">{{ $rentReturn->settlement_method ? str($rentReturn->settlement_method)->replace('_', ' ')->title() : 'Not recorded' }}</h2>
                         <p class="stat-meta"><span>{{ $rentReturn->ledger_posted ? 'Ledger posting requested' : 'Lease record only' }}</span></p>
                     </article>
                 </section>
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="form-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Calculation</p>
@@ -109,8 +109,8 @@
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
-                        <article class="security-card dashboard-panel">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Actions</p>
@@ -208,7 +208,7 @@
                                         <textarea class="field-input" name="notes" rows="3">{{ old('notes', $rentReturn->notes) }}</textarea>
                                     </label>
 
-                                    <button class="btn btn-solid" type="submit">Save status update</button>
+                                    <button class="btn btn-primary" type="submit">Save status update</button>
                                 </form>
                             @else
                                 <p class="security-empty">This record is visible from the tenant portal in read-only mode.</p>

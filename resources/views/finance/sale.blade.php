@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Sale Lifecycle | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack property-detail-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3 property-detail-stack">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 5 finance</p>
@@ -11,8 +11,8 @@
                         <p class="page-description">Listing data, lead tracking, sale closure, and per-owner profit/loss distribution.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('properties.show', $property) }}">Back to property</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('properties.show', $property) }}">Back to property</a>
                     </div>
                 </section>
 
@@ -20,32 +20,32 @@
                     <div class="page-status"><span class="badge badge-green">{{ session('status') }}</span></div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
+                <section class="row g-3">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Status</p>
                         <h2 class="stat-value">{{ $sale ? str($sale->status)->replace('_', ' ')->title() : 'Not listed' }}</h2>
                         <p class="stat-meta"><span>property lifecycle {{ str($property->lifecycle_stage)->replace('_', ' ')->title() }}</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Asking price</p>
                         <h2 class="stat-value">{{ number_format((float) ($sale?->asking_price ?? 0), 2) }}</h2>
                         <p class="stat-meta"><span>listing benchmark</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Net sale proceeds</p>
                         <h2 class="stat-value">{{ number_format((float) ($sale?->net_sale_proceeds ?? 0), 2) }}</h2>
                         <p class="stat-meta"><span>after commission and closing costs</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Gross profit / loss</p>
                         <h2 class="stat-value">{{ number_format((float) ($sale?->gross_profit_loss ?? 0), 2) }}</h2>
                         <p class="stat-meta"><span>vs acquisition {{ number_format((float) ($sale?->total_acquisition_cost_snapshot ?? ($property->purchase?->total_acquisition_cost ?? 0)), 2) }}</span></p>
                     </article>
                 </section>
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="table-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Lead and offer log</p>
@@ -56,8 +56,8 @@
                             @if (! $sale || $sale->leads->isEmpty())
                                 <p class="security-empty">No leads logged yet.</p>
                             @else
-                                <div class="data-table-card">
-                                    <table class="data-table data-table-compact">
+                                <div class="">
+                                    <table class="data-table data-table-compact table w-100">
                                         <thead>
                                             <tr>
                                                 <th>Buyer</th>
@@ -91,7 +91,7 @@
                             @endif
                         </article>
 
-                        <article class="table-card dashboard-panel">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Owner distribution</p>
@@ -102,8 +102,8 @@
                             @if ($ownerShares === [])
                                 <p class="security-empty">Owner share distribution appears after sale closure and ownership setup.</p>
                             @else
-                                <div class="data-table-card">
-                                    <table class="data-table data-table-compact">
+                                <div class="">
+                                    <table class="data-table data-table-compact table w-100">
                                         <thead>
                                             <tr>
                                                 <th>Owner</th>
@@ -126,9 +126,9 @@
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
                         @can('update', $property)
-                            <article class="security-card dashboard-panel">
+                            <article class="card border-0 shadow-sm dashboard-panel">
                                 <div class="dashboard-panel-head">
                                     <div>
                                         <p class="row-label">Listing</p>
@@ -143,12 +143,12 @@
                                     <label class="field-group"><span class="field-label">Broker name</span><input class="field-input" type="text" name="broker_name" value="{{ old('broker_name', $sale?->broker_name) }}"></label>
                                     <label class="field-group"><span class="field-label">Broker contact</span><input class="field-input" type="text" name="broker_contact" value="{{ old('broker_contact', $sale?->broker_contact) }}"></label>
                                     <label class="field-group"><span class="field-label">Listing notes</span><textarea class="field-input" name="listing_notes" rows="3">{{ old('listing_notes', $sale?->listing_notes) }}</textarea></label>
-                                    <button class="btn btn-solid" type="submit">Save listing</button>
+                                    <button class="btn btn-primary" type="submit">Save listing</button>
                                 </form>
                             </article>
 
                             @if ($sale)
-                                <article class="security-card dashboard-panel">
+                                <article class="card border-0 shadow-sm dashboard-panel">
                                     <div class="dashboard-panel-head">
                                         <div>
                                             <p class="row-label">Lead log</p>
@@ -172,12 +172,12 @@
                                             </select>
                                         </label>
                                         <label class="field-group"><span class="field-label">Notes</span><textarea class="field-input" name="notes" rows="2"></textarea></label>
-                                        <button class="btn btn-solid" type="submit">Log lead</button>
+                                        <button class="btn btn-primary" type="submit">Log lead</button>
                                     </form>
                                 </article>
 
                                 @if ($sale->status !== 'closed')
-                                    <article class="security-card dashboard-panel">
+                                    <article class="card border-0 shadow-sm dashboard-panel">
                                         <div class="dashboard-panel-head">
                                             <div>
                                                 <p class="row-label">Sale closure</p>
@@ -195,13 +195,13 @@
                                             <label class="field-group"><span class="field-label">Closing costs</span><input class="field-input" type="number" min="0" step="0.01" name="closing_costs" value="0"></label>
                                             <label class="field-group"><span class="field-label">Sale deed upload</span><input class="field-input" type="file" name="sale_deed"></label>
                                             <label class="field-group"><span class="field-label">Sale notes</span><textarea class="field-input" name="sale_notes" rows="2"></textarea></label>
-                                            <button class="btn btn-coral" type="submit">Close sale and mark sold</button>
+                                            <button class="btn btn-outline-danger" type="submit">Close sale and mark sold</button>
                                         </form>
                                     </article>
                                 @endif
                             @endif
                         @else
-                            <article class="security-card dashboard-panel"><p class="security-empty">Read-only visibility is enabled for your role in this workspace.</p></article>
+                            <article class="card border-0 shadow-sm dashboard-panel"><p class="security-empty">Read-only visibility is enabled for your role in this workspace.</p></article>
                         @endcan
                     </div>
                 </section>

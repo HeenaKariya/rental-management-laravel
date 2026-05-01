@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Create Deposit | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 3 foundation</p>
@@ -11,14 +11,14 @@
                         <p class="page-description">Create the lease-linked deposit account before posting collections, deductions, refunds, forfeitures, or top-ups.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('deposits.index') }}">Back to deposits</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('deposits.index') }}">Back to deposits</a>
                     </div>
                 </section>
 
                 @if ($errors->any())
-                    <div class="table-card" style="margin-bottom: 1.25rem;">
-                        <div class="pending-card">
+                    <div class="card border-0 shadow-sm" style="margin-bottom: 1.25rem;">
+                        <div class="card border-0 shadow-sm">
                             @foreach ($errors->all() as $error)
                                 <div class="pending-row"><span>{{ $error }}</span></div>
                             @endforeach
@@ -38,7 +38,7 @@
                                 </div>
                             </div>
 
-                            <div class="form-card">
+                            <div class="card border-0 shadow-sm">
                                 <label class="field-group">
                                     <span class="field-label">Lease</span>
                                     <select class="field-input" name="lease_id" required>
@@ -70,8 +70,8 @@
                     </div>
 
                     <div class="btn-strip" style="margin-top: 1.5rem;">
-                        <button class="btn btn-solid" type="submit">Open deposit</button>
-                        <a class="btn btn-ghost" href="{{ route('deposits.index') }}">Cancel</a>
+                        <button class="btn btn-primary" type="submit">Open deposit</button>
+                        <a class="btn btn-outline-secondary" href="{{ route('deposits.index') }}">Cancel</a>
                     </div>
                 </form>
             </div>

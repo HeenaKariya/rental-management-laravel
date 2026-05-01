@@ -1,17 +1,17 @@
 @extends('layouts.app', ['title' => 'Maintenance Request | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Maintenance request</p>
                         <h1 class="page-title">{{ $maintenanceRequest->title }}</h1>
                         <p class="page-description">{{ $maintenanceRequest->unit?->property?->title }} · {{ $maintenanceRequest->unit?->unit_number }}</p>
                     </div>
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('maintenance.index') }}">Back to list</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('maintenance.index') }}">Back to list</a>
                     </div>
                 </section>
 
@@ -19,7 +19,7 @@
                     <div class="page-status"><span class="badge badge-green">{{ session('status') }}</span></div>
                 @endif
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="pending-row"><span>Status</span><span>{{ str($maintenanceRequest->status)->replace('_', ' ')->title() }}</span></div>
                     <div class="pending-row"><span>Priority</span><span>{{ str($maintenanceRequest->priority)->title() }}</span></div>
                     <div class="pending-row"><span>Category</span><span>{{ str($maintenanceRequest->category)->title() }}</span></div>
@@ -27,7 +27,7 @@
                     <div class="pending-row"><span>Tenant</span><span>{{ $maintenanceRequest->tenant?->full_name ?? 'N/A' }}</span></div>
                 </article>
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Description</p>
@@ -41,7 +41,7 @@
                 </article>
 
                 @can('update', $maintenanceRequest)
-                    <article class="form-card dashboard-panel">
+                    <article class="card border-0 shadow-sm dashboard-panel">
                         <div class="dashboard-panel-head">
                             <div>
                                 <p class="row-label">Staff controls</p>
@@ -74,7 +74,7 @@
                                 <textarea class="field-input" rows="4" name="internal_notes">{{ old('internal_notes', $maintenanceRequest->internal_notes) }}</textarea>
                             </label>
                             <div class="btn-strip" style="margin-top: 0.75rem;">
-                                <button class="btn btn-solid" type="submit">Update request</button>
+                                <button class="btn btn-primary" type="submit">Update request</button>
                             </div>
                         </form>
                     </article>

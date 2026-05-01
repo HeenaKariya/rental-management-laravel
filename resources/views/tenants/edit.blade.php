@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Edit Tenant | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 3 foundation</p>
@@ -11,8 +11,8 @@
                         <p class="page-description">Update tenant status, KYC state, and supporting documents inside the scoped tenancy workspace.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('tenants.show', $tenant) }}">Back to tenant</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('tenants.show', $tenant) }}">Back to tenant</a>
                     </div>
                 </section>
 

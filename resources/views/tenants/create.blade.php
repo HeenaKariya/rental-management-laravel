@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Create Tenant | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 3 foundation</p>
@@ -11,8 +11,8 @@
                         <p class="page-description">Start the tenant profile and KYC record that later lease and deposit flows will extend.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('tenants.index') }}">Back to tenants</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('tenants.index') }}">Back to tenants</a>
                     </div>
                 </section>
 

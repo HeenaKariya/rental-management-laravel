@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Edit Property | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class=" property-workspace">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Property workspace</p>
@@ -11,8 +11,8 @@
                         <p class="page-description">Update property details, media, and lifecycle metadata with the same layout system used across the dashboard and property views.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('properties.show', $property) }}">Back to detail</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('properties.show', $property) }}">Back to detail</a>
                     </div>
                 </section>
 

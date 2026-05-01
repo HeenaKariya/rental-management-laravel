@@ -9,9 +9,9 @@
         $displayTimezone = 'Asia/Kolkata';
     @endphp
 
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Super Admin panel</p>
@@ -19,19 +19,19 @@
                         <p class="page-description">Run dispatch/retry actions and monitor delivery outcomes.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost btn-sm" href="{{ route('admin.notifications.export.channel.csv', ['channel' => $currentChannel] + $filterQuery) }}">Export CSV</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.notifications.export.channel.csv', ['channel' => $currentChannel] + $filterQuery) }}">Export CSV</a>
                         <form method="POST" action="{{ route('admin.notifications.dispatch-now') }}">
                             @csrf
                             <input type="hidden" name="delivery_channel" value="{{ $currentChannel }}">
-                            <button class="btn btn-solid btn-sm" type="submit">Dispatch now</button>
+                            <button class="btn btn-primary btn-sm" type="submit">Dispatch now</button>
                         </form>
                         <form method="POST" action="{{ route('admin.notifications.retry-failed') }}">
                             @csrf
                             <input type="hidden" name="delivery_channel" value="{{ $currentChannel }}">
-                            <button class="btn btn-ghost btn-sm" type="submit">Retry failed</button>
+                            <button class="btn btn-outline-secondary btn-sm" type="submit">Retry failed</button>
                         </form>
-                        <a class="btn btn-ghost btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
                     </div>
                 </section>
 
@@ -39,30 +39,38 @@
                     <div class="auth-alert auth-alert-success">{{ session('status') }}</div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
-                        <p class="stat-label">Total records</p>
-                        <h2 class="stat-value">{{ $summary['total'] }}</h2>
-                        <p class="stat-meta"><span>latest delivery logs</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Sent</p>
-                        <h2 class="stat-value">{{ $summary['sent'] }}</h2>
-                        <p class="stat-meta"><span>successfully delivered</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Failed</p>
-                        <h2 class="stat-value">{{ $summary['failed'] }}</h2>
-                        <p class="stat-meta"><span>eligible for retry</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Pending</p>
-                        <h2 class="stat-value">{{ $summary['pending'] }}</h2>
-                        <p class="stat-meta"><span>queued status</span></p>
-                    </article>
+                <section class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3">
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Total records</p>
+                            <h2 class="stat-value">{{ $summary['total'] }}</h2>
+                            <p class="stat-meta"><span>latest delivery logs</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Sent</p>
+                            <h2 class="stat-value">{{ $summary['sent'] }}</h2>
+                            <p class="stat-meta"><span>successfully delivered</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Failed</p>
+                            <h2 class="stat-value">{{ $summary['failed'] }}</h2>
+                            <p class="stat-meta"><span>eligible for retry</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Pending</p>
+                            <h2 class="stat-value">{{ $summary['pending'] }}</h2>
+                            <p class="stat-meta"><span>queued status</span></p>
+                        </article>
+                    </div>
                 </section>
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Delivery log</p>
@@ -102,8 +110,8 @@
                                 <input class="form-control" type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}">
                             </label>
                             <div class="col-12 col-md-2 d-flex align-items-end gap-2">
-                                <button class="btn btn-solid btn-sm" type="submit">Apply filters</button>
-                                <a class="btn btn-ghost btn-sm" href="{{ route($deliveriesRoute, ['reset' => 1]) }}">Reset</a>
+                                <button class="btn btn-primary btn-sm" type="submit">Apply filters</button>
+                                <a class="btn btn-outline-secondary btn-sm" href="{{ route($deliveriesRoute, ['reset' => 1]) }}">Reset</a>
                             </div>
                         </div>
                     </form>
@@ -118,8 +126,8 @@
                             @endif
                         </p>
                     @else
-                        <div class="data-table-card">
-                            <table class="data-table data-table-compact">
+                        <div class="">
+                            <table class="data-table data-table-compact table w-100">
                                 <thead>
                                     <tr>
                                         <th>Event</th>
@@ -152,7 +160,7 @@
                                                     <form method="POST" action="{{ route('admin.notifications.retry-one', $delivery) }}">
                                                         @csrf
                                                         <input type="hidden" name="delivery_channel" value="{{ $currentChannel }}">
-                                                        <button class="btn btn-ghost btn-sm" type="submit">Retry</button>
+                                                        <button class="btn btn-outline-secondary btn-sm" type="submit">Retry</button>
                                                     </form>
                                                 @else
                                                     <span class="muted-text">No action</span>

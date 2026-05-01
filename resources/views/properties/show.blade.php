@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Property Detail | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class=" property-workspace">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Property detail</p>
@@ -11,16 +11,16 @@
                         <p class="page-description">{{ $property->street_address }}, {{ $property->city }}, {{ $property->state }} {{ $property->postal_code }}</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('properties.index') }}">Back to list</a>
+                    <div class="d-flex flex-wrap gap-2 property-detail-header-actions">
+                        <a class="btn btn-outline-secondary" href="{{ route('properties.index') }}">Back to list</a>
                         @can('update', $property)
-                            <a class="btn btn-solid" href="{{ route('properties.edit', $property) }}">Edit</a>
+                            <a class="btn btn-primary" href="{{ route('properties.edit', $property) }}">Edit</a>
                         @endcan
                         @can('archive', $property)
-                            <form method="POST" action="{{ route('properties.archive', $property) }}">
+                            <form class="property-detail-action-form" method="POST" action="{{ route('properties.archive', $property) }}">
                                 @csrf
                                 @method('DELETE')
-                                <button class="btn btn-coral" type="submit">Archive</button>
+                                <button class="btn btn-outline-danger" type="submit">Archive</button>
                             </form>
                         @endcan
                     </div>
@@ -32,58 +32,85 @@
                     </div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
-                        <p class="stat-label">Property ID</p>
-                        <h2 class="stat-value">#{{ $property->id }}</h2>
-                        <p class="stat-meta"><span>{{ str($property->type)->replace('_', ' ')->title() }}</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Lifecycle</p>
-                        <h2 class="stat-value">{{ str($property->lifecycle_stage)->replace('_', ' ')->title() }}</h2>
-                        <p class="stat-meta"><span>{{ $property->city }}, {{ $property->state }}</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Assigned managers</p>
-                        <h2 class="stat-value">{{ $property->activeManagerAssignments->count() }}</h2>
-                        <p class="stat-meta"><span>active access holders</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Media items</p>
-                        <h2 class="stat-value">{{ $property->photos->count() }}</h2>
-                        <p class="stat-meta"><span>{{ $property->activityLogs->count() }} activity records</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Net income</p>
-                        <h2 class="stat-value">{{ number_format((float) $financeSummary['net_income'], 2) }}</h2>
-                        <p class="stat-meta"><span>income {{ number_format((float) $financeSummary['total_income'], 2) }} · expense {{ number_format((float) $financeSummary['total_expense'], 2) }}</span></p>
-                    </article>
+                <section class="row row-cols-1 row-cols-md-2 row-cols-xl-5 g-3">
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Property ID</p>
+                            <h2 class="stat-value">#{{ $property->id }}</h2>
+                            <p class="stat-meta"><span>{{ str($property->type)->replace('_', ' ')->title() }}</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Lifecycle</p>
+                            <h2 class="stat-value">{{ str($property->lifecycle_stage)->replace('_', ' ')->title() }}</h2>
+                            <p class="stat-meta"><span>{{ $property->city }}, {{ $property->state }}</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Assigned managers</p>
+                            <h2 class="stat-value">{{ $property->activeManagerAssignments->count() }}</h2>
+                            <p class="stat-meta"><span>active access holders</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Media items</p>
+                            <h2 class="stat-value">{{ $property->photos->count() }}</h2>
+                            <p class="stat-meta"><span>{{ $property->activityLogs->count() }} activity records</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Net income</p>
+                            <h2 class="stat-value">{{ number_format((float) $financeSummary['net_income'], 2) }}</h2>
+                            <p class="stat-meta"><span>income {{ number_format((float) $financeSummary['total_income'], 2) }} · expense {{ number_format((float) $financeSummary['total_expense'], 2) }}</span></p>
+                        </article>
+                    </div>
                 </section>
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="table-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Overview</p>
                                     <h3 class="dashboard-panel-title">Property summary</h3>
                                 </div>
-                                <div class="btn-strip">
-                                    <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.ledger.index', $property) }}">Open finance ledger</a>
-                                    <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.purchase.show', $property) }}">Purchase and loan</a>
-                                    <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.sale.show', $property) }}">Sale lifecycle</a>
-                                    <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.reports.show', $property) }}">Owner reports</a>
+                                <div class="btn-strip property-finance-links">
+                                    <a class="btn btn-outline-secondary btn-sm" href="{{ route('properties.finance.ledger.index', $property) }}">Open finance ledger</a>
+                                    <a class="btn btn-outline-secondary btn-sm" href="{{ route('properties.finance.purchase.show', $property) }}">Purchase and loan</a>
+                                    <a class="btn btn-outline-secondary btn-sm" href="{{ route('properties.finance.sale.show', $property) }}">Sale lifecycle</a>
+                                    <a class="btn btn-outline-secondary btn-sm" href="{{ route('properties.finance.reports.show', $property) }}">Owner reports</a>
                                 </div>
                             </div>
 
-                            <div class="pending-row"><span>Type</span><span>{{ str($property->type)->replace('_', ' ')->title() }}</span></div>
-                            <div class="pending-row"><span>Lifecycle</span><span>{{ str($property->lifecycle_stage)->replace('_', ' ')->title() }}</span></div>
-                            <div class="pending-row"><span>Area</span><span>{{ $property->area ? number_format((float) $property->area, 2).' '.$property->area_unit : 'Not set' }}</span></div>
-                            <div class="pending-row"><span>Address</span><span>{{ $property->street_address }}, {{ $property->city }}, {{ $property->state }} {{ $property->postal_code }}, {{ $property->country }}</span></div>
-                            <div class="pending-row"><span>Notes</span><span>{{ $property->description ?: 'No property notes added yet.' }}</span></div>
+                            <div class="property-summary-grid">
+                                <article class="property-summary-item">
+                                    <p class="row-label mb-1">Type</p>
+                                    <p class="property-summary-value">{{ str($property->type)->replace('_', ' ')->title() }}</p>
+                                </article>
+                                <article class="property-summary-item">
+                                    <p class="row-label mb-1">Lifecycle</p>
+                                    <p class="property-summary-value">{{ str($property->lifecycle_stage)->replace('_', ' ')->title() }}</p>
+                                </article>
+                                <article class="property-summary-item">
+                                    <p class="row-label mb-1">Area</p>
+                                    <p class="property-summary-value">{{ $property->area ? number_format((float) $property->area, 2).' '.$property->area_unit : 'Not set' }}</p>
+                                </article>
+                                <article class="property-summary-item property-summary-item-wide">
+                                    <p class="row-label mb-1">Address</p>
+                                    <p class="property-summary-copy">{{ $property->street_address }}, {{ $property->city }}, {{ $property->state }} {{ $property->postal_code }}, {{ $property->country }}</p>
+                                </article>
+                                <article class="property-summary-item property-summary-item-wide">
+                                    <p class="row-label mb-1">Notes</p>
+                                    <p class="property-summary-copy">{{ $property->description ?: 'No property notes added yet.' }}</p>
+                                </article>
+                            </div>
                         </article>
 
-                        <article class="table-card dashboard-panel">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Manager access</p>
@@ -91,8 +118,8 @@
                                 </div>
                             </div>
 
-                            <div class="data-table-card">
-                                <table class="data-table data-table-compact">
+                            <div class="">
+                                <table class="data-table data-table-compact table w-100">
                                     <thead>
                                         <tr>
                                             <th scope="col">Manager</th>
@@ -112,7 +139,7 @@
                                                         <form method="POST" action="{{ route('properties.assignments.destroy', [$property, $assignment]) }}">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button class="btn btn-ghost btn-sm" type="submit">Revoke</button>
+                                                            <button class="btn btn-outline-secondary btn-sm" type="submit">Revoke</button>
                                                         </form>
                                                     @else
                                                         <span class="muted-text">Access granted</span>
@@ -129,7 +156,7 @@
                             </div>
 
                             @can('assignManager', $property)
-                                <form class="form-card property-inline-form" method="POST" action="{{ route('properties.assignments.store', $property) }}">
+                                <form class="property-inline-form property-inline-panel" method="POST" action="{{ route('properties.assignments.store', $property) }}">
                                     @csrf
                                     <label class="field-group">
                                         <span class="field-label">Assign manager</span>
@@ -140,12 +167,12 @@
                                             @endforeach
                                         </select>
                                     </label>
-                                    <button class="btn btn-solid" type="submit">Assign manager</button>
+                                    <button class="btn btn-primary" type="submit">Assign manager</button>
                                 </form>
                             @endcan
                         </article>
 
-                        <article class="table-card dashboard-panel">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Ownership</p>
@@ -153,8 +180,8 @@
                                 </div>
                             </div>
 
-                            <div class="data-table-card">
-                                <table class="data-table data-table-compact">
+                            <div class="">
+                                <table class="data-table data-table-compact table w-100">
                                     <thead>
                                         <tr>
                                             <th scope="col">Owner</th>
@@ -182,12 +209,12 @@
                             </div>
 
                             @can('assignManager', $property)
-                                <form class="form-card property-inline-form" method="POST" action="{{ route('properties.owners.sync', $property) }}">
+                                <form class="property-inline-form property-inline-panel" method="POST" action="{{ route('properties.owners.sync', $property) }}">
                                     @csrf
-                                    <div class="two-up-grid">
+                                    <div class="property-owner-grid">
                                         @for ($row = 0; $row < max(3, $property->owners->count()); $row++)
                                             @php $ownerRow = $property->owners->get($row); @endphp
-                                            <div class="table-card" style="padding: 0.75rem;">
+                                            <div class="property-owner-editor-card">
                                                 <label class="field-group">
                                                     <span class="field-label">Owner user</span>
                                                     <select class="field-input" name="owners[{{ $row }}][user_id]">
@@ -201,7 +228,7 @@
                                                     <span class="field-label">Owner name</span>
                                                     <input class="field-input" type="text" name="owners[{{ $row }}][owner_name]" value="{{ old("owners.$row.owner_name", $ownerRow?->owner_name) }}">
                                                 </label>
-                                                <div class="two-up-grid">
+                                                <div class="property-owner-metrics-grid">
                                                     <label class="field-group">
                                                         <span class="field-label">Share %</span>
                                                         <input class="field-input" type="number" step="0.01" min="0" max="100" name="owners[{{ $row }}][ownership_pct]" value="{{ old("owners.$row.ownership_pct", $ownerRow?->ownership_pct) }}">
@@ -219,14 +246,14 @@
                                         @endfor
                                     </div>
 
-                                    <button class="btn btn-solid" type="submit">Save ownership splits</button>
+                                    <button class="btn btn-primary" type="submit">Save ownership splits</button>
                                 </form>
                             @endcan
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
-                        <article class="table-card dashboard-panel">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Media</p>
@@ -234,8 +261,8 @@
                                 </div>
                             </div>
 
-                            <div class="data-table-card">
-                                <table class="data-table data-table-compact">
+                            <div class="">
+                                <table class="data-table data-table-compact table w-100">
                                     <thead>
                                         <tr>
                                             <th scope="col">Photo</th>
@@ -265,7 +292,7 @@
                             </div>
                         </article>
 
-                        <article class="feed-card dashboard-panel">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Activity</p>

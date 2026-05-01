@@ -5,9 +5,9 @@
         $recoveryCodeCount = count($recoveryCodes);
     @endphp
 
-    <div class="ui-shell px-0">
-        <div class="ui-wrap px-0">
-            <div class="dashboard-stack d-flex flex-column gap-3">
+    <div class="">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft d-flex flex-column flex-lg-row justify-content-between gap-3">
                     <div>
                         <p class="page-kicker">Security settings</p>
@@ -15,16 +15,16 @@
                         <p class="page-description">Confirm your second factor, rotate recovery codes, and manage access safety for your account.</p>
                     </div>
 
-                    <div class="page-actions d-flex flex-wrap gap-2 align-items-center">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
                         @if ($user->hasRole('super_admin'))
-                            <a class="btn btn-violet btn-sm" href="{{ route('admin.security.two-factor.index') }}">Admin oversight</a>
+                            <a class="btn btn-primary btn-sm" href="{{ route('admin.security.two-factor.index') }}">Admin oversight</a>
                         @endif
-                        <a class="btn btn-ghost btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
                     </div>
                 </section>
 
                 <section>
-                    <article class="security-card dashboard-panel card border-0 p-3 p-lg-4">
+                    <article class="card border-0 shadow-sm dashboard-panel p-3 p-lg-4">
 
                         @if (session('status'))
                             <div class="auth-alert auth-alert-success">{{ session('status') }}</div>
@@ -44,7 +44,7 @@
 
                             <form method="POST" action="{{ route('settings.security.two-factor.enable') }}">
                                 @csrf
-                                <button class="btn btn-solid" type="submit">Start 2FA setup</button>
+                                <button class="btn btn-primary" type="submit">Start 2FA setup</button>
                             </form>
                         @else
                             <div class="row g-3 g-xl-4 align-items-start security-twofactor-layout">
@@ -85,7 +85,7 @@
                                             </label>
 
                                             <div class="btn-strip col-12 col-lg-auto">
-                                                <button class="btn btn-solid" type="submit">Confirm delivered OTP</button>
+                                                <button class="btn btn-primary" type="submit">Confirm delivered OTP</button>
                                             </div>
                                         </form>
 
@@ -99,13 +99,13 @@
                                             <form method="POST" action="{{ route('settings.security.two-factor.otp.resend') }}">
                                                 @csrf
                                                 <input type="hidden" name="channel" value="email">
-                                                <button class="btn btn-ghost btn-sm" type="submit" @disabled(! $emailAvailable)>Resend via Email</button>
+                                                <button class="btn btn-outline-secondary btn-sm" type="submit" @disabled(! $emailAvailable)>Resend via Email</button>
                                             </form>
 
                                             <form method="POST" action="{{ route('settings.security.two-factor.otp.resend') }}">
                                                 @csrf
                                                 <input type="hidden" name="channel" value="whatsapp">
-                                                <button class="btn btn-ghost btn-sm" type="submit" @disabled(! $whatsappAvailable)>Resend via WhatsApp</button>
+                                                <button class="btn btn-outline-secondary btn-sm" type="submit" @disabled(! $whatsappAvailable)>Resend via WhatsApp</button>
                                             </form>
                                         </div>
 
@@ -129,7 +129,7 @@
                                             </label>
 
                                             <div class="btn-strip col-12 col-lg-auto">
-                                                <button class="btn btn-solid" type="submit">Confirm authenticator</button>
+                                                <button class="btn btn-primary" type="submit">Confirm authenticator</button>
                                             </div>
                                         </form>
                                     @else
@@ -160,13 +160,13 @@
                                         <div class="security-actions d-flex flex-wrap gap-2">
                                             <form method="POST" action="{{ route('settings.security.two-factor.recovery-codes') }}">
                                                 @csrf
-                                                <button class="btn btn-lime" type="submit">Regenerate recovery codes</button>
+                                                <button class="btn btn-success" type="submit">Regenerate recovery codes</button>
                                             </form>
 
                                             <form method="POST" action="{{ route('settings.security.two-factor.disable') }}">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button class="btn btn-ghost" type="submit">Disable 2FA</button>
+                                                <button class="btn btn-outline-secondary" type="submit">Disable 2FA</button>
                                             </form>
                                         </div>
                                     </div>
@@ -177,7 +177,7 @@
                 </section>
 
                 <section>
-                    <article class="security-card dashboard-panel card border-0">
+                    <article class="card border-0 shadow-sm dashboard-panel">
                         <div class="dashboard-panel-head d-flex align-items-start justify-content-between gap-2">
                             <div>
                                 <p class="row-label">Audit trail</p>

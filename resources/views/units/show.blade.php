@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Unit Detail | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack property-detail-stack">
+    <div class=" property-workspace">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3 property-detail-stack">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Unit detail</p>
@@ -11,13 +11,13 @@
                         <p class="page-description">Unit inventory and occupancy details scoped through {{ $unit->property->title }}.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('units.index') }}">Back to units</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('units.index') }}">Back to units</a>
                         @can('create', App\Models\Lease::class)
-                            <a class="btn btn-ghost" href="{{ route('leases.create', ['unit_id' => $unit->id]) }}">Start new lease</a>
+                            <a class="btn btn-outline-secondary" href="{{ route('leases.create', ['unit_id' => $unit->id]) }}">Start new lease</a>
                         @endcan
                         @can('update', $unit)
-                            <a class="btn btn-solid" href="{{ route('units.edit', $unit) }}">Edit unit</a>
+                            <a class="btn btn-primary" href="{{ route('units.edit', $unit) }}">Edit unit</a>
                         @endcan
                     </div>
                 </section>
@@ -28,32 +28,40 @@
                     </div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
-                        <p class="stat-label">Property</p>
-                        <h2 class="stat-value">#{{ $unit->property_id }}</h2>
-                        <p class="stat-meta"><span>{{ $unit->property->title }}</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Status</p>
-                        <h2 class="stat-value">{{ str($unit->occupancy_status)->replace('_', ' ')->title() }}</h2>
-                        <p class="stat-meta"><span>{{ $unit->vacant_since ? 'Vacant since '.$unit->vacant_since->format('M j, Y') : 'Occupancy tracked' }}</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Bedrooms</p>
-                        <h2 class="stat-value">{{ $unit->bedrooms ?? 0 }}</h2>
-                        <p class="stat-meta"><span>unit layout</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Area</p>
-                        <h2 class="stat-value">{{ $unit->area ? rtrim(rtrim(number_format((float) $unit->area, 2, '.', ''), '0'), '.') : 'N/A' }}</h2>
-                        <p class="stat-meta"><span>{{ $unit->area_unit }}</span></p>
-                    </article>
+                <section class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3">
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Property</p>
+                            <h2 class="stat-value">#{{ $unit->property_id }}</h2>
+                            <p class="stat-meta"><span>{{ $unit->property->title }}</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Status</p>
+                            <h2 class="stat-value">{{ str($unit->occupancy_status)->replace('_', ' ')->title() }}</h2>
+                            <p class="stat-meta"><span>{{ $unit->vacant_since ? 'Vacant since '.$unit->vacant_since->format('M j, Y') : 'Occupancy tracked' }}</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Bedrooms</p>
+                            <h2 class="stat-value">{{ $unit->bedrooms ?? 0 }}</h2>
+                            <p class="stat-meta"><span>unit layout</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Area</p>
+                            <h2 class="stat-value">{{ $unit->area ? rtrim(rtrim(number_format((float) $unit->area, 2, '.', ''), '0'), '.') : 'N/A' }}</h2>
+                            <p class="stat-meta"><span>{{ $unit->area_unit }}</span></p>
+                        </article>
+                    </div>
                 </section>
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="form-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Inventory profile</p>
@@ -90,8 +98,8 @@
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
-                        <article class="security-card dashboard-panel">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Next module</p>

@@ -114,7 +114,7 @@ class DashboardTest extends TestCase
 
         $this->actingAs($superAdmin)
             ->get(route('admin.notifications.index'))
-            ->assertOk();
+            ->assertRedirect(route('admin.notifications.settings'));
 
         $this->actingAs($superAdmin)
             ->get(route('properties.finance.reports.owner-statement.csv', $property))

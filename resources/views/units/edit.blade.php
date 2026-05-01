@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Edit Unit | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 3 foundation</p>
@@ -11,8 +11,8 @@
                         <p class="page-description">Adjust occupancy and inventory details inside the same property-scoped workspace.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('units.show', $unit) }}">Back to unit</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('units.show', $unit) }}">Back to unit</a>
                     </div>
                 </section>
 

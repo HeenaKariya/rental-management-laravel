@@ -7,9 +7,9 @@
         $pendingExpense = $entries->where('entry_type', 'expense')->where('status', 'pending_review')->sum(fn ($entry) => (float) $entry->amount);
     @endphp
 
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack property-detail-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3 property-detail-stack">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 5 finance</p>
@@ -17,8 +17,8 @@
                         <p class="page-description">Property-level income and expense entries, including flagged expense review workflow.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('properties.show', $property) }}">Back to property</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('properties.show', $property) }}">Back to property</a>
                     </div>
                 </section>
 
@@ -28,30 +28,30 @@
                     </div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
+                <section class="row g-3">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Approved income</p>
                         <h2 class="stat-value">{{ number_format((float) $approvedIncome, 2) }}</h2>
                         <p class="stat-meta"><span>ledger income total</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Approved expense</p>
                         <h2 class="stat-value">{{ number_format((float) $approvedExpense, 2) }}</h2>
                         <p class="stat-meta"><span>ledger expense total</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Net income</p>
                         <h2 class="stat-value">{{ number_format((float) ($approvedIncome - $approvedExpense), 2) }}</h2>
                         <p class="stat-meta"><span>approved entries only</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Pending expense review</p>
                         <h2 class="stat-value">{{ number_format((float) $pendingExpense, 2) }}</h2>
                         <p class="stat-meta"><span>awaiting Super Admin decision</span></p>
                     </article>
                 </section>
 
-                <article class="form-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Filters</p>
@@ -80,15 +80,15 @@
                             </label>
                         </div>
                         <div class="btn-strip" style="margin-top: 1rem;">
-                            <button class="btn btn-solid" type="submit">Apply</button>
-                            <a class="btn btn-ghost" href="{{ route('properties.finance.ledger.index', $property) }}">Reset</a>
+                            <button class="btn btn-primary" type="submit">Apply</button>
+                            <a class="btn btn-outline-secondary" href="{{ route('properties.finance.ledger.index', $property) }}">Reset</a>
                         </div>
                     </form>
                 </article>
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="table-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Ledger timeline</p>
@@ -99,8 +99,8 @@
                             @if ($entries->isEmpty())
                                 <p class="security-empty">No ledger entries are available for this filter selection.</p>
                             @else
-                                <div class="data-table-card">
-                                    <table class="data-table data-table-compact">
+                                <div class="">
+                                    <table class="data-table data-table-compact table w-100">
                                         <thead>
                                             <tr>
                                                 <th scope="col">Date</th>
@@ -119,7 +119,7 @@
                                                     <td>{{ str($entry->category)->replace('_', ' ')->title() }}</td>
                                                     <td>{{ number_format((float) $entry->amount, 2) }}</td>
                                                     <td>
-                                                        <span class="badge {{ $entry->status === 'approved' ? 'badge-green' : ($entry->status === 'rejected' ? 'badge-coral' : 'badge-gold') }} compact-badge">{{ str($entry->status)->replace('_', ' ')->title() }}</span>
+                                                        <span class="badge {{ $entry->status === 'approved' ? 'badge-green' : ($entry->status 'rejected' 'badge-coral' 'badge-gold') }} compact-badge">{{ str($entry->status)->replace('_', ' ')->title() }}</span>
                                                     </td>
                                                     <td>
                                                         {{ $entry->notes ?: 'No notes' }}
@@ -139,9 +139,9 @@
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
                         @if ($canManage)
-                            <article class="security-card dashboard-panel">
+                            <article class="card border-0 shadow-sm dashboard-panel">
                                 <div class="dashboard-panel-head">
                                     <div>
                                         <p class="row-label">Manual income</p>
@@ -171,11 +171,11 @@
                                         <span class="field-label">Notes</span>
                                         <textarea class="field-input" name="notes" rows="3"></textarea>
                                     </label>
-                                    <button class="btn btn-solid" type="submit">Save income</button>
+                                    <button class="btn btn-primary" type="submit">Save income</button>
                                 </form>
                             </article>
 
-                            <article class="security-card dashboard-panel">
+                            <article class="card border-0 shadow-sm dashboard-panel">
                                 <div class="dashboard-panel-head">
                                     <div>
                                         <p class="row-label">Manual expense</p>
@@ -213,13 +213,13 @@
                                         <span class="field-label">Notes</span>
                                         <textarea class="field-input" name="notes" rows="3"></textarea>
                                     </label>
-                                    <button class="btn btn-solid" type="submit">Save expense</button>
+                                    <button class="btn btn-primary" type="submit">Save expense</button>
                                 </form>
                             </article>
                         @endif
 
                         @if ($user?->hasRole('super_admin'))
-                            <article class="security-card dashboard-panel">
+                            <article class="card border-0 shadow-sm dashboard-panel">
                                 <div class="dashboard-panel-head">
                                     <div>
                                         <p class="row-label">Review queue</p>
@@ -238,8 +238,8 @@
                                             <textarea class="field-input" name="review_notes" rows="2"></textarea>
                                         </label>
                                         <div class="btn-strip">
-                                            <button class="btn btn-solid btn-sm" type="submit" name="action" value="approve">Approve</button>
-                                            <button class="btn btn-coral btn-sm" type="submit" name="action" value="reject">Reject</button>
+                                            <button class="btn btn-primary btn-sm" type="submit" name="action" value="approve">Approve</button>
+                                            <button class="btn btn-outline-danger btn-sm" type="submit" name="action" value="reject">Reject</button>
                                         </div>
                                     </form>
                                 @empty

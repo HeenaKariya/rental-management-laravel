@@ -8,9 +8,9 @@
         $recentlyRecordedTotal = $recentlyRecorded->sum(fn ($instalment) => (float) $instalment->amount_paid);
     @endphp
 
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 4 dashboard</p>
@@ -18,46 +18,56 @@
                         <p class="page-description">Review upcoming dues, partial collections, overdue ledgers, arrears carry-forward, and recent payment activity across the visible lease portfolio.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('dashboard') }}">Dashboard</a>
-                        <a class="btn btn-ghost" href="{{ route('finance.reports.arrears.index') }}">Arrears report</a>
-                        <a class="btn btn-ghost" href="{{ route('finance.reports.deposits.index') }}">Deposits report</a>
-                        <a class="btn btn-ghost" href="{{ route('finance.reports.rent-collection.index') }}">Rent collection report</a>
-                        <a class="btn btn-ghost" href="{{ route('finance.reports.expenses.index') }}">Expense report</a>
-                        <a class="btn btn-ghost" href="{{ route('finance.reports.rent-returns.index') }}">Rent return report</a>
-                        <a class="btn btn-ghost" href="{{ route('finance.reports.loan-schedule.index') }}">Loan schedule report</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('dashboard') }}">Dashboard</a>
+                        <a class="btn btn-outline-secondary" href="{{ route('finance.reports.arrears.index') }}">Arrears report</a>
+                        <a class="btn btn-outline-secondary" href="{{ route('finance.reports.deposits.index') }}">Deposits report</a>
+                        <a class="btn btn-outline-secondary" href="{{ route('finance.reports.rent-collection.index') }}">Rent collection report</a>
+                        <a class="btn btn-outline-secondary" href="{{ route('finance.reports.expenses.index') }}">Expense report</a>
+                        <a class="btn btn-outline-secondary" href="{{ route('finance.reports.rent-returns.index') }}">Rent return report</a>
+                        <a class="btn btn-outline-secondary" href="{{ route('finance.reports.loan-schedule.index') }}">Loan schedule report</a>
                     </div>
                 </section>
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
-                        <p class="stat-label">Upcoming dues</p>
-                        <h2 class="stat-value">{{ $upcomingDues->count() }}</h2>
-                        <p class="stat-meta"><span>{{ number_format($upcomingExpected, 2) }} expected</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Partially paid</p>
-                        <h2 class="stat-value">{{ $partiallyPaid->count() }}</h2>
-                        <p class="stat-meta"><span>open with receipts logged</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Overdue</p>
-                        <h2 class="stat-value">{{ $overdue->count() }}</h2>
-                        <p class="stat-meta"><span>{{ number_format($overdueExpected, 2) }} outstanding</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Arrears tracker</p>
-                        <h2 class="stat-value">{{ $arrearsTracker->count() }}</h2>
-                        <p class="stat-meta"><span>{{ number_format($arrearsExpected, 2) }} brought forward</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Flagged expenses</p>
-                        <h2 class="stat-value">{{ $flaggedExpenses->count() }}</h2>
-                        <p class="stat-meta"><span>pending review queue</span></p>
-                    </article>
+                <section class="row row-cols-1 row-cols-md-2 row-cols-xl-5 g-3">
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Upcoming dues</p>
+                            <h2 class="stat-value">{{ $upcomingDues->count() }}</h2>
+                            <p class="stat-meta"><span>{{ number_format($upcomingExpected, 2) }} expected</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Partially paid</p>
+                            <h2 class="stat-value">{{ $partiallyPaid->count() }}</h2>
+                            <p class="stat-meta"><span>open with receipts logged</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Overdue</p>
+                            <h2 class="stat-value">{{ $overdue->count() }}</h2>
+                            <p class="stat-meta"><span>{{ number_format($overdueExpected, 2) }} outstanding</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Arrears tracker</p>
+                            <h2 class="stat-value">{{ $arrearsTracker->count() }}</h2>
+                            <p class="stat-meta"><span>{{ number_format($arrearsExpected, 2) }} brought forward</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Flagged expenses</p>
+                            <h2 class="stat-value">{{ $flaggedExpenses->count() }}</h2>
+                            <p class="stat-meta"><span>pending review queue</span></p>
+                        </article>
+                    </div>
                 </section>
 
-                <article class="form-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Finance filters</p>
@@ -89,15 +99,15 @@
                         </div>
 
                         <div class="btn-strip" style="margin-top: 1rem;">
-                            <button class="btn btn-solid" type="submit">Apply filters</button>
-                            <a class="btn btn-ghost" href="{{ route('finance.index') }}">Reset</a>
+                            <button class="btn btn-primary" type="submit">Apply filters</button>
+                            <a class="btn btn-outline-secondary" href="{{ route('finance.index') }}">Reset</a>
                         </div>
                     </form>
                 </article>
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="table-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Upcoming dues</p>
@@ -123,13 +133,13 @@
                                         </div>
                                         <div class="muted-text">{{ $ledger->due_on->format('M j, Y') }}</div>
                                         <div class="muted-text">{{ number_format((float) $ledger->outstanding_balance, 2) }}</div>
-                                        <div><a class="btn btn-ghost btn-sm" href="{{ route('leases.payments.show', $ledger->lease) }}">Open</a></div>
+                                        <div><a class="btn btn-outline-secondary btn-sm" href="{{ route('leases.payments.show', $ledger->lease) }}">Open</a></div>
                                     </div>
                                 @endforeach
                             @endif
                         </article>
 
-                        <article class="table-card dashboard-panel">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Partially paid</p>
@@ -154,13 +164,13 @@
                                         </div>
                                         <div class="muted-text">{{ number_format((float) $ledger->total_received, 2) }}</div>
                                         <div class="muted-text">{{ number_format((float) $ledger->outstanding_balance, 2) }}</div>
-                                        <div><a class="btn btn-ghost btn-sm" href="{{ route('leases.payments.show', $ledger->lease) }}">Open</a></div>
+                                        <div><a class="btn btn-outline-secondary btn-sm" href="{{ route('leases.payments.show', $ledger->lease) }}">Open</a></div>
                                     </div>
                                 @endforeach
                             @endif
                         </article>
 
-                        <article class="table-card dashboard-panel">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Overdue</p>
@@ -186,15 +196,15 @@
                                         </div>
                                         <div class="muted-text">{{ $ledger->due_on->format('M j, Y') }}</div>
                                         <div class="muted-text">{{ number_format((float) $ledger->outstanding_balance, 2) }}</div>
-                                        <div><a class="btn btn-ghost btn-sm" href="{{ route('leases.payments.show', $ledger->lease) }}">Open</a></div>
+                                        <div><a class="btn btn-outline-secondary btn-sm" href="{{ route('leases.payments.show', $ledger->lease) }}">Open</a></div>
                                     </div>
                                 @endforeach
                             @endif
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
-                        <article class="table-card dashboard-panel">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Arrears tracker</p>
@@ -218,7 +228,7 @@
                             @endif
                         </article>
 
-                        <article class="feed-card dashboard-panel">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Recently recorded</p>
@@ -245,7 +255,7 @@
                             @endforelse
                         </article>
 
-                        <article class="table-card dashboard-panel">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Expense review</p>
@@ -263,7 +273,7 @@
                                             <div class="tenant-unit">{{ str($expense->category)->replace('_', ' ')->title() }} · {{ number_format((float) $expense->amount, 2) }}</div>
                                         </div>
                                         <div>
-                                            <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.ledger.index', $expense->property) }}">Open ledger</a>
+                                            <a class="btn btn-outline-secondary btn-sm" href="{{ route('properties.finance.ledger.index', $expense->property) }}">Open ledger</a>
                                         </div>
                                     </div>
                                 @endforeach

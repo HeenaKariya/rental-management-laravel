@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Finance Reports | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack property-detail-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3 property-detail-stack">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 5 finance</p>
@@ -11,36 +11,36 @@
                         <p class="page-description">Downloadable owner statement and category-level P&L matrix in CSV and PDF.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('properties.show', $property) }}">Back to property</a>
-                        <a class="btn btn-ghost" href="{{ route('properties.finance.ledger.index', $property) }}">Open ledger</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('properties.show', $property) }}">Back to property</a>
+                        <a class="btn btn-outline-secondary" href="{{ route('properties.finance.ledger.index', $property) }}">Open ledger</a>
                     </div>
                 </section>
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
+                <section class="row g-3">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Operational income</p>
                         <h2 class="stat-value">{{ number_format((float) $operationalSummary['total_income'], 2) }}</h2>
                         <p class="stat-meta"><span>approved income entries</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Operational expense</p>
                         <h2 class="stat-value">{{ number_format((float) $operationalSummary['total_expense'], 2) }}</h2>
                         <p class="stat-meta"><span>approved expense entries</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Net operational</p>
                         <h2 class="stat-value">{{ number_format((float) $operationalSummary['net_operational_income'], 2) }}</h2>
                         <p class="stat-meta"><span>income minus expense</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Sale profit / loss</p>
                         <h2 class="stat-value">{{ number_format((float) $operationalSummary['sale_profit_loss'], 2) }}</h2>
                         <p class="stat-meta"><span>from closed sale snapshot</span></p>
                     </article>
                 </section>
 
-                <article class="form-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Date range</p>
@@ -49,10 +49,10 @@
                     </div>
 
                     <div class="btn-strip" style="margin-bottom: 0.75rem;">
-                        <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.reports.show', [$property, 'period' => 'this_month']) }}">MTD</a>
-                        <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.reports.show', [$property, 'period' => 'this_quarter']) }}">QTD</a>
-                        <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.reports.show', [$property, 'period' => 'ytd']) }}">YTD</a>
-                        <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.reports.show', [$property, 'period' => 'all_time']) }}">All time</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('properties.finance.reports.show', [$property, 'period' => 'this_month']) }}">MTD</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('properties.finance.reports.show', [$property, 'period' => 'this_quarter']) }}">QTD</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('properties.finance.reports.show', [$property, 'period' => 'ytd']) }}">YTD</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('properties.finance.reports.show', [$property, 'period' => 'all_time']) }}">All time</a>
                     </div>
 
                     <form method="GET" action="{{ route('properties.finance.reports.show', $property) }}">
@@ -79,13 +79,13 @@
                             </label>
                         </div>
                         <div class="btn-strip" style="margin-top: 1rem;">
-                            <button class="btn btn-solid" type="submit">Apply filter</button>
-                            <a class="btn btn-ghost" href="{{ route('properties.finance.reports.show', $property) }}">Reset</a>
+                            <button class="btn btn-primary" type="submit">Apply filter</button>
+                            <a class="btn btn-outline-secondary" href="{{ route('properties.finance.reports.show', $property) }}">Reset</a>
                         </div>
                     </form>
                 </article>
 
-                <article class="table-card dashboard-panel">
+                <article class="card border-0 shadow-sm dashboard-panel">
                     <div class="dashboard-panel-head">
                         <div>
                             <p class="row-label">Exports</p>
@@ -104,16 +104,16 @@
                     @endphp
 
                     <div class="btn-strip">
-                        <a class="btn btn-solid btn-sm" href="{{ route('properties.finance.reports.owner-statement.csv', [$property] + $exportQuery) }}">Owner statement CSV</a>
-                        <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.reports.owner-statement.pdf', [$property] + $exportQuery) }}">Owner statement PDF</a>
-                        <a class="btn btn-solid btn-sm" href="{{ route('properties.finance.reports.pnl-matrix.csv', [$property] + $exportQuery) }}">P&amp;L matrix CSV</a>
-                        <a class="btn btn-ghost btn-sm" href="{{ route('properties.finance.reports.pnl-matrix.pdf', [$property] + $exportQuery) }}">P&amp;L matrix PDF</a>
+                        <a class="btn btn-primary btn-sm" href="{{ route('properties.finance.reports.owner-statement.csv', [$property] + $exportQuery) }}">Owner statement CSV</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('properties.finance.reports.owner-statement.pdf', [$property] + $exportQuery) }}">Owner statement PDF</a>
+                        <a class="btn btn-primary btn-sm" href="{{ route('properties.finance.reports.pnl-matrix.csv', [$property] + $exportQuery) }}">P&amp;L matrix CSV</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ route('properties.finance.reports.pnl-matrix.pdf', [$property] + $exportQuery) }}">P&amp;L matrix PDF</a>
                     </div>
                 </article>
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="table-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Owner statement</p>
@@ -124,8 +124,8 @@
                             @if (empty($ownerStatementRows))
                                 <p class="security-empty">No active ownership rows found. Configure ownership splits to generate statement rows.</p>
                             @else
-                                <div class="data-table-card">
-                                    <table class="data-table data-table-compact">
+                                <div class="">
+                                    <table class="data-table data-table-compact table w-100">
                                         <thead>
                                             <tr>
                                                 <th>Owner</th>
@@ -154,8 +154,8 @@
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
-                        <article class="table-card dashboard-panel">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">P&amp;L matrix</p>
@@ -166,8 +166,8 @@
                             @if (empty($pnlMatrixRows))
                                 <p class="security-empty">No approved ledger entries are available to build the matrix.</p>
                             @else
-                                <div class="data-table-card">
-                                    <table class="data-table data-table-compact">
+                                <div class="">
+                                    <table class="data-table data-table-compact table w-100">
                                         <thead>
                                             <tr>
                                                 <th>Category</th>

@@ -18,6 +18,6 @@
             @error('password')<span class="field-hint is-error">{{ $message }}</span>@enderror
         </label>
 
-        <button class="btn btn-solid" type="submit">Confirm password</button>
+        <button class="btn btn-primary" type="submit">Confirm password</button>
     </form>
 @endsection

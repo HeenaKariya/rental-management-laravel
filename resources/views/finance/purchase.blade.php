@@ -6,9 +6,9 @@
         $loan = $property->loan;
     @endphp
 
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack property-detail-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3 property-detail-stack">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 5 finance</p>
@@ -16,9 +16,9 @@
                         <p class="page-description">Acquisition details, mortgage setup, and EMI payment log with summary metrics.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('properties.show', $property) }}">Back to property</a>
-                        <a class="btn btn-ghost" href="{{ route('properties.finance.ledger.index', $property) }}">Open ledger</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('properties.show', $property) }}">Back to property</a>
+                        <a class="btn btn-outline-secondary" href="{{ route('properties.finance.ledger.index', $property) }}">Open ledger</a>
                     </div>
                 </section>
 
@@ -28,32 +28,32 @@
                     </div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
+                <section class="row g-3">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Acquisition total</p>
                         <h2 class="stat-value">{{ number_format((float) ($purchase?->total_acquisition_cost ?? 0), 2) }}</h2>
                         <p class="stat-meta"><span>purchase plus duties and costs</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Loan amount</p>
                         <h2 class="stat-value">{{ number_format((float) ($loan?->loan_amount ?? 0), 2) }}</h2>
                         <p class="stat-meta"><span>{{ $loan?->lender_name ?: 'No loan configured' }}</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Total EMI paid</p>
                         <h2 class="stat-value">{{ number_format((float) ($loanSummary['total_emis_paid'] ?? 0), 2) }}</h2>
                         <p class="stat-meta"><span>interest paid {{ number_format((float) ($loanSummary['total_interest_paid'] ?? 0), 2) }}</span></p>
                     </article>
-                    <article class="stat-card">
+                    <article class="card shadow-sm h-100 p-3">
                         <p class="stat-label">Outstanding principal</p>
                         <h2 class="stat-value">{{ number_format((float) ($loanSummary['outstanding_principal'] ?? 0), 2) }}</h2>
                         <p class="stat-meta"><span>remaining tenure {{ (int) ($loanSummary['remaining_tenure_months'] ?? 0) }} months</span></p>
                     </article>
                 </section>
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="table-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Purchase record</p>
@@ -71,7 +71,7 @@
                             <div class="pending-row"><span>Notes</span><span>{{ $purchase?->notes ?: 'No purchase notes recorded.' }}</span></div>
                         </article>
 
-                        <article class="table-card dashboard-panel">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">EMI history</p>
@@ -82,8 +82,8 @@
                             @if (! $loan || $loan->emiLogs->isEmpty())
                                 <p class="security-empty">No EMI records logged yet.</p>
                             @else
-                                <div class="data-table-card">
-                                    <table class="data-table data-table-compact">
+                                <div class="">
+                                    <table class="data-table data-table-compact table w-100">
                                         <thead>
                                             <tr>
                                                 <th scope="col">EMI #</th>
@@ -112,9 +112,9 @@
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
                         @can('update', $property)
-                            <article class="security-card dashboard-panel">
+                            <article class="card border-0 shadow-sm dashboard-panel">
                                 <div class="dashboard-panel-head">
                                     <div>
                                         <p class="row-label">Purchase input</p>
@@ -156,11 +156,11 @@
                                         <span class="field-label">Notes</span>
                                         <textarea class="field-input" name="notes" rows="3">{{ old('notes', $purchase?->notes) }}</textarea>
                                     </label>
-                                    <button class="btn btn-solid" type="submit">Save purchase</button>
+                                    <button class="btn btn-primary" type="submit">Save purchase</button>
                                 </form>
                             </article>
 
-                            <article class="security-card dashboard-panel">
+                            <article class="card border-0 shadow-sm dashboard-panel">
                                 <div class="dashboard-panel-head">
                                     <div>
                                         <p class="row-label">Loan input</p>
@@ -215,7 +215,7 @@
                                         <span class="field-label">Notes</span>
                                         <textarea class="field-input" name="notes" rows="3">{{ old('notes', $loan?->notes) }}</textarea>
                                     </label>
-                                    <button class="btn btn-solid" type="submit">Save loan</button>
+                                    <button class="btn btn-primary" type="submit">Save loan</button>
                                 </form>
 
                                 @if ($loan)
@@ -247,12 +247,12 @@
                                             <span class="field-label">Notes</span>
                                             <textarea class="field-input" name="notes" rows="2"></textarea>
                                         </label>
-                                        <button class="btn btn-solid" type="submit">Log EMI payment</button>
+                                        <button class="btn btn-primary" type="submit">Log EMI payment</button>
                                     </form>
                                 @endif
                             </article>
                         @else
-                            <article class="security-card dashboard-panel">
+                            <article class="card border-0 shadow-sm dashboard-panel">
                                 <p class="security-empty">Read-only visibility is enabled for your role in this workspace.</p>
                             </article>
                         @endcan

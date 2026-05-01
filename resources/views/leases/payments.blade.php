@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Payment History | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack property-detail-stack">
+    <div class=" property-workspace">
+        <div class="py-2">
+            <div class="d-flex flex-column gap-3 property-detail-stack">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 4 foundation</p>
@@ -11,10 +11,10 @@
                         <p class="page-description">Monthly rent demand, arrears carry-forward, credits, and instalments for {{ $lease->tenant->full_name }} at {{ $lease->unit->property->title }} · {{ $lease->unit->unit_number }}.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('leases.show', $lease) }}">Back to lease</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('leases.show', $lease) }}">Back to lease</a>
                         @can('update', $lease)
-                            <a class="btn btn-solid" href="{{ route('leases.edit', $lease) }}">Edit lease billing</a>
+                            <a class="btn btn-primary" href="{{ route('leases.edit', $lease) }}">Edit lease billing</a>
                         @endcan
                     </div>
                 </section>
@@ -25,32 +25,40 @@
                     </div>
                 @endif
 
-                <section class="stat-grid dashboard-stat-grid">
-                    <article class="stat-card">
-                        <p class="stat-label">Ledger months</p>
-                        <h2 class="stat-value">{{ $lease->rentLedgers->count() }}</h2>
-                        <p class="stat-meta"><span>lease timeline generated</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Open balance</p>
-                        <h2 class="stat-value">{{ number_format($lease->rentLedgers->sum(fn ($ledger) => max((float) $ledger->outstanding_balance, 0)), 2) }}</h2>
-                        <p class="stat-meta"><span>includes arrears and late fees</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Credits</p>
-                        <h2 class="stat-value">{{ number_format($lease->rentLedgers->sum(fn ($ledger) => max(((float) $ledger->outstanding_balance) * -1, 0)), 2) }}</h2>
-                        <p class="stat-meta"><span>overpayments carried forward</span></p>
-                    </article>
-                    <article class="stat-card">
-                        <p class="stat-label">Late fee rule</p>
-                        <h2 class="stat-value">{{ $lease->late_fee_mode === 'percentage' ? number_format((float) $lease->late_fee_value, 2).'%' : number_format((float) $lease->late_fee_value, 2) }}</h2>
-                        <p class="stat-meta"><span>{{ $lease->grace_period_days }} day grace period</span></p>
-                    </article>
+                <section class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3">
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Ledger months</p>
+                            <h2 class="stat-value">{{ $lease->rentLedgers->count() }}</h2>
+                            <p class="stat-meta"><span>lease timeline generated</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Open balance</p>
+                            <h2 class="stat-value">{{ number_format($lease->rentLedgers->sum(fn ($ledger) => max((float) $ledger->outstanding_balance, 0)), 2) }}</h2>
+                            <p class="stat-meta"><span>includes arrears and late fees</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Credits</p>
+                            <h2 class="stat-value">{{ number_format($lease->rentLedgers->sum(fn ($ledger) => max(((float) $ledger->outstanding_balance) * -1, 0)), 2) }}</h2>
+                            <p class="stat-meta"><span>overpayments carried forward</span></p>
+                        </article>
+                    </div>
+                    <div class="col">
+                        <article class="card shadow-sm h-100 p-3">
+                            <p class="stat-label">Late fee rule</p>
+                            <h2 class="stat-value">{{ $lease->late_fee_mode === 'percentage' ? number_format((float) $lease->late_fee_value, 2).'%' : number_format((float) $lease->late_fee_value, 2) }}</h2>
+                            <p class="stat-meta"><span>{{ $lease->grace_period_days }} day grace period</span></p>
+                        </article>
+                    </div>
                 </section>
 
-                <section class="dashboard-grid">
-                    <div class="dashboard-column-wide">
-                        <article class="table-card dashboard-panel">
+                <section class="row g-3">
+                    <div class="col-12 col-xl-8 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Payment timeline</p>
@@ -62,7 +70,7 @@
                                 <p class="security-empty">No rent ledger entries are available yet for this lease.</p>
                             @else
                                 @foreach ($lease->rentLedgers as $ledger)
-                                    <article class="table-card" style="margin-bottom: 1rem;">
+                                    <article class="card border-0 shadow-sm lease-ledger-card">
                                         <div class="dashboard-panel-head">
                                             <div>
                                                 <p class="row-label">{{ $ledger->payment_month->format('F Y') }}</p>
@@ -117,7 +125,7 @@
                                                     <div class="muted-text">{{ number_format((float) $instalment->amount_paid, 2) }}</div>
                                                     <div class="muted-text">{{ str($instalment->payment_mode)->replace('_', ' ')->title() }}</div>
                                                     <div class="muted-text">{{ $instalment->recorder?->name ?: 'System' }}</div>
-                                                    <div><a class="btn btn-ghost btn-sm" href="{{ route('leases.payments.receipt.download', [$lease, $ledger, $instalment]) }}">Receipt PDF</a></div>
+                                                    <div><a class="btn btn-outline-secondary btn-sm" href="{{ route('leases.payments.receipt.download', [$lease, $ledger, $instalment]) }}">Receipt PDF</a></div>
                                                 </div>
 
                                                 @if ($instalment->isVoided())
@@ -132,7 +140,7 @@
 
                                                 @can('update', $lease)
                                                     @if (! $instalment->isVoided())
-                                                        <form method="POST" action="{{ route('leases.payments.instalments.correct', [$lease, $ledger, $instalment]) }}" class="auth-form-grid" style="margin-top: 0.75rem;">
+                                                        <form method="POST" action="{{ route('leases.payments.instalments.correct', [$lease, $ledger, $instalment]) }}" class="auth-form-grid lease-inline-form">
                                                             @csrf
                                                             @method('PATCH')
                                                             <label class="field-group">
@@ -148,18 +156,18 @@
                                                                 <input class="field-input" type="text" name="reference_number" value="{{ $instalment->reference_number }}">
                                                             </label>
                                                             <div class="btn-strip">
-                                                                <button class="btn btn-ghost btn-sm" type="submit">Save correction</button>
+                                                                <button class="btn btn-outline-secondary btn-sm" type="submit">Save correction</button>
                                                             </div>
                                                         </form>
 
-                                                        <form method="POST" action="{{ route('leases.payments.instalments.void', [$lease, $ledger, $instalment]) }}" style="margin-top: 0.75rem;">
+                                                        <form method="POST" action="{{ route('leases.payments.instalments.void', [$lease, $ledger, $instalment]) }}" class="lease-inline-form">
                                                             @csrf
                                                             @method('DELETE')
                                                             <label class="field-group">
                                                                 <span class="field-label">Void reason</span>
                                                                 <textarea class="field-input" name="void_reason" rows="2" required></textarea>
                                                             </label>
-                                                            <button class="btn btn-ghost btn-sm" type="submit">Void instalment</button>
+                                                            <button class="btn btn-outline-secondary btn-sm" type="submit">Void instalment</button>
                                                         </form>
                                                     @endif
                                                 @endcan
@@ -171,8 +179,8 @@
                         </article>
                     </div>
 
-                    <div class="dashboard-column-side">
-                        <article class="security-card dashboard-panel">
+                    <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+                        <article class="card border-0 shadow-sm dashboard-panel">
                             <div class="dashboard-panel-head">
                                 <div>
                                     <p class="row-label">Record instalment</p>
@@ -223,7 +231,7 @@
                                         <span class="field-label">Notes</span>
                                         <textarea class="field-input" name="notes" rows="3"></textarea>
                                     </label>
-                                    <button class="btn btn-solid" type="submit">Record instalment</button>
+                                    <button class="btn btn-primary" type="submit">Record instalment</button>
                                 </form>
                             @else
                                 <p class="security-empty">This payment history is visible in read-only mode from the tenant portal.</p>

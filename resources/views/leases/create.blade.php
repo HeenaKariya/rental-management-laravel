@@ -1,9 +1,9 @@
 @extends('layouts.app', ['title' => 'Create Lease | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
-        <div class="ui-wrap">
-            <div class="dashboard-stack">
+    <div class="">
+        <div class="">
+            <div class="d-flex flex-column gap-3">
                 <section class="page-header card-soft">
                     <div>
                         <p class="page-kicker">Phase 3 foundation</p>
@@ -11,8 +11,8 @@
                         <p class="page-description">Start the lease record and enforce the unit-level active lease boundary from the first write.</p>
                     </div>
 
-                    <div class="page-actions">
-                        <a class="btn btn-ghost" href="{{ route('leases.index') }}">Back to leases</a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ route('leases.index') }}">Back to leases</a>
                     </div>
                 </section>
 

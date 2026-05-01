@@ -30,7 +30,7 @@
             ])->where('visible');
         @endphp
 
-        <div class="app-shell d-flex">
+        <div class="app-shell">
             <aside class="app-sidebar flex-shrink-0" data-app-nav-panel>
                 <div class="app-sidebar-top">
                     <a class="app-brand" href="{{ route('dashboard') }}">
@@ -93,7 +93,7 @@
                     </div>
 
                     <div class="app-topbar-actions">
-                        <button class="btn btn-ghost btn-sm app-nav-toggle" type="button" data-app-nav-toggle>Menu</button>
+                        <button class="btn btn-outline-secondary btn-sm app-nav-toggle" type="button" data-app-nav-toggle>Menu</button>
                         @if ($authUser)
                             <details class="app-profile-menu">
                                 <summary class="app-topbar-profile" aria-label="Open account menu">
@@ -121,7 +121,7 @@
                     </div>
                 </header>
 
-                <main class="app-content container-fluid py-3 py-lg-4 flex-grow-1">
+                <main class="app-content container-fluid">
                     @yield('content')
                 </main>
             </div>

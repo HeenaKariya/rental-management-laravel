@@ -15,11 +15,11 @@
 
     <form method="POST" action="{{ route('verification.send') }}" class="auth-form-grid">
         @csrf
-        <button class="btn btn-solid" type="submit">Resend verification email</button>
+        <button class="btn btn-primary" type="submit">Resend verification email</button>
     </form>
 
     <form method="POST" action="{{ route('logout') }}">
         @csrf
-        <button class="btn btn-ghost" type="submit">Logout</button>
+        <button class="btn btn-outline-secondary" type="submit">Logout</button>
     </form>
 @endsection
