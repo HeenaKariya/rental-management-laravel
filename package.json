@@ -13,6 +13,11 @@
     "dependencies": {
         "alpinejs": "^3.15.11",
         "bootstrap": "^5.3.3",
+        "datatables.net": "^2.3.8",
+        "datatables.net-bs5": "^2.3.8",
+        "datatables.net-responsive": "^3.0.8",
+        "datatables.net-responsive-bs5": "^3.0.8",
+        "jquery": "^4.0.0",
         "simple-datatables": "^10.2.0"
     }
 }

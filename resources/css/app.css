@@ -1,4 +1,6 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
+@import 'datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css';
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
@@ -869,6 +871,106 @@ input {
 
 .data-table-compact {
 	min-width: 0;
+}
+
+.js-jquery-datatable {
+	min-width: 0;
+}
+
+.oversight-table-card {
+	overflow-x: hidden;
+}
+
+.oversight-table-card .dt-container,
+.oversight-table-card .dataTables_wrapper {
+	overflow-x: hidden;
+}
+
+.oversight-page .ui-wrap {
+	gap: 24px;
+}
+
+.oversight-page .page-header {
+	padding: 16px 18px;
+}
+
+.oversight-page .dashboard-panel {
+	padding: 14px;
+}
+
+.oversight-page .dashboard-panel-head {
+	margin-bottom: 10px;
+}
+
+.oversight-page .data-table-card .datatable-top,
+.oversight-page .data-table-card .datatable-bottom {
+	padding: 12px 14px;
+}
+
+.oversight-page .data-table th,
+.oversight-page .data-table td {
+	padding: 12px 14px;
+}
+
+#oversight-users-table {
+	min-width: 0;
+	width: 100% !important;
+	table-layout: auto;
+}
+
+#oversight-users-table th {
+	white-space: normal;
+	word-break: normal;
+}
+
+#oversight-users-table td {
+	white-space: normal;
+	word-break: normal;
+	overflow-wrap: anywhere;
+}
+
+#oversight-users-table td.dt-control,
+#oversight-users-table th.dt-control {
+	width: 44px;
+	text-align: center;
+	padding-left: 12px;
+	padding-right: 12px;
+}
+
+#oversight-users-table td.dt-control {
+	cursor: pointer;
+}
+
+#oversight-users-table td.dt-control::before {
+	content: '+';
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	border-radius: 999px;
+	border: 1px solid rgba(13, 13, 13, 0.22);
+	font-weight: 800;
+	line-height: 1;
+	color: var(--ink2);
+	background: #fff;
+}
+
+#oversight-users-table tr.parent td.dt-control::before {
+	content: '-';
+	background: #efe8d9;
+	border-color: rgba(13, 13, 13, 0.28);
+}
+
+#oversight-users-table tr.child > td {
+	background: #faf7ef;
+	padding-top: 12px;
+	padding-bottom: 14px;
+}
+
+#oversight-users-table tr.child table {
+	width: 100%;
+	margin: 0;
 }
 
 .data-table th,
@@ -2225,6 +2327,19 @@ input {
 
 	.ui-wrap {
 		gap: 22px;
+	}
+
+	.oversight-page {
+		padding-bottom: 12px;
+	}
+
+	.oversight-page .page-header,
+	.oversight-page .dashboard-panel,
+	.oversight-page .data-table-card .datatable-top,
+	.oversight-page .data-table-card .datatable-bottom,
+	.oversight-page .data-table th,
+	.oversight-page .data-table td {
+		padding: 10px;
 	}
 
 	.identity-card,

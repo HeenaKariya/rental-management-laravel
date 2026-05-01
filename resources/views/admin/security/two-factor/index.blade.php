@@ -1,17 +1,17 @@
 @extends('layouts.app', ['title' => '2FA Oversight | PropMgr'])
 
 @section('content')
-    <div class="ui-shell">
+    <div class="ui-shell oversight-page">
         <div class="ui-wrap">
             <div class="dashboard-stack">
-                <section class="page-header card-soft">
+                <section class="page-header">
                     <div>
                         <p class="page-kicker">Super Admin panel</p>
                         <h1 class="page-title">Two-factor oversight</h1>
                         <p class="page-description">Monitor two-factor adoption and recent auth activity.</p>
                     </div>
 
-                    <div class="page-actions">
+                    <div class="page-actions d-flex flex-wrap gap-2">
                         <span class="badge badge-ink">{{ $users->count() }} monitored accounts</span>
                         <a class="btn btn-violet btn-sm" href="{{ route('settings.security') }}">My security</a>
                         <a class="btn btn-ghost btn-sm" href="{{ route('dashboard') }}">Back to dashboard</a>
@@ -49,86 +49,93 @@
                     <div class="dashboard-column-wide">
                         <article class="table-card dashboard-panel">
                             <div class="dashboard-panel-head">
-                                <div>
-                                    <p class="row-label">Account status</p>
-                                    <h3 class="dashboard-panel-title">Monitored users</h3>
-                                </div>
+                                <p class="row-label mb-0">Account status</p>
+                                <h3 class="dashboard-panel-title mb-0">Monitored users</h3>
                             </div>
 
-                            <div class="table-head">
-                                <span>User</span>
-                                <span>2FA status</span>
-                                <span>Last event</span>
-                                <span>Updated</span>
+                            <div class="oversight-table-card">
+                                <table id="oversight-users-table" class="table w-100 data-table data-table-compact js-jquery-datatable">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" class="dt-control" data-sortable="false"></th>
+                                            <th scope="col" data-sortable="false">Row</th>
+                                            <th scope="col">Row ID</th>
+                                            <th scope="col">User</th>
+                                            <th scope="col">2FA status</th>
+                                            <th scope="col">Last event</th>
+                                            <th scope="col">Updated</th>
+                                            <th scope="col">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($users as $user)
+                                            <tr>
+                                                <td class="dt-control"></td>
+                                                <td data-row-number>{{ $loop->iteration }}</td>
+                                                <td>#{{ $user->id }}</td>
+                                                <td>
+                                                    <div class="data-table-primary">{{ $user->name }}</div>
+                                                    <div class="data-table-secondary">{{ $user->roleSummary() }} · {{ $user->email }}</div>
+                                                    @if ($user->isSoftLocked())
+                                                        <div class="data-table-secondary">Temporarily locked</div>
+                                                    @elseif ($user->isHardLocked())
+                                                        <div class="data-table-secondary">Super Admin reset required</div>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <div class="badge-strip">
+                                                        <span class="badge {{ $user->twoFactorStatusBadgeClass() }} compact-badge">{{ $user->twoFactorStatus() }}</span>
+                                                        <span class="badge {{ $user->authLockStatusBadgeClass() }} compact-badge">{{ $user->authLockStatus() }}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    @if ($user->latestAuthAuditLog)
+                                                        <div class="data-table-primary">{{ $user->latestAuthAuditLog->label() }}</div>
+                                                        @if ($user->latestAuthAuditLog->summary())
+                                                            <div class="data-table-secondary">{{ $user->latestAuthAuditLog->summary() }}</div>
+                                                        @endif
+                                                    @else
+                                                        <div class="data-table-primary">No recorded auth activity</div>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if ($user->latestAuthAuditLog)
+                                                        <div class="data-table-primary">{{ $user->latestAuthAuditLog->occurred_at?->timezone('Asia/Kolkata')->format('M j, Y') }}</div>
+                                                        <div class="data-table-secondary">{{ $user->latestAuthAuditLog->occurred_at?->timezone('Asia/Kolkata')->format('g:i A') }} IST</div>
+                                                    @else
+                                                        <div class="data-table-primary">Never</div>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex flex-wrap gap-2">
+                                                        @if ($user->isAuthLocked())
+                                                            <form method="POST" action="{{ route('admin.security.two-factor.release-lock', $user) }}">
+                                                                @csrf
+                                                                <button class="btn btn-ghost btn-sm" type="submit">Release lock</button>
+                                                            </form>
+                                                        @endif
+
+                                                        @if ($user->two_factor_secret !== null)
+                                                            <form method="POST" action="{{ route('admin.security.two-factor.reset', $user) }}">
+                                                                @csrf
+                                                                <button class="btn btn-violet btn-sm" type="submit">Reset 2FA</button>
+                                                            </form>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             </div>
-
-                            @foreach ($users as $user)
-                                <div class="table-row">
-                                    <div class="oversight-user-meta">
-                                        <p class="oversight-user-name">{{ $user->name }}</p>
-                                        <p class="oversight-user-role">{{ $user->roleSummary() }}</p>
-                                        <p class="oversight-user-email">{{ $user->email }}</p>
-                                        @if ($user->isSoftLocked())
-                                            <p class="oversight-user-email">Temporarily locked</p>
-                                        @elseif ($user->isHardLocked())
-                                            <p class="oversight-user-email">Super Admin reset required</p>
-                                        @endif
-
-                                        @if ($user->isAuthLocked() || $user->two_factor_secret !== null)
-                                            <div class="oversight-actions">
-                                                @if ($user->isAuthLocked())
-                                                    <form method="POST" action="{{ route('admin.security.two-factor.release-lock', $user) }}">
-                                                        @csrf
-                                                        <button class="btn btn-ghost btn-sm" type="submit">Release lock</button>
-                                                    </form>
-                                                @endif
-
-                                                @if ($user->two_factor_secret !== null)
-                                                    <form method="POST" action="{{ route('admin.security.two-factor.reset', $user) }}">
-                                                        @csrf
-                                                        <button class="btn btn-violet btn-sm" type="submit">Reset 2FA</button>
-                                                    </form>
-                                                @endif
-                                            </div>
-                                        @endif
-                                    </div>
-
-                                    <div class="badge-strip">
-                                        <span class="badge {{ $user->twoFactorStatusBadgeClass() }} compact-badge">{{ $user->twoFactorStatus() }}</span>
-                                        <span class="badge {{ $user->authLockStatusBadgeClass() }} compact-badge">{{ $user->authLockStatus() }}</span>
-                                    </div>
-
-                                    <div class="oversight-user-meta">
-                                        @if ($user->latestAuthAuditLog)
-                                            <p class="oversight-user-name">{{ $user->latestAuthAuditLog->label() }}</p>
-                                            @if ($user->latestAuthAuditLog->summary())
-                                                <p class="oversight-user-email">{{ $user->latestAuthAuditLog->summary() }}</p>
-                                            @endif
-                                        @else
-                                            <p class="oversight-user-name">No recorded auth activity</p>
-                                        @endif
-                                    </div>
-
-                                    <div class="oversight-user-meta">
-                                        @if ($user->latestAuthAuditLog)
-                                            <p class="oversight-user-name">{{ $user->latestAuthAuditLog->occurred_at?->timezone('Asia/Kolkata')->format('M j, Y') }}</p>
-                                            <p class="oversight-user-email">{{ $user->latestAuthAuditLog->occurred_at?->timezone('Asia/Kolkata')->format('g:i A') }} IST</p>
-                                        @else
-                                            <p class="oversight-user-name">Never</p>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endforeach
                         </article>
                     </div>
 
                     <div class="dashboard-column-side">
                         <aside class="security-card dashboard-panel">
                             <div class="dashboard-panel-head">
-                                <div>
-                                    <p class="row-label">Recent events</p>
-                                    <h3 class="dashboard-panel-title">Platform authentication activity</h3>
-                                </div>
+                                <p class="row-label mb-0">Recent events</p>
+                                <h3 class="dashboard-panel-title mb-0">Platform authentication activity</h3>
                             </div>
 
                             <div class="security-log-list">
